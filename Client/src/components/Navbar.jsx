@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Menu, X, GraduationCap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const navLinks = [
   "Dashboard",
@@ -30,14 +31,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 gradient-teal rounded-lg flex items-center justify-center">
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity">
+            <div className="w-8 h-8 gradient-teal rounded-lg flex items-center justify-center shadow-sm">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <span className="text-lg font-bold text-gray-900 tracking-tight">
               Smart Study Circle
             </span>
-          </div>
+          </Link>
 
           {/* Center nav links – desktop */}
           <div className="hidden md:flex items-center gap-1">
@@ -54,9 +55,12 @@ export default function Navbar() {
 
           {/* Right buttons – desktop */}
           <div className="hidden md:flex items-center gap-3">
-            <button className="text-sm font-medium text-gray-700 hover:text-teal-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200">
+            <Link
+              to="/login"
+              className="text-sm font-medium text-gray-700 hover:text-teal-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200"
+            >
               Log In
-            </button>
+            </Link>
             <button className="text-sm font-semibold text-white px-5 py-2.5 rounded-xl gradient-teal hover:opacity-90 transition-all duration-200 shadow-sm hover:shadow-md">
               Get Started
             </button>
@@ -91,9 +95,13 @@ export default function Navbar() {
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
-            <button className="w-full text-sm font-medium text-gray-700 py-2.5 rounded-lg border border-gray-200 hover:border-teal-300 hover:text-teal-600 transition-all duration-200">
+            <Link
+              to="/login"
+              onClick={() => setIsOpen(false)}
+              className="text-center w-full text-sm font-medium text-gray-700 py-2.5 rounded-lg border border-gray-200 hover:border-teal-300 hover:text-teal-600 transition-all duration-200 bg-transparent"
+            >
               Log In
-            </button>
+            </Link>
             <button className="w-full text-sm font-semibold text-white py-2.5 rounded-xl gradient-teal hover:opacity-90 transition-all duration-200">
               Get Started
             </button>
