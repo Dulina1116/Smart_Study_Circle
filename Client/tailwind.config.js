@@ -1,62 +1,27 @@
-/** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-      },
       colors: {
-        teal: {
-          50: "#f0fdfa",
-          100: "#ccfbf1",
-          200: "#99f6e4",
-          300: "#5eead4",
-          400: "#2dd4bf",
-          500: "#14b8a6",
-          600: "#0d9488",
-          700: "#0f766e",
-          800: "#115e59",
-          900: "#134e4a",
-        },
-        cyan: {
-          50: "#ecfeff",
-          100: "#cffafe",
-          200: "#a5f3fc",
-          300: "#67e8f9",
-          400: "#22d3ee",
-          500: "#06b6d4",
-          600: "#0891b2",
-          700: "#0e7490",
-          800: "#155e75",
-          900: "#164e63",
-        },
-        blue: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-        },
+        primary:   '#00b8a9',
+        'primary-dark': '#009e91',
+        'primary-light': '#e0f7f5',
+        dark:      '#1a1a2e',
+        muted:     '#6b7280',
+        'bg-main': '#f8f9fa',
+        'bg-card': '#ffffff',
+        'border-c':'#e5e7eb',
+        error:     '#ef4444',
+        success:   '#10b981',
       },
-      borderRadius: {
-        "2xl": "16px",
-        "3xl": "24px",
-      },
-      boxShadow: {
-        card: "0 1px 3px 0 rgba(0,0,0,0.07), 0 4px 16px 0 rgba(0,0,0,0.06)",
-        "card-hover":
-          "0 4px 20px 0 rgba(0,0,0,0.10), 0 8px 32px 0 rgba(14,116,144,0.08)",
-      },
-      backgroundImage: {
-        "teal-gradient": "linear-gradient(135deg, #0d9488 0%, #06b6d4 100%)",
-        "hero-gradient":
-          "linear-gradient(135deg, #f0fdfa 0%, #ecfeff 50%, #eff6ff 100%)",
+      fontFamily: {
+        head: ['Syne', 'sans-serif'],
+        body: ['DM Sans', 'sans-serif'],
       },
     },
   },
   plugins: [],
-};
+}
