@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -304,10 +304,10 @@ export default function Register() {
           <p className="text-center text-[0.7rem] tracking-widest mt-5
             leading-loose text-gray-400">
             ALREADY HAVE AN ACCOUNT?<br/>
-            <a href="/login"
+            <Link to="/login"
               className="text-[#00b8a9] font-bold text-sm hover:underline">
               Log in to your account
-            </a>
+            </Link>
           </p>
           <p className="text-center text-[0.68rem] mt-3 leading-relaxed text-gray-400">
             By signing up, you agree to our{' '}
