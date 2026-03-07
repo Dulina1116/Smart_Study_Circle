@@ -25,3 +25,28 @@ input:-webkit-autofill {
   background: #00b8a9;
   border-radius: 4px;
 }
+
+@layer utilities {
+  .gradient-teal {
+    background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);
+  }
+
+  .gradient-teal-text {
+    background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .shadow-card-hover {
+    box-shadow: 0 4px 20px 0 rgba(0,0,0,0.10), 0 8px 32px 0 rgba(14,116,144,0.08); /* Tailwind config extension fallback */
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .card-hover:hover {
+    @apply -translate-y-1 shadow-card-hover;
+  }
+}
