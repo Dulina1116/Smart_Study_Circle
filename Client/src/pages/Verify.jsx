@@ -6,6 +6,7 @@ export default function Verify() {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
   const [countdown, setCountdown] = useState(60)
   const [canResend, setCanResend] = useState(false)
   const inputs = useRef([])
@@ -60,22 +61,22 @@ export default function Verify() {
     setLoading(true)
     setError('')
     try {
-      // Backend ready වුණාම uncomment කරන්න:
-      // const res = await fetch('http://localhost:5000/api/auth/verify-otp', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, otp: code }),
-      // })
-      // const data = await res.json()
-      // if (!res.ok) throw new Error(data.message)
-      // navigate('/interests')
+      const res = await fetch('http://localhost:5000/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: code }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
 
-      await new Promise(r => setTimeout(r, 1500))
-      if (code === '123456') {
-        navigate('/interests')
-      } else {
-        throw new Error('Invalid code. Use 123456 for demo.')
-      }
+      // Token save කරන්න
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      localStorage.removeItem('tempEmail')
+
+      setSuccess(true)
+      await new Promise(r => setTimeout(r, 1800))
+      navigate('/interests')
     } catch (err) {
       setError('⚠ ' + err.message)
       setOtp(['', '', '', '', '', ''])
@@ -92,8 +93,18 @@ export default function Verify() {
     setCountdown(60)
     setOtp(['', '', '', '', '', ''])
     setError('')
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
+    } catch (err) {
+      setError('⚠ ' + err.message)
+    }
     inputs.current[0].focus()
-    console.log('OTP resent to:', email)
   }
 
   return (
@@ -152,6 +163,18 @@ export default function Verify() {
             />
           ))}
         </div>
+
+        {/* Success */}
+        {success && (
+          <div className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl
+            bg-[#e0f7f5] border border-[#00b8a9] mt-4">
+            <span className="text-xl">🎉</span>
+            <div>
+              <p className="text-sm font-bold text-[#007a6e]">Email Verified!</p>
+              <p className="text-xs text-[#00b8a9]">Redirecting you now...</p>
+            </div>
+          </div>
+        )}
 
         {/* Error */}
         {error && (

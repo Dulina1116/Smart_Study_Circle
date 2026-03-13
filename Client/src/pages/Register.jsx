@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -11,31 +11,37 @@ export default function Register() {
     role: 'student',
   })
 
-  const [errors, setErrors]       = useState({})
-  const [showPw, setShowPw]       = useState(false)
-  const [loading, setLoading]     = useState(false)
-  const [pwStrength, setPwStrength] = useState({ width: '0%', color: '', label: '' })
+  const [errors, setErrors]         = useState({})
+  const [showPw, setShowPw]         = useState(false)
+  const [loading, setLoading]       = useState(false)
+  const [pwStrength, setPwStrength] = useState(null)   // null = no bar yet
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
     if (e.target.name === 'password') checkStrength(e.target.value)
   }
 
+  // ── FIX: score=0 now maps to a real "Too Short" level; bar only shown when pw non-empty ──
   const checkStrength = (pw) => {
+    if (!pw) { setPwStrength(null); return }
+
     let score = 0
     if (pw.length >= 8)          score++
     if (pw.length >= 12)         score++
     if (/[A-Z]/.test(pw))        score++
     if (/[0-9]/.test(pw))        score++
     if (/[^A-Za-z0-9]/.test(pw)) score++
+
     const levels = [
-      { width: '20%', color: '#ef4444', label: 'Very Weak'  },
-      { width: '40%', color: '#f97316', label: 'Weak'       },
-      { width: '60%', color: '#eab308', label: 'Fair'       },
-      { width: '80%', color: '#22c55e', label: 'Strong'     },
-      { width: '100%',color: '#00b8a9', label: 'Very Strong'},
+      { width: '10%', color: '#ef4444', label: 'Too Short'  },  // score = 0
+      { width: '20%', color: '#ef4444', label: 'Very Weak'  },  // score = 1
+      { width: '40%', color: '#f97316', label: 'Weak'       },  // score = 2
+      { width: '60%', color: '#eab308', label: 'Fair'       },  // score = 3
+      { width: '80%', color: '#22c55e', label: 'Strong'     },  // score = 4
+      { width: '100%',color: '#00b8a9', label: 'Very Strong'},  // score = 5
     ]
-    setPwStrength(levels[Math.min(score - 1, 4)] || levels[0])
+
+    setPwStrength(levels[Math.min(score, 5)])
   }
 
   const validate = () => {
@@ -44,14 +50,17 @@ export default function Register() {
       e.fullName = '⚠ Full name is required.'
     else if (formData.fullName.trim().length < 3)
       e.fullName = '⚠ At least 3 characters required.'
+
     if (!formData.email.trim())
       e.email = '⚠ University email is required.'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       e.email = '⚠ Enter a valid email address.'
+
     if (!formData.password)
       e.password = '⚠ Password is required.'
     else if (formData.password.length < 8)
       e.password = '⚠ Minimum 8 characters required.'
+
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -61,16 +70,14 @@ export default function Register() {
     if (!validate()) return
     setLoading(true)
     try {
-      // Backend ready වුණාම uncomment කරන්න:
-      // const res = await fetch('http://localhost:5000/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // })
-      // const data = await res.json()
-      // if (!res.ok) throw new Error(data.message)
+      const res = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
 
-      await new Promise(r => setTimeout(r, 1500))
       localStorage.setItem('tempEmail', formData.email)
       navigate('/verify')
     } catch (err) {
@@ -241,19 +248,41 @@ export default function Register() {
                 <button type="button" onClick={() => setShowPw(!showPw)}
                   className="absolute right-3 top-1/2 -translate-y-1/2
                     text-gray-400 hover:text-[#00b8a9] transition-colors">
-                  {showPw ? '🙈' : '👁'}
+                  {showPw ? (
+                    // Eye-off icon
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8
+                        a18.45 18.45 0 0 1 5.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8
+                        a18.5 18.5 0 0 1-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  ) : (
+                    // Eye icon
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  )}
                 </button>
               </div>
-              {formData.password && (
+
+              {/* ── Strength bar: only renders when pwStrength is not null ── */}
+              {pwStrength && (
                 <div className="flex items-center gap-2 mt-2">
-                  <div className="flex-1 h-1.5 rounded-full bg-gray-200">
+                  <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-300"
                       style={{ width: pwStrength.width, background: pwStrength.color }}/>
                   </div>
-                  <span className="text-[0.7rem] font-semibold"
+                  <span className="text-[0.7rem] font-semibold min-w-[64px] text-right"
                     style={{ color: pwStrength.color }}>{pwStrength.label}</span>
                 </div>
               )}
+
               {errors.password &&
                 <p className="text-red-500 text-xs mt-1 font-medium">{errors.password}</p>}
             </div>
@@ -304,10 +333,10 @@ export default function Register() {
           <p className="text-center text-[0.7rem] tracking-widest mt-5
             leading-loose text-gray-400">
             ALREADY HAVE AN ACCOUNT?<br/>
-            <Link to="/login"
+            <a href="/login"
               className="text-[#00b8a9] font-bold text-sm hover:underline">
               Log in to your account
-            </Link>
+            </a>
           </p>
           <p className="text-center text-[0.68rem] mt-3 leading-relaxed text-gray-400">
             By signing up, you agree to our{' '}
