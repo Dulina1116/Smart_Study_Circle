@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, GraduationCap } from "lucide-react";
+import { Menu, X, GraduationCap, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const navLinks = [
@@ -51,6 +51,13 @@ export default function Navbar() {
                 {link}
               </a>
             ))}
+            <Link
+              to="/admin"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-50 hover:border-teal-400 transition-all duration-200 ml-1"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Admin
+            </Link>
           </div>
 
           {/* Right buttons – desktop */}
@@ -94,6 +101,14 @@ export default function Navbar() {
               {link}
             </a>
           ))}
+          <Link
+            to="/admin"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-50 hover:border-teal-400 transition-all duration-200"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Admin
+          </Link>
           <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
             <Link
               to="/login"
