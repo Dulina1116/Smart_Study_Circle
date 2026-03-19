@@ -133,7 +133,7 @@ export default function Interests() {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
-    navigate("/");
+    navigate("/dashboard/student");
   };
 
   const progress = Math.min((selected.length / 3) * 100, 100);
@@ -303,7 +303,7 @@ export default function Interests() {
         <div className="flex items-center gap-3">
           {/* Skip */}
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard/student")}
             className="px-5 py-2.5 rounded-xl text-sm font-medium
               text-gray-400 hover:text-gray-600 transition-colors"
           >

@@ -52,7 +52,7 @@ export default function Register() {
       e.fullName = '⚠ At least 3 characters required.'
 
     if (!formData.email.trim())
-      e.email = '⚠ University email is required.'
+      e.email = '⚠ Email is required.'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       e.email = '⚠ Enter a valid email address.'
 
@@ -209,23 +209,20 @@ export default function Register() {
             {/* Email */}
             <div className="mb-5">
               <label className="block text-sm font-semibold text-[#1a1a2e] mb-2">
-                University Email
+                Email Address
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2
                   font-bold text-gray-400 text-base">@</span>
                 <input type="email" name="email" value={formData.email}
                   onChange={handleChange}
-                  placeholder="name@university.edu"
+                  placeholder="name@example.com"
                   className={`w-full pl-10 pr-4 py-3 rounded-2xl text-sm text-[#1a1a2e]
                     outline-none border bg-white transition-all
                     focus:border-[#00b8a9] focus:shadow-[0_0_0_3px_rgba(0,184,169,0.15)] ${
                     errors.email ? 'border-red-400' : 'border-gray-200'
                   }`}/>
               </div>
-              <p className="text-xs mt-1 text-gray-400">
-                ℹ Must be a valid .edu or institutional email
-              </p>
               {errors.email &&
                 <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
             </div>
