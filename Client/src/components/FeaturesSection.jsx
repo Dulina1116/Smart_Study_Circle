@@ -1,135 +1,78 @@
-import {
-  MessageCircle,
-  Share2,
-  Trophy,
-  BookOpen,
-  Activity,
-  Megaphone,
-  Users,
-  BarChart,
-  Plug,
-} from "lucide-react";
+import { BellRing, BrainCircuit, Layers3, ShieldCheck, Target, Workflow } from "lucide-react";
 
-const roles = [
+const featureBlocks = [
   {
-    role: "Student",
-    icon: <BookOpen className="w-6 h-6" />,
-    color: "from-teal-500 to-cyan-500",
-    bg: "bg-teal-50",
-    border: "border-teal-100",
-    accent: "text-teal-600",
+    title: "Live Focus Rooms",
     description:
-      "Excel in your studies with the power of peer collaboration and smart tools.",
-    features: [
-      {
-        icon: <MessageCircle className="w-4 h-4" />,
-        text: "Peer-to-peer chat",
-      },
-      { icon: <Share2 className="w-4 h-4" />, text: "Resource sharing" },
-      { icon: <Trophy className="w-4 h-4" />, text: "Gamified progress" },
-    ],
+      "Create timed deep-work rooms with clear outcomes, role assignment, and shared notes.",
+    icon: <BrainCircuit className="h-5 w-5" />,
+    tone: "from-teal-500 to-cyan-500",
+    span: "md:col-span-2",
   },
   {
-    role: "Lecturer",
-    icon: <Megaphone className="w-6 h-6" />,
-    color: "from-blue-500 to-indigo-500",
-    bg: "bg-blue-50",
-    border: "border-blue-100",
-    accent: "text-blue-600",
-    description:
-      "Engage your students effectively with insights and direct communication.",
-    features: [
-      { icon: <BookOpen className="w-4 h-4" />, text: "Content management" },
-      { icon: <Activity className="w-4 h-4" />, text: "Engagement heatmaps" },
-      { icon: <Megaphone className="w-4 h-4" />, text: "Direct announcements" },
-    ],
+    title: "Goal Milestones",
+    description: "Break each subject into weekly wins and visible progress checkpoints.",
+    icon: <Target className="h-5 w-5" />,
+    tone: "from-blue-500 to-indigo-500",
+    span: "md:col-span-1",
   },
   {
-    role: "Admin",
-    icon: <Users className="w-6 h-6" />,
-    color: "from-violet-500 to-purple-500",
-    bg: "bg-violet-50",
-    border: "border-violet-100",
-    accent: "text-violet-600",
+    title: "Smart Workflows",
+    description: "Distribute tasks automatically and avoid duplicate effort across members.",
+    icon: <Workflow className="h-5 w-5" />,
+    tone: "from-teal-500 to-emerald-500",
+    span: "md:col-span-1",
+  },
+  {
+    title: "Faculty Alerts",
     description:
-      "Oversee your institution with comprehensive dashboards and integrations.",
-    features: [
-      { icon: <Users className="w-4 h-4" />, text: "User management" },
-      {
-        icon: <BarChart className="w-4 h-4" />,
-        text: "Institutional analytics",
-      },
-      { icon: <Plug className="w-4 h-4" />, text: "Integration API" },
-    ],
+      "Notify lecturers only when support is needed, keeping circles student-led by default.",
+    icon: <BellRing className="h-5 w-5" />,
+    tone: "from-cyan-500 to-sky-500",
+    span: "md:col-span-1",
+  },
+  {
+    title: "Institution Ready",
+    description:
+      "Secure access controls, department views, and adoption analytics for admins at scale.",
+    icon: <ShieldCheck className="h-5 w-5" />,
+    tone: "from-indigo-500 to-violet-500",
+    span: "md:col-span-1",
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section className="py-24 bg-gray-50/50" id="features">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-50 border border-teal-100 text-teal-700 text-sm font-medium">
-            Features
+    <section id="features" className="bg-gradient-to-b from-white to-teal-50/40 py-20 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="animate-fade-up text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700">
+            <Layers3 className="h-4 w-4" />
+            New Landing Experience
           </div>
-          <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
-            Tailored Experience for{" "}
-            <span className="gradient-teal-text">Everyone</span>
+          <h2 className="mt-4 text-3xl font-extrabold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
+            Everything Your Circle Needs
+            <span className="gradient-teal-text"> In One Flow</span>
           </h2>
-          <p className="text-lg text-gray-500 max-w-xl mx-auto">
-            Whether you're learning, teaching, or managing — Smart Study Circle
-            has you covered.
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-500">
+            The redesigned feature layout highlights the practical tools students
+            use every day, without visual clutter.
           </p>
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {roles.map((item) => (
-            <div
-              key={item.role}
-              className={`relative bg-white rounded-2xl border ${item.border} p-8 card-hover group cursor-pointer`}
-              style={{
-                boxShadow:
-                  "0 1px 3px 0 rgba(0,0,0,0.07), 0 4px 16px 0 rgba(0,0,0,0.06)",
-              }}
+        <div className="perspective-container mt-12 grid grid-cols-1 gap-5 md:grid-cols-3 lg:gap-6">
+          {featureBlocks.map((item, idx) => (
+            <article
+              key={item.title}
+              className={`card-3d card-hover animate-fade-up animate-scale-in depth-effect shadow-3d h-full rounded-2xl border border-gray-100 bg-white p-6 hover:border-teal-200 ${item.span}`}
+              style={{ animationDelay: `${idx * 90}ms` }}
             >
-              {/* Icon */}
-              <div
-                className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-white mb-5 shadow-sm group-hover:scale-110 transition-transform duration-200`}
-              >
+              <div className={`mb-4 inline-flex rounded-xl bg-gradient-to-br p-2.5 text-white transition-transform hover:scale-110 ${item.tone}`}>
                 {item.icon}
               </div>
-
-              {/* Role badge */}
-              <span
-                className={`inline-block text-xs font-semibold uppercase tracking-widest ${item.accent} ${item.bg} px-2.5 py-1 rounded-full mb-3`}
-              >
-                {item.role}
-              </span>
-
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                {item.role}
-              </h3>
-              <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                {item.description}
-              </p>
-
-              {/* Feature list */}
-              <ul className="space-y-3">
-                {item.features.map((f, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-3 text-sm text-gray-700"
-                  >
-                    <span className={`${item.accent} opacity-80`}>
-                      {f.icon}
-                    </span>
-                    {f.text}
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <h3 className="text-xl font-bold text-gray-900">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-500">{item.description}</p>
+            </article>
           ))}
         </div>
       </div>

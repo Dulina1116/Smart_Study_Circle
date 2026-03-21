@@ -1,9 +1,18 @@
+import { Link } from "react-router-dom";
 import { GraduationCap, Facebook, Instagram, Linkedin } from "lucide-react";
 
 const footerLinks = {
-  Platform: ["Features", "For Lecturers", "For Institutions", "Pricing"],
-  Resources: ["Study Guides", "Blog", "Community", "Help Center"],
-  Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy"],
+  Resources: [
+    { label: "Study Guides", path: "/study-guides" },
+    { label: "Blog", path: "/blog" },
+    { label: "Community", path: "/community" },
+    { label: "Help Center", path: "/help" },
+  ],
+  Legal: [
+    { label: "Privacy Policy", path: "/privacy" },
+    { label: "Terms of Service", path: "/terms" },
+    { label: "Cookie Policy", path: "/cookies" },
+  ],
 };
 
 export default function Footer() {
@@ -52,13 +61,13 @@ export default function Footer() {
               </h4>
               <ul className="space-y-3">
                 {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
+                  <li key={link.label}>
+                    <Link
+                      to={link.path}
                       className="text-sm text-gray-400 hover:text-teal-400 transition-colors duration-200"
                     >
-                      {link}
-                    </a>
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>

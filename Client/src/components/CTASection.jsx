@@ -1,50 +1,53 @@
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+
+const promises = [
+  "No setup complexity for students",
+  "Built-in session structure and accountability",
+  "Clear progress visibility for every role",
+];
 
 export default function CTASection() {
   return (
-    <section className="py-24 relative overflow-hidden">
-      {/* Gradient background */}
-      <div className="absolute inset-0 gradient-teal" />
-      {/* Decorative circles */}
-      <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full blur-2xl" />
-      <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
+    <section className="relative overflow-hidden py-20 lg:py-24">
+      <div className="absolute inset-0 gradient-teal-animated" />
+      <div className="absolute -top-12 -right-10 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
+      <div className="absolute -bottom-16 -left-16 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
 
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm">
-          🎓 Join 8,000+ students today
-        </div>
+      <div className="perspective-container relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 animate-fade-up">
+        <div className="card-3d animate-scale-in layered-depth rounded-3xl border border-white/30 bg-white/10 p-6 backdrop-blur-md transition-all hover:border-white/50 sm:p-8 lg:p-12">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
+            Recreated Landing. Same Theme.
+          </p>
+          <h2 className="mt-3 max-w-3xl text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">
+            Launch Your First Circle in Minutes and Keep It Growing Weekly
+          </h2>
+          <p className="mt-4 max-w-2xl text-lg text-white/85">
+            The new page flow is optimized for clarity and conversion while
+            staying true to your original color direction.
+          </p>
 
-        <h2 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight">
-          Ready to boost your grades?
-        </h2>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {promises.map((item, idx) => (
+              <div
+                key={item}
+                className="animate-scale-in inline-flex min-h-11 items-center gap-2 rounded-xl bg-white/15 px-3 py-2 text-sm text-white transition-all hover:bg-white/25"
+                style={{ animationDelay: `${100 + idx * 80}ms` }}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                {item}
+              </div>
+            ))}
+          </div>
 
-        <p className="text-lg text-white/80 max-w-xl mx-auto leading-relaxed">
-          Join thousands of students transforming their academic journey with
-          Smart Study Circle.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-          <button className="inline-flex items-center gap-2 px-8 py-4 text-base font-bold text-teal-600 bg-white rounded-xl hover:bg-teal-50 transition-all duration-200 shadow-lg hover:shadow-xl group">
-            Get Started for Free
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </button>
-          <button className="inline-flex items-center gap-2 px-8 py-4 text-base font-bold text-white border-2 border-white/40 rounded-xl hover:bg-white/10 transition-all duration-200 group backdrop-blur-sm">
-            <Play className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            View Demo
-          </button>
-        </div>
-
-        {/* Trust row */}
-        <div className="flex flex-wrap items-center justify-center gap-8 pt-4 opacity-80">
-          {["MIT", "Stanford", "Oxford", "Harvard", "Cambridge"].map((uni) => (
-            <span
-              key={uni}
-              className="text-white text-sm font-bold tracking-wide"
-            >
-              {uni}
-            </span>
-          ))}
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            <button className="animate-scale-in group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-7 py-4 text-base font-bold text-teal-700 transition-all hover:bg-teal-50 hover:shadow-lg sm:w-auto" style={{ animationDelay: '200ms' }}>
+              Create Circle Now
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </button>
+            <button className="animate-scale-in inline-flex w-full items-center justify-center rounded-xl border-2 border-white/40 px-7 py-4 text-base font-bold text-white transition-all hover:bg-white/10 hover:border-white/60 sm:w-auto" style={{ animationDelay: '250ms' }}>
+              Talk to your campus admin
+            </button>
+          </div>
         </div>
       </div>
     </section>
