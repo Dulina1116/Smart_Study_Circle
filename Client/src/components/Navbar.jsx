@@ -31,7 +31,10 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity">
+          <Link
+            to="/"
+            className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity"
+          >
             <div className="w-8 h-8 gradient-teal rounded-lg flex items-center justify-center shadow-sm">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
@@ -68,9 +71,12 @@ export default function Navbar() {
             >
               Log In
             </Link>
-            <button className="text-sm font-semibold text-white px-5 py-2.5 rounded-xl gradient-teal hover:opacity-90 transition-all duration-200 shadow-sm hover:shadow-md">
+            <Link
+              to="/login"
+              className="text-sm font-semibold text-white px-5 py-2.5 rounded-xl gradient-teal hover:opacity-90 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
               Get Started
-            </button>
+            </Link>
           </div>
 
           {/* Hamburger – mobile */}
@@ -117,9 +123,13 @@ export default function Navbar() {
             >
               Log In
             </Link>
-            <button className="w-full text-sm font-semibold text-white py-2.5 rounded-xl gradient-teal hover:opacity-90 transition-all duration-200">
+            <Link
+              to="/login"
+              onClick={() => setIsOpen(false)}
+              className="text-center w-full text-sm font-semibold text-white py-2.5 rounded-xl gradient-teal hover:opacity-90 transition-all duration-200"
+            >
               Get Started
-            </button>
+            </Link>
           </div>
         </div>
       </div>

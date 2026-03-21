@@ -8,6 +8,13 @@ import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import StudentDashboard from './pages/StudentDashboard'
 import LecturerDashboard from './pages/LecturerDashboard'
+import StudyGuides from './pages/StudyGuides'
+import Blog from './pages/Blog'
+import Community from './pages/Community'
+import HelpCenter from './pages/HelpCenter'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
+import CookiePolicy from './pages/CookiePolicy'
 import { getUser } from './utils/authUtils'
 
 /** Redirects unauthenticated users away from protected admin routes */
@@ -48,6 +55,15 @@ function App() {
         <Route path="/verify" element={<Verify />} />
         <Route path="/interests" element={<Interests />} />
 
+        {/* Footer Pages */}
+        <Route path="/study-guides" element={<StudyGuides />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/help" element={<HelpCenter />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/cookies" element={<CookiePolicy />} />
+
         {/* Admin */}
         <Route path="/admin" element={<AdminLogin />} />
         <Route
@@ -81,4 +97,4 @@ function App() {
   )
 }
 
-export default App
+export default App

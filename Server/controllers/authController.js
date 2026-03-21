@@ -1,31 +1,31 @@
-import jwt from 'jsonwebtoken'
-import nodemailer from 'nodemailer'
-import User from '../models/User.js'
+import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+import User from "../models/User.js";
 
-// ── JWT token generate කරන්න ──
+// ── JWT token generate ──
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' })
-}
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
 
-// ── OTP generate කරන්න (6 digits) ──
+// ── OTP generate (6 digits) ──
 const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString()
-}
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
-// ── Email send කරන්න ──
+// ── Email send ──
 const sendOTPEmail = async (email, otp) => {
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: "gmail",
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-  })
+  });
 
   await transporter.sendMail({
     from: `"Smart Study Circle" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: 'Verify Your Email — Smart Study Circle',
+    subject: "Verify Your Email — Smart Study Circle",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: auto; padding: 32px;
         border-radius: 16px; border: 1px solid #e5e7eb;">
@@ -39,8 +39,8 @@ const sendOTPEmail = async (email, otp) => {
         </p>
       </div>
     `,
-  })
-}
+  });
+};
 
 // ─────────────────────────────────────────
 // @route   POST /api/auth/register
@@ -49,38 +49,38 @@ const sendOTPEmail = async (email, otp) => {
 // ─────────────────────────────────────────
 export const register = async (req, res) => {
   try {
-    const { fullName, email, password, role } = req.body
+    const { fullName, email, password, role } = req.body;
 
     // Already registered check
-    const existing = await User.findOne({ email })
+    const existing = await User.findOne({ email });
     if (existing && existing.isVerified) {
-      return res.status(400).json({ message: 'Email already registered.' })
+      return res.status(400).json({ message: "Email already registered." });
     }
 
-    const otp       = generateOTP()
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000) // 10 min
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
     if (existing && !existing.isVerified) {
       // OTP resend — update existing unverified user
-      existing.fullName  = fullName
-      existing.password  = password
-      existing.role      = role
-      existing.otp       = otp
-      existing.otpExpiry = otpExpiry
-      await existing.save()
+      existing.fullName = fullName;
+      existing.password = password;
+      existing.role = role;
+      existing.otp = otp;
+      existing.otpExpiry = otpExpiry;
+      await existing.save();
     } else {
       // New user create
-      await User.create({ fullName, email, password, role, otp, otpExpiry })
+      await User.create({ fullName, email, password, role, otp, otpExpiry });
     }
 
-    await sendOTPEmail(email, otp)
+    await sendOTPEmail(email, otp);
 
-    res.status(201).json({ message: 'OTP sent to your email.' })
+    res.status(201).json({ message: "OTP sent to your email." });
   } catch (err) {
-    console.error('Register Error:', err.message)
-    res.status(500).json({ message: 'Server error. Please try again.' })
+    console.error("Register Error:", err.message);
+    res.status(500).json({ message: "Server error. Please try again." });
   }
-}
+};
 
 // ─────────────────────────────────────────
 // @route   POST /api/auth/verify-otp
@@ -89,44 +89,46 @@ export const register = async (req, res) => {
 // ─────────────────────────────────────────
 export const verifyOTP = async (req, res) => {
   try {
-    const { email, otp } = req.body
+    const { email, otp } = req.body;
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: 'User not found.' })
+      return res.status(404).json({ message: "User not found." });
     }
 
     if (user.otp !== otp) {
-      return res.status(400).json({ message: 'Invalid OTP.' })
+      return res.status(400).json({ message: "Invalid OTP." });
     }
 
     if (user.otpExpiry < new Date()) {
-      return res.status(400).json({ message: 'OTP expired. Please register again.' })
+      return res
+        .status(400)
+        .json({ message: "OTP expired. Please register again." });
     }
 
     // Verify user
-    user.isVerified = true
-    user.otp        = null
-    user.otpExpiry  = null
-    await user.save()
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
 
-    const token = generateToken(user._id)
+    const token = generateToken(user._id);
 
     res.status(200).json({
-      message: 'Email verified successfully!',
+      message: "Email verified successfully!",
       token,
       user: {
-        id:       user._id,
+        id: user._id,
         fullName: user.fullName,
-        email:    user.email,
-        role:     user.role,
+        email: user.email,
+        role: user.role,
       },
-    })
+    });
   } catch (err) {
-    console.error('Verify OTP Error:', err.message)
-    res.status(500).json({ message: 'Server error. Please try again.' })
+    console.error("Verify OTP Error:", err.message);
+    res.status(500).json({ message: "Server error. Please try again." });
   }
-}
+};
 
 // ─────────────────────────────────────────
 // @route   POST /api/auth/login
@@ -135,36 +137,38 @@ export const verifyOTP = async (req, res) => {
 // ─────────────────────────────────────────
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password.' })
+      return res.status(401).json({ message: "Invalid email or password." });
     }
 
     if (!user.isVerified) {
-      return res.status(401).json({ message: 'Please verify your email first.' })
+      return res
+        .status(401)
+        .json({ message: "Please verify your email first." });
     }
 
-    const isMatch = await user.matchPassword(password)
+    const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password.' })
+      return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    const token = generateToken(user._id)
+    const token = generateToken(user._id);
 
     res.status(200).json({
-      message: 'Login successful!',
+      message: "Login successful!",
       token,
       user: {
-        id:       user._id,
+        id: user._id,
         fullName: user.fullName,
-        email:    user.email,
-        role:     user.role,
+        email: user.email,
+        role: user.role,
       },
-    })
+    });
   } catch (err) {
-    console.error('Login Error:', err.message)
-    res.status(500).json({ message: 'Server error. Please try again.' })
+    console.error("Login Error:", err.message);
+    res.status(500).json({ message: "Server error. Please try again." });
   }
-}
+};
