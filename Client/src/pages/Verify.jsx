@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { saveAuth } from "../utils/authUtils";
 
 export default function Verify() {
   const navigate = useNavigate();
@@ -77,17 +78,16 @@ export default function Verify() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      // Token save කරන්න
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Save auth and redirect based on role
+      saveAuth(data.token, data.user);
       localStorage.removeItem("tempEmail");
 
       setSuccess(true);
       await new Promise((r) => setTimeout(r, 1800));
       if (data.user?.role === "lecturer") {
-        navigate("/");
+        navigate("/dashboard/lecturer", { replace: true });
       } else {
-        navigate("/interests");
+        navigate("/interests", { replace: true });
       }
     } catch (err) {
       setError("⚠ " + err.message);
