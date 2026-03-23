@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import connectDB from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
+import userRoutes from './routes/userRoutes.js'
 
 dotenv.config()
 
@@ -20,6 +21,10 @@ connectDB()
 
 // ── Routes ──
 app.use('/api/auth', authRoutes)
+app.use('/api/users', userRoutes)
+
+// Serve uploads folder
+app.use('/uploads', express.static('uploads'))
 
 // ── Health Check ──
 app.get('/', (req, res) => res.send('Smart Study Circle API Running ✦'))

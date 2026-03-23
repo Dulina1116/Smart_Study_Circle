@@ -122,6 +122,12 @@ export const verifyOTP = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
+        department: user.department,
+        designation: user.designation,
+        bio: user.bio,
+        officeLocation: user.officeLocation,
+        officeHours: user.officeHours,
+        profilePicture: user.profilePicture,
       },
     });
   } catch (err) {
@@ -165,6 +171,12 @@ export const login = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
+        department: user.department,
+        designation: user.designation,
+        bio: user.bio,
+        officeLocation: user.officeLocation,
+        officeHours: user.officeHours,
+        profilePicture: user.profilePicture,
       },
     });
   } catch (err) {

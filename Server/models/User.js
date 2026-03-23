@@ -39,6 +39,31 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // --- Profile Fields ---
+    department: {
+      type: String,
+      default: '',
+    },
+    designation: {
+      type: String,
+      default: '',
+    },
+    bio: {
+      type: String,
+      default: '',
+    },
+    officeLocation: {
+      type: String,
+      default: '',
+    },
+    officeHours: {
+      type: String,
+      default: '',
+    },
+    profilePicture: {
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 )
