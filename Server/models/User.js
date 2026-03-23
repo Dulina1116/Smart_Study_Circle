@@ -39,6 +39,34 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    department: {
+      type: String,
+      default: '',
+    },
+    displayName: {
+      type: String,
+      default: '',
+    },
+    bio: {
+      type: String,
+      default: '',
+    },
+    universityEmail: {
+      type: String,
+      default: '',
+    },
+    avatar: {
+      type: String,
+      default: '',
+    },
+    emailAlerts: {
+      type: Boolean,
+      default: true,
+    },
+    pushNotifications: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 )
