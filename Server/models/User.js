@@ -39,11 +39,12 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // --- Profile Fields ---
     department: {
       type: String,
       default: '',
     },
-    displayName: {
+    designation: {
       type: String,
       default: '',
     },
@@ -51,21 +52,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    universityEmail: {
+    officeLocation: {
       type: String,
       default: '',
     },
-    avatar: {
+    officeHours: {
       type: String,
       default: '',
     },
-    emailAlerts: {
-      type: Boolean,
-      default: true,
-    },
-    pushNotifications: {
-      type: Boolean,
-      default: false,
+    profilePicture: {
+      type: String,
+      default: '',
     },
   },
   { timestamps: true }
