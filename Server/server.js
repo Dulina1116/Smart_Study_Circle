@@ -4,6 +4,11 @@ import dotenv from 'dotenv'
 import connectDB from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js'
+import circleRoutes from './routes/circleRoutes.js'
+import dashboardRoutes from './routes/dashboardRoutes.js'
+import reportRoutes from './routes/reportRoutes.js'
+import resourceRoutes from './routes/resourceRoutes.js'
+import officeHourRoutes from './routes/officeHourRoutes.js'
 
 dotenv.config()
 
@@ -17,14 +22,19 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
 
-// ── DB Connect ──
+ // ── DB Connect ──
 connectDB()
 
-import userRoutes from './routes/userRoutes.js'
+
 
 // ── Routes ──
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/circles', circleRoutes)
+app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/reports', reportRoutes)
+app.use('/api/resources', resourceRoutes)
+app.use('/api/office-hours', officeHourRoutes)
 
 // Serve uploads folder
 app.use('/uploads', express.static('uploads'))
