@@ -1,6 +1,17 @@
 import React, { useState } from 'react'
 import { Camera, User, Contact, MapPin, Clock, Save, ChevronDown, Loader2 } from 'lucide-react'
 
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || `${window.location.protocol}//${window.location.hostname}:5000`
+
+const resolveImageUrl = (value) => {
+  if (!value || typeof value !== 'string') return ''
+  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:') || value.startsWith('blob:')) return value
+  if (value.startsWith('/')) return `${API_ORIGIN}${value}`
+  if (value.startsWith('uploads/')) return `${API_ORIGIN}/${value}`
+  if (value.startsWith('profile-')) return `${API_ORIGIN}/uploads/${value}`
+  return value
+}
+
 export default function LecturerProfileSettings({ user }) {
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "Dr. Aris Thorne",
@@ -12,12 +23,12 @@ export default function LecturerProfileSettings({ user }) {
     officeHours: user?.officeHours || "Mon-Wed, 2 PM - 4 PM"
   })
 
-  const baseUrl = 'http://localhost:5000'
+  const baseUrl = ''
   const token = localStorage.getItem('token')
 
   const [isLoading, setIsLoading] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
-  const [previewImage, setPreviewImage] = useState(user?.profilePicture ? `${baseUrl}${user.profilePicture}` : null)
+  const [previewImage, setPreviewImage] = useState(resolveImageUrl(user?.profilePicture || user?.avatar || ''))
   const [isRemoved, setIsRemoved] = useState(false)
 
   const handleChange = (e) => {
@@ -48,21 +59,30 @@ export default function LecturerProfileSettings({ user }) {
   const handleSave = async () => {
     try {
       setIsLoading(true)
+      const cleanToken = (token || '').replace(/[\r\n"]/g, '')
 
       // 1. Handle Photo Upload / Deletion first
       if (selectedFile) {
         const uploadData = new FormData()
         uploadData.append('image', selectedFile)
-        await fetch(`${baseUrl}/api/users/profile/photo`, {
+        const uploadRes = await fetch(`${baseUrl}/api/users/profile/photo`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${cleanToken}` },
           body: uploadData
         })
+        if (!uploadRes.ok) {
+          const uploadDataErr = await uploadRes.json().catch(() => ({}))
+          throw new Error(uploadDataErr.message || 'Error uploading profile photo')
+        }
       } else if (isRemoved && user?.profilePicture) {
-        await fetch(`${baseUrl}/api/users/profile/photo`, {
+        const removeRes = await fetch(`${baseUrl}/api/users/profile/photo`, {
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${cleanToken}` }
         })
+        if (!removeRes.ok) {
+          const removeErr = await removeRes.json().catch(() => ({}))
+          throw new Error(removeErr.message || 'Error removing profile photo')
+        }
       }
 
       // 2. Handle Text Fields Update
@@ -70,14 +90,14 @@ export default function LecturerProfileSettings({ user }) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${cleanToken}`
         },
         body: JSON.stringify(formData)
       })
 
       const data = await res.json()
       if (res.ok) {
-        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('user', JSON.stringify(data))
         alert('Profile saved successfully!')
         window.location.reload() // Reload app to update dashboard picture & name globally
       } else {

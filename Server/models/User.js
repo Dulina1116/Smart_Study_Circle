@@ -40,7 +40,15 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     // --- Profile Fields ---
+    displayName: {
+      type: String,
+      default: '',
+    },
     department: {
+      type: String,
+      default: '',
+    },
+    universityEmail: {
       type: String,
       default: '',
     },
@@ -57,6 +65,10 @@ const userSchema = new mongoose.Schema(
       default: '',
     },
     officeHours: {
+      type: String,
+      default: '',
+    },
+    avatar: {
       type: String,
       default: '',
     },
