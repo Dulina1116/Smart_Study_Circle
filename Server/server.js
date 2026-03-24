@@ -9,14 +9,11 @@ import jwt from 'jsonwebtoken'
 import connectDB from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js'
-import studyCircleRoutes from './routes/studyCircleRoutes.js'
+import circleRoutes from './routes/circleRoutes.js'
+import dashboardRoutes from './routes/dashboardRoutes.js'
+import reportRoutes from './routes/reportRoutes.js'
 import resourceRoutes from './routes/resourceRoutes.js'
-import User from './models/User.js'
-import StudyCircle from './models/StudyCircle.js'
-import CircleMessage from './models/CircleMessage.js'
-import Resource from './models/Resource.js'
-
-import { formatAvatarUrl, normalizeAvatar } from './utils/avatarHelper.js'
+import officeHourRoutes from './routes/officeHourRoutes.js'
 
 dotenv.config()
 
@@ -31,14 +28,19 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
 
-// ── DB Connect ──
+ // ── DB Connect ──
+connectDB()
+
 
 
 // ── Routes ──
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
-app.use('/api/circles', studyCircleRoutes)
+app.use('/api/circles', circleRoutes)
+app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/reports', reportRoutes)
 app.use('/api/resources', resourceRoutes)
+app.use('/api/office-hours', officeHourRoutes)
 
 // Serve uploads folder
 import { fileURLToPath } from 'url'; const __dirname = path.dirname(fileURLToPath(import.meta.url)); app.use('/uploads', express.static(path.join(__dirname, 'uploads')))

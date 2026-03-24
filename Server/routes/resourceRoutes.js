@@ -1,80 +1,31 @@
-import express from 'express'
-import multer from 'multer'
-import fs from 'fs'
-import path from 'path'
-import { protect } from '../middleware/authMiddleware.js'
-import {
-  getAllResources,
-  getFeaturedResources,
-  getResourcesByCategory,
-  getResourcesBySpecificCategory,
-  getResourceById,
-  createResource,
-  updateResource,
-  deleteResource,
-  trackDownload,
-  getRecentResources,
-} from '../controllers/resourceController.js'
+import express from 'express';
+import { uploadResource, getTopResources, getResources, updateResource, deleteResource } from '../controllers/resourceController.js';
+import { protect } from '../middleware/authMiddleware.js';
+import multer from 'multer';
+import fs from 'fs';
 
-const router = express.Router()
-
-const resourceUploadDir = path.join(process.cwd(), 'uploads', 'resources')
-if (!fs.existsSync(resourceUploadDir)) {
-  fs.mkdirSync(resourceUploadDir, { recursive: true })
+// Ensure uploads directory exists
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir);
 }
 
-const fileStorage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, resourceUploadDir)
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir)
   },
-  filename(req, file, cb) {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
-    const ext = path.extname(file.originalname)
-    cb(null, `resource-${req.user.id}-${unique}${ext}`)
-  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname)
+  }
 })
 
-const upload = multer({
-  storage: fileStorage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
-  fileFilter(req, file, cb) {
-    const allowedMimes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'video/mp4',
-      'video/quicktime',
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'text/plain',
-    ]
+const upload = multer({ storage: storage })
+const router = express.Router();
 
-    if (allowedMimes.includes(file.mimetype)) {
-      cb(null, true)
-    } else {
-      cb(new Error(`File type ${file.mimetype} not allowed`))
-    }
-  },
-})
+router.post('/', protect, upload.single('file'), uploadResource);
+router.get('/', protect, getResources);
+router.get('/top', protect, getTopResources);
+router.put('/:id', protect, updateResource);
+router.delete('/:id', protect, deleteResource);
 
-// Public routes
-router.get('/', getAllResources)
-router.get('/featured', getFeaturedResources)
-router.get('/categories', getResourcesByCategory)
-router.get('/category/:category', getResourcesBySpecificCategory)
-router.get('/recent', getRecentResources)
-
-// Protected routes
-router.use(protect)
-router.get('/:resourceId', getResourceById)
-router.post('/', upload.single('file'), createResource)
-router.put('/:resourceId', upload.single('file'), updateResource)
-router.delete('/:resourceId', deleteResource)
-router.post('/:resourceId/download', trackDownload)
-
-export default router
+export default router;
