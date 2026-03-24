@@ -26,6 +26,17 @@ import LecturerProfileSettings from '../components/LecturerProfileSettings'
 import LecturerMyCircles from '../components/LecturerMyCircles'
 import LecturerResourceLibrary from '../components/LecturerResourceLibrary'
 
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || `${window.location.protocol}//${window.location.hostname}:5000`
+
+const resolveImageUrl = (value) => {
+  if (!value || typeof value !== 'string') return ''
+  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:') || value.startsWith('blob:')) return value
+  if (value.startsWith('/')) return `${API_ORIGIN}${value}`
+  if (value.startsWith('uploads/')) return `${API_ORIGIN}/${value}`
+  if (value.startsWith('profile-')) return `${API_ORIGIN}/uploads/${value}`
+  return value
+}
+
 export default function LecturerDashboard() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
@@ -183,7 +194,7 @@ export default function LecturerDashboard() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA] md:bg-[#FAFAFA]">
         {/* Header */}
-        <header className="h-20 bg-white md:bg-transparent border-b border-transparent md:border-slate-200 flex items-center justify-between px-8 shrink-0 bg-white">
+        <header className="h-20 bg-white md:bg-transparent border-b border-transparent md:border-slate-200 flex items-center justify-between px-8 shrink-0">
           <h1 className="text-xl font-bold text-slate-800 tracking-tight">Dashboard Overview</h1>
 
           <div className="flex items-center gap-6">
@@ -206,8 +217,8 @@ export default function LecturerDashboard() {
               
               <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('profile')} title="Profile Settings">
                 <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
-                  {user.profilePicture ? (
-                    <img src={`http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  {resolveImageUrl(user.profilePicture || user.avatar || '') ? (
+                    <img src={resolveImageUrl(user.profilePicture || user.avatar || '')} alt="Profile" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   ) : (
                     <User className="w-5 h-5 text-slate-400 group-hover:scale-105 transition-transform" />
                   )}

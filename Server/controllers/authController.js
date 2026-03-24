@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import User from "../models/User.js";
+import { normalizeAvatar } from "../utils/avatarHelper.js";
 
 // ── JWT token generate ──
 const generateToken = (id) => {
@@ -120,13 +121,16 @@ export const verifyOTP = async (req, res) => {
       user: {
         id: user._id,
         fullName: user.fullName,
+        displayName: user.displayName,
         email: user.email,
         role: user.role,
         department: user.department,
         designation: user.designation,
+        universityEmail: user.universityEmail,
         bio: user.bio,
         officeLocation: user.officeLocation,
         officeHours: user.officeHours,
+        avatar: normalizeAvatar(user.avatar, user.profilePicture),
         profilePicture: user.profilePicture,
       },
     });
@@ -169,13 +173,16 @@ export const login = async (req, res) => {
       user: {
         id: user._id,
         fullName: user.fullName,
+        displayName: user.displayName,
         email: user.email,
         role: user.role,
         department: user.department,
         designation: user.designation,
+        universityEmail: user.universityEmail,
         bio: user.bio,
         officeLocation: user.officeLocation,
         officeHours: user.officeHours,
+        avatar: normalizeAvatar(user.avatar, user.profilePicture),
         profilePicture: user.profilePicture,
       },
     });
