@@ -1,6 +1,7 @@
 import User from '../models/User.js'
 import fs from 'fs'
 import path from 'path'
+import { normalizeAvatar } from '../utils/avatarHelper.js'
 
 // @desc    Update user profile
 // @route   PUT /api/users/profile
@@ -13,11 +14,18 @@ export const updateProfile = async (req, res) => {
     }
 
     user.fullName = req.body.fullName || user.fullName
+    user.displayName = req.body.displayName || user.displayName
     user.department = req.body.department || user.department
     user.designation = req.body.designation || user.designation
+    user.universityEmail = req.body.universityEmail || user.universityEmail
     user.bio = req.body.bio || user.bio
     user.officeLocation = req.body.officeLocation || user.officeLocation
     user.officeHours = req.body.officeHours || user.officeHours
+    
+    // Handle avatar - store base64 or image URL
+    if (req.body.avatar) {
+      user.avatar = req.body.avatar
+    }
 
     // Email is unique and used for login, we can allow update if it's not taken
     if (req.body.email && req.body.email !== user.email) {
@@ -30,19 +38,19 @@ export const updateProfile = async (req, res) => {
 
     const updatedUser = await user.save()
     res.json({
-      message: 'Profile updated successfully',
-      user: {
-        id: updatedUser._id,
-        fullName: updatedUser.fullName,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        department: updatedUser.department,
-        designation: updatedUser.designation,
-        bio: updatedUser.bio,
-        officeLocation: updatedUser.officeLocation,
-        officeHours: updatedUser.officeHours,
-        profilePicture: updatedUser.profilePicture
-      }
+      id: updatedUser._id,
+      fullName: updatedUser.fullName,
+      displayName: updatedUser.displayName,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      department: updatedUser.department,
+      designation: updatedUser.designation,
+      universityEmail: updatedUser.universityEmail,
+      bio: updatedUser.bio,
+      officeLocation: updatedUser.officeLocation,
+      officeHours: updatedUser.officeHours,
+      avatar: normalizeAvatar(updatedUser.avatar, updatedUser.profilePicture),
+      profilePicture: updatedUser.profilePicture
     })
   } catch (err) {
     console.error('Update Profile Error:', err.message)
@@ -66,7 +74,7 @@ export const uploadProfilePhoto = async (req, res) => {
 
     // Delete old profile picture if exists 
     if (user.profilePicture) {
-      const oldPath = path.join(process.cwd(), user.profilePicture)
+      const oldPath = path.join(process.cwd(), String(user.profilePicture).replace(/^\//, ''))
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath)
       }
@@ -78,6 +86,18 @@ export const uploadProfilePhoto = async (req, res) => {
 
     res.json({
       message: 'Profile photo uploaded successfully',
+      id: updatedUser._id,
+      fullName: updatedUser.fullName,
+      displayName: updatedUser.displayName,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      department: updatedUser.department,
+      designation: updatedUser.designation,
+      universityEmail: updatedUser.universityEmail,
+      bio: updatedUser.bio,
+      officeLocation: updatedUser.officeLocation,
+      officeHours: updatedUser.officeHours,
+      avatar: normalizeAvatar(updatedUser.avatar, updatedUser.profilePicture),
       profilePicture: updatedUser.profilePicture
     })
   } catch (err) {
@@ -97,7 +117,7 @@ export const removeProfilePhoto = async (req, res) => {
     }
 
     if (user.profilePicture) {
-      const oldPath = path.join(process.cwd(), user.profilePicture)
+      const oldPath = path.join(process.cwd(), String(user.profilePicture).replace(/^\//, ''))
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath)
       }

@@ -8,6 +8,8 @@ import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import StudentDashboard from './pages/StudentDashboard'
 import LecturerDashboard from './pages/LecturerDashboard'
+import StudyCircleChatPage from './pages/StudyCircleChatPage'
+import ResourcePreviewPage from './pages/ResourcePreviewPage'
 import StudyGuides from './pages/StudyGuides'
 import Blog from './pages/Blog'
 import Community from './pages/Community'
@@ -81,6 +83,22 @@ function App() {
           element={
             <ProtectedRoute role="student">
               <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/student/circles/:circleId/chat"
+          element={
+            <ProtectedRoute role="student">
+              <StudyCircleChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/resources/preview/:resourceId"
+          element={
+            <ProtectedRoute>
+              <ResourcePreviewPage />
             </ProtectedRoute>
           }
         />
