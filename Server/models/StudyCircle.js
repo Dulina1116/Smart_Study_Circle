@@ -1,16 +1,16 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
 const joinRequestSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
-      default: 'pending',
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
     requestedAt: {
       type: Date,
@@ -21,14 +21,14 @@ const joinRequestSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { _id: true }
-)
+  { _id: true },
+);
 
 const reportSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     reason: {
@@ -39,7 +39,7 @@ const reportSchema = new mongoose.Schema(
     },
     details: {
       type: String,
-      default: '',
+      default: "",
       trim: true,
       maxlength: 500,
     },
@@ -48,41 +48,41 @@ const reportSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { _id: true }
-)
+  { _id: true },
+);
 
 const studyCircleSchema = new mongoose.Schema(
   {
     subject: {
       type: String,
-      required: [true, 'Subject is required'],
+      required: [true, "Subject is required"],
       trim: true,
     },
     moduleCode: {
       type: String,
-      required: [true, 'Module code is required'],
+      required: [true, "Module code is required"],
       trim: true,
       uppercase: true,
     },
     semester: {
       type: String,
-      required: [true, 'Semester is required'],
+      required: [true, "Semester is required"],
       trim: true,
     },
     year: {
       type: Number,
-      required: [true, 'Year is required'],
+      required: [true, "Year is required"],
       min: 1,
       max: 4,
     },
     visibility: {
       type: String,
-      enum: ['public', 'private'],
-      default: 'public',
+      enum: ["public", "private"],
+      default: "public",
     },
     description: {
       type: String,
-      default: '',
+      default: "",
       trim: true,
       maxlength: 250,
     },
@@ -95,19 +95,19 @@ const studyCircleSchema = new mongoose.Schema(
     },
     creator: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     coModerators: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
       },
     ],
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
       },
     ],
     joinRequests: [joinRequestSchema],
@@ -117,12 +117,12 @@ const studyCircleSchema = new mongoose.Schema(
       default: true,
     },
   },
-  { timestamps: true }
-)
+  { timestamps: true },
+);
 
-studyCircleSchema.index({ moduleCode: 1, year: 1 })
-studyCircleSchema.index({ members: 1, isActive: 1, updatedAt: -1 })
-studyCircleSchema.index({ visibility: 1, isActive: 1, createdAt: -1 })
+studyCircleSchema.index({ moduleCode: 1, year: 1 });
+studyCircleSchema.index({ members: 1, isActive: 1, updatedAt: -1 });
+studyCircleSchema.index({ visibility: 1, isActive: 1, createdAt: -1 });
 
-const StudyCircle = mongoose.model('StudyCircle', studyCircleSchema)
-export default StudyCircle
+const StudyCircle = mongoose.model("StudyCircle", studyCircleSchema);
+export default StudyCircle;

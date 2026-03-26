@@ -33,11 +33,12 @@ export default function LecturerResourceLibrary() {
   const fetchResources = async () => {
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:5000/api/resources', {
+      const res = await fetch('http://localhost:5000/api/lecturer-resources', {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (res.ok) {
-        setResources(await res.json())
+        const data = await res.json()
+        setResources(Array.isArray(data) ? data : [])
       }
     } catch (err) {
       console.error(err)
@@ -51,7 +52,11 @@ export default function LecturerResourceLibrary() {
   const handleUploadClick = () => {
     setEditingId(null)
     setFormData({
-      title: '', module: '', type: 'PDF', tags: '', description: ''
+      title: 'Week 5 Lecture Notes',
+      module: 'Physics 101',
+      type: 'PDF',
+      tags: 'lecture, notes, physics',
+      description: 'Core concepts for week 5'
     })
     setSelectedFile(null)
     setShowModal(true)
@@ -74,10 +79,10 @@ export default function LecturerResourceLibrary() {
     setEditingId(resource._id)
     setFormData({
       title: resource.title || resource.fileName,
-      module: resource.module || '',
+      module: resource.module || 'Physics 101',
       type: resource.type || 'PDF',
-      tags: resource.tags || '',
-      description: resource.description || ''
+      tags: resource.tags || 'lecture, notes, physics',
+      description: resource.description || 'Core concepts for week 5'
     })
     setSelectedFile(null)
     setShowModal(true)
@@ -87,7 +92,7 @@ export default function LecturerResourceLibrary() {
     if (!window.confirm("Are you sure you want to delete this resource?")) return;
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch(`http://localhost:5000/api/resources/${id}`, {
+      const res = await fetch(`http://localhost:5000/api/lecturer-resources/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -100,12 +105,12 @@ export default function LecturerResourceLibrary() {
   const handleUploadSubmit = async () => {
     try {
       const token = localStorage.getItem('token');
-      let url = 'http://localhost:5000/api/resources';
+      let url = 'http://localhost:5000/api/lecturer-resources';
       let method = 'POST';
       let body;
 
       if (editingId) {
-        url = `http://localhost:5000/api/resources/${editingId}`;
+        url = `http://localhost:5000/api/lecturer-resources/${editingId}`;
         method = 'PUT';
         body = JSON.stringify(formData);
       } else {
