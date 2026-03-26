@@ -322,14 +322,12 @@ export const deleteResource = async (req, res) => {
         .json({ message: "Only the uploader can delete this resource." });
     }
 
-    // Soft delete
-    resource.isActive = false;
-    await resource.save();
-
     // Clean up file if exists
     if (resource.filePath && fs.existsSync(resource.filePath)) {
       fs.unlinkSync(resource.filePath);
     }
+
+    await Resource.deleteOne({ _id: resourceId });
 
     return res.json({ message: "Resource deleted successfully." });
   } catch (err) {

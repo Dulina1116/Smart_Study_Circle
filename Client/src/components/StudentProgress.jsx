@@ -1,18 +1,148 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Share2, FileText, Zap, Users, Download, ChevronRight, CheckCircle2, 
-  Award, Target, BookOpen, FileVideo, ChevronUp, ChevronDown 
+import {
+  Share2,
+  FileText,
+  Zap,
+  Users,
+  Download,
+  BookOpen,
+  ChevronUp,
 } from 'lucide-react';
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
-  AreaChart, Area, Cell
+import { jsPDF } from 'jspdf';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  Cell,
 } from 'recharts';
+
+const API_ORIGIN =
+  import.meta.env.VITE_API_ORIGIN ||
+  `${window.location.protocol}//${window.location.hostname}:5000`;
 
 export default function StudentProgress({ user, role = 'student' }) {
   const isAdmin = role === 'admin';
   const [progressData, setProgressData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const handleDownloadReport = () => {
+    if (!progressData) return;
+
+    const summary = progressData.summary || {};
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginLeft = 48;
+    const marginRight = 48;
+    const contentWidth = pageWidth - marginLeft - marginRight;
+    let y = 60;
+
+    // Header band
+    doc.setFillColor(15, 118, 110);
+    doc.rect(0, 0, pageWidth, 90, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Smart Study Circle', marginLeft, 40);
+    doc.setFontSize(12);
+    doc.setTextColor(226, 232, 240);
+    doc.text('Student Progress Report', marginLeft, 62);
+
+    y = 110;
+    doc.setTextColor(71, 85, 105);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, marginLeft, y);
+    y += 20;
+
+    // Summary cards
+    const cardGap = 12;
+    const cardWidth = (contentWidth - cardGap * 3) / 4;
+    const cardHeight = 64;
+    const cards = [
+      { label: 'Active Circles', value: progressData.activeCircles || 0, color: [16, 185, 129] },
+      { label: 'Resources Shared', value: summary.resourcesShared || 0, color: [59, 130, 246] },
+      { label: 'Resources Viewed', value: summary.resourcesViewed || 0, color: [99, 102, 241] },
+      { label: 'Messages Sent', value: summary.messagesCount || 0, color: [245, 158, 11] },
+    ];
+
+    cards.forEach((card, index) => {
+      const x = marginLeft + index * (cardWidth + cardGap);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(x, y, cardWidth, cardHeight, 10, 10, 'F');
+      doc.setFillColor(...card.color);
+      doc.roundedRect(x + 10, y + 10, 6, 28, 3, 3, 'F');
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(String(card.value), x + 24, y + 30);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(card.label, x + 24, y + 48);
+    });
+
+    y += cardHeight + 24;
+
+    // Engagement summary block
+    doc.setFillColor(240, 253, 250);
+    doc.roundedRect(marginLeft, y, contentWidth, 70, 12, 12, 'F');
+    doc.setTextColor(13, 148, 136);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Engagement Score', marginLeft + 16, y + 26);
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(22);
+    doc.text(String(summary.engagementScore || 0), marginLeft + 16, y + 52);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.text(
+      `Joined circles: ${progressData.joinedCircles || 0} · Active circles: ${progressData.activeCircles || 0}`,
+      marginLeft + 150,
+      y + 40,
+    );
+
+    y += 90;
+
+    // Top resources table
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Top Resources', marginLeft, y);
+    y += 12;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Title', marginLeft, y + 14);
+    doc.text('Views', marginLeft + contentWidth - 110, y + 14);
+    doc.text('Downloads', marginLeft + contentWidth - 40, y + 14);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(marginLeft, y + 20, marginLeft + contentWidth, y + 20);
+
+    y += 30;
+    doc.setTextColor(15, 23, 42);
+    const topResources = progressData.topResources || [];
+    if (topResources.length === 0) {
+      doc.setTextColor(100, 116, 139);
+      doc.text('No viewed resources yet.', marginLeft, y);
+    } else {
+      topResources.slice(0, 6).forEach((res) => {
+        const title = String(res.title || 'Untitled');
+        doc.text(title, marginLeft, y, { maxWidth: contentWidth - 140 });
+        doc.text(String(res.views || 0), marginLeft + contentWidth - 110, y);
+        doc.text(String(res.downloads || 0), marginLeft + contentWidth - 40, y);
+        y += 18;
+      });
+    }
+
+    doc.save(`student-progress-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -22,10 +152,13 @@ export default function StudentProgress({ user, role = 'student' }) {
         
         let endpoint = '';
         if (isAdmin) {
-          endpoint = 'http://localhost:5000/api/progress/admin/overview';
+          endpoint = `${API_ORIGIN}/api/progress/admin/overview`;
         } else {
-          const userId = user?._id || '60d21b4667d0d8992e610c85'; // Fallback for dev if needed
-          endpoint = `http://localhost:5000/api/progress/student/${userId}`;
+          const userId = user?._id || user?.id;
+          if (!userId) {
+            throw new Error('Missing user id for student progress');
+          }
+          endpoint = `${API_ORIGIN}/api/progress/student/${userId}`;
         }
 
         const response = await fetch(endpoint);
@@ -92,8 +225,14 @@ export default function StudentProgress({ user, role = 'student' }) {
         { name: 'W1', focus: 0 }, { name: 'W2', focus: 0 }, { name: 'W3', focus: 0 }, { name: 'W4', focus: 0 }
       ];
 
-  const modules = isAdmin ? (progressData.moduleBreakdown || []) : (progressData.modules || []);
-  const topGroups = progressData.topPerformingGroups || [];
+  const circleStats = progressData.circleStats || [];
+  const recentResources = progressData.recentResources || [];
+  const topResources = progressData.topResources || [];
+  const circleHighlights = [...circleStats]
+    .sort((a, b) => (b.memberCount || 0) - (a.memberCount || 0))
+    .slice(0, 3);
+  const recentResourceHighlights = recentResources.slice(0, 3);
+  const topResourceHighlights = topResources.slice(0, 4);
 
   // Derived calculations for Hero
   let activePercentage = 0;
@@ -118,9 +257,9 @@ export default function StudentProgress({ user, role = 'student' }) {
               {isAdmin ? "Platform Overview" : "Student Progress"}
             </h1>
             <p className="text-gray-500">
-              {isAdmin 
-                ? "Monitor platform-wide engagement, resource sharing, and study circle activity." 
-                : "Track academic engagement, collaboration, and learning progress."}
+              {isAdmin
+                ? "Monitor platform-wide engagement, resource sharing, and study circle activity."
+                : "See how your study circles, shared resources, and activity contribute to your learning."}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -129,7 +268,10 @@ export default function StudentProgress({ user, role = 'student' }) {
               <option>Last Month</option>
               <option>This Semester</option>
             </select>
-            <button className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center transition-colors">
+            <button
+              onClick={handleDownloadReport}
+              className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center transition-colors"
+            >
               <Download className="w-4 h-4 mr-2 text-gray-500" />
               Report
             </button>
@@ -203,7 +345,32 @@ export default function StudentProgress({ user, role = 'student' }) {
 
         {/* 4 Summary Tiles */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Tile 1 */}
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                <Users className="w-6 h-6" />
+              </div>
+              <span className="bg-emerald-50 text-emerald-600 text-xs font-bold px-2 py-1 rounded-lg flex items-center">
+                <ChevronUp className="w-3 h-3 ml-0.5" />
+              </span>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                {isAdmin ? "Active Circles" : "Study Circles"}
+              </p>
+              <h3 className="text-3xl font-extrabold text-gray-900">
+                {isAdmin
+                  ? (summary.activeStudyCircles || 0).toLocaleString()
+                  : `${progressData.activeCircles || 0}`}
+              </h3>
+              {!isAdmin && (
+                <p className="text-[11px] text-gray-500 mt-1">
+                  {progressData.joinedCircles || 0} total joined
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-6">
               <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500">
@@ -218,12 +385,13 @@ export default function StudentProgress({ user, role = 'student' }) {
                 {isAdmin ? "Total Resources Shared" : "Resources Shared"}
               </p>
               <h3 className="text-3xl font-extrabold text-gray-900">
-                {isAdmin ? (summary.totalResourcesShared || 0).toLocaleString() : (summary.resourcesShared || 0).toLocaleString()}
+                {isAdmin
+                  ? (summary.totalResourcesShared || 0).toLocaleString()
+                  : (summary.resourcesShared || 0).toLocaleString()}
               </h3>
             </div>
           </div>
-          
-          {/* Tile 2 */}
+
           <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-6">
               <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500">
@@ -235,54 +403,131 @@ export default function StudentProgress({ user, role = 'student' }) {
             </div>
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                {isAdmin ? "Total Study Plans" : "Study Plans"}
+                {isAdmin ? "Total Study Plans" : "Resources Viewed"}
               </p>
               <h3 className="text-3xl font-extrabold text-gray-900">
-                {isAdmin ? (summary.totalStudyPlansCreated || 0).toLocaleString() : (summary.studyPlansCreated || 0).toLocaleString()}
+                {isAdmin
+                  ? (summary.totalStudyPlansCreated || 0).toLocaleString()
+                  : (summary.resourcesViewed || 0).toLocaleString()}
               </h3>
             </div>
           </div>
 
-          {/* Tile 3 */}
           <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-500">
-                {isAdmin ? <Users className="w-6 h-6 fill-current" /> : <Zap className="w-6 h-6 fill-current" />}
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
+                <Zap className="w-6 h-6" />
               </div>
-              <span className="bg-teal-50 text-teal-600 text-xs font-bold px-2 py-1 rounded-lg flex items-center">
+              <span className="bg-amber-50 text-amber-600 text-xs font-bold px-2 py-1 rounded-lg flex items-center">
                 <ChevronUp className="w-3 h-3 ml-0.5" />
               </span>
             </div>
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                {isAdmin ? "Total Students" : "Engagement Score"}
+                {isAdmin ? "Total Students" : "Messages Sent"}
               </p>
               <h3 className="text-3xl font-extrabold text-gray-900">
-                {isAdmin ? (summary.totalStudents || 0).toLocaleString() : (summary.engagementScore || 0).toLocaleString()}
-              </h3>
-            </div>
-          </div>
-
-          {/* Tile 4 */}
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-500">
-                {isAdmin ? <BookOpen className="w-6 h-6" /> : <Users className="w-6 h-6" />}
-              </div>
-              <span className="bg-emerald-50 text-emerald-500 text-xs font-bold px-2 py-1 rounded-lg flex items-center">
-                <ChevronUp className="w-3 h-3 ml-0.5" />
-              </span>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                {isAdmin ? "Active Circles" : "Group Activity"}
-              </p>
-              <h3 className="text-3xl font-extrabold text-gray-900">
-                {isAdmin ? (summary.activeStudyCircles || 0).toLocaleString() : (summary.groupActivity || 0).toLocaleString()}
+                {isAdmin
+                  ? (summary.totalStudents || 0).toLocaleString()
+                  : (summary.messagesCount || 0).toLocaleString()}
               </h3>
             </div>
           </div>
         </div>
+
+        {/* Study Circles + Resources */}
+        {!isAdmin && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">
+                    Study Circles
+                  </p>
+                  <h2 className="text-2xl font-extrabold text-[#0f172a] mt-2">
+                    Active circles
+                  </h2>
+                </div>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                  {progressData.activeCircles || 0}/{progressData.joinedCircles || 0}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {circleHighlights.length === 0 ? (
+                  <div className="text-sm text-gray-400">No active circles yet.</div>
+                ) : (
+                  circleHighlights.map((circle) => (
+                    <div key={circle.id} className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50/70 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {circle.subject || "Study Circle"}
+                        </p>
+                        <p className="text-[11px] uppercase tracking-widest text-gray-500">
+                          {circle.moduleCode || "MODULE"} · {circle.semester || "Term"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-emerald-600">
+                          {circle.memberCount || 0}
+                        </p>
+                        <p className="text-[11px] text-gray-400">members</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-500">
+                    Resources
+                  </p>
+                  <h2 className="text-2xl font-extrabold text-[#0f172a] mt-2">
+                    Top resources
+                  </h2>
+                </div>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                  {topResources.length} total
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {topResourceHighlights.length === 0 ? (
+                  <div className="text-sm text-gray-400">No viewed resources yet.</div>
+                ) : (
+                  topResourceHighlights.map((res) => (
+                    <div key={res.id} className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 line-clamp-2">
+                            {res.title}
+                          </p>
+                          <p className="text-[11px] uppercase tracking-widest text-gray-400">
+                            {res.type || "file"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-bold text-emerald-600">
+                            {res.views || 0} views
+                          </p>
+                          <p className="text-[11px] text-gray-400">
+                            {res.downloads || 0} downloads
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-[10px] text-gray-400">
+                        {res.createdAt ? new Date(res.createdAt).toLocaleDateString() : ""}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -341,144 +586,71 @@ export default function StudentProgress({ user, role = 'student' }) {
           </div>
         </div>
 
-        {/* Academic Modules / Breakdowns */}
-        <div>
-          <div className="flex justify-between items-center mb-6 mt-4">
-            <h2 className="text-xl font-extrabold text-[#0f172a] tracking-tight">
-              {isAdmin ? "Platform Module Breakdown" : "Your Academic Modules"}
-            </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {modules.length > 0 ? (
-              modules.map((mod, index) => {
-                const colors = ['blue', 'emerald', 'fuchsia', 'orange'];
-                const c = colors[index % colors.length];
-                return (
-                  <div key={index} className={`bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:border-${c}-200 transition-colors`}>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className={`w-10 h-10 rounded-xl bg-${c}-50 text-${c}-600 flex items-center justify-center`}>
-                        <BookOpen className="w-5 h-5" />
-                      </div>
-                      <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
-                        {mod.semester || 'TERM'}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-gray-900 mb-1 truncate">{mod.moduleCode || 'Unknown Module'}</h3>
-                    <p className="text-xs text-gray-500 mb-4 truncate">
-                      {isAdmin ? `${mod.totalStudents || 0} Students Accessing` : `${mod.subject || 'Enrolled Course'}`}
-                    </p>
-                    
-                    <div className="flex justify-between text-xs font-bold mb-1.5">
-                      <span className="text-gray-400">Activity Level</span>
-                      <span className={`text-${c}-600`}>{isAdmin ? (mod.studyCirclesCount || 0) + ' Circles' : 'Active'}</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className={`h-full bg-${c}-600 rounded-full`} style={{ width: isAdmin ? `${Math.min((mod.studyCirclesCount / summary.activeStudyCircles) * 100 || 0, 100)}%` : '75%' }}></div>
-                    </div>
-                  </div>
-                )
-              })
-            ) : (
-               <div className="col-span-full bg-white rounded-2xl p-8 border border-gray-100 text-center text-gray-500 shadow-sm">
-                 <BookOpen className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-                 <p className="font-semibold">{isAdmin ? "No modules have been tracked on the platform yet." : "You haven't joined any modules yet."}</p>
-                 <p className="text-sm">Active study circle data will automatically appear here.</p>
-               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Bottom Banner: Group Peer Comparison */}
-        <div className="bg-white rounded-3xl p-8 md:p-10 border border-gray-100 flex flex-col md:flex-row gap-10 items-center justify-between shadow-sm relative overflow-hidden">
-          {/* Abstract background decor */}
-          <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary-light/50 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-primary-light/30 rounded-full blur-3xl pointer-events-none"></div>
-
-          <div className="md:w-1/2 relative z-10">
-            <h2 className="text-3xl font-extrabold text-[#0f172a] mb-4 leading-tight">
-              {isAdmin && topGroups.length > 0 ? "Top Performing Circles" : "Group Peer Comparison"}
-            </h2>
-            <p className="text-gray-500 text-sm leading-relaxed mb-8">
-              {isAdmin 
-                ? "The groups represented here have the highest number of active memberships and interactions across all registered study circles this semester."
-                : "Your groups are performing exceptionally well. Ensure consistent participation to unlock specific circle achievements!"}
-            </p>
-            <div className="flex items-center gap-3 bg-primary-light/50 rounded-2xl p-4 border border-primary-light w-fit">
-              <Award className="w-5 h-5 text-primary-dark" />
-              <span className="text-sm font-bold text-primary-dark tracking-wide truncate max-w-[200px]">
-                {isAdmin ? `Leading: ${topGroups[0]?.name || 'N/A'}` : `Circles Joined: ${progressData.joinedCircles || 0}`}
+        {/* My Goals */}
+        {!isAdmin && (
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-500">
+                  My Goals
+                </p>
+                <h3 className="text-2xl font-extrabold text-[#0f172a] mt-2">
+                  Weekly targets
+                </h3>
+              </div>
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                This week
               </span>
             </div>
-          </div>
 
-          {/* Dynamic Top Groups CSS Chart representation */}
-          <div className="md:w-1/2 flex items-end justify-around h-48 w-full relative z-10 pt-4 border-b border-gray-100 pb-1">
-            {isAdmin && topGroups.length > 0 ? (
-              topGroups.slice(0, 4).map((group, idx) => {
-                const isTop = idx === 0;
-                // Height based on rank for visual effect
-                const heightClass = ['h-40', 'h-24', 'h-16', 'h-10'][idx] || 'h-8';
-                
-                return (
-                  <div key={group._id || idx} className="flex flex-col items-center gap-2 w-1/5">
-                     <div className={`w-full rounded-t-xl relative overflow-hidden ${isTop ? 'bg-gradient-to-t from-primary-dark to-primary shadow-lg shadow-primary/30 ' + heightClass : 'bg-primary-light/50 group-hover:bg-primary-light transition-all ' + heightClass}`}>
-                        {!isTop && <div className="absolute bottom-0 w-full h-[60%] bg-primary/20"></div>}
-                     </div>
-                     <span className={`text-[10px] font-bold uppercase tracking-widest truncate w-full text-center ${isTop ? 'text-primary' : 'text-gray-400'}`} title={group.name}>
-                       {group.name?.substring(0, 4) || 'GRP'}
-                     </span>
-                  </div>
-                );
-              })
-            ) : (
-              /* Fallback default style for Student or Empty state to preserve the design layout */
-              <>
-                <div className="flex flex-col items-center gap-2 w-1/5">
-                  <div className="w-full bg-primary-light/50 rounded-t-xl h-12 relative overflow-hidden group hover:bg-primary-light transition-all">
-                    <div className="absolute bottom-0 w-full h-[60%] bg-primary/20"></div>
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Grp C</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Share resources</span>
+                  <span className="text-xs font-semibold text-indigo-600">{summary.resourcesShared || 0}/3</span>
                 </div>
-                <div className="flex flex-col items-center gap-2 w-1/5">
-                  <div className="w-full bg-primary-light/50 rounded-t-xl h-24 relative overflow-hidden group hover:bg-primary-light transition-all">
-                    <div className="absolute bottom-0 w-full h-[75%] bg-primary/20"></div>
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Grp D</span>
+                <div className="h-2 rounded-full bg-indigo-100 overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500"
+                    style={{ width: `${Math.min(((summary.resourcesShared || 0) / 3) * 100, 100)}%` }}
+                  />
                 </div>
-                <div className="flex flex-col items-center gap-2 w-1/5">
-                  <div className="w-full rounded-t-xl h-40 shadow-lg shadow-primary/30 relative overflow-hidden bg-gradient-to-t from-primary-dark to-primary"></div>
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">My Grp</span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+                <p className="text-[11px] text-gray-500 mt-3">Upload 3 helpful resources.</p>
+              </div>
 
-        {/* Recent Achievements */}
-        <div className="pt-4 pb-8 border-t border-gray-100 flex flex-col items-center">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-6">
-            {isAdmin ? "Platform Insights & Highlights" : "Recent Achievements"}
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <div className="bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-full flex items-center gap-2 text-indigo-700 text-xs font-bold transition-transform hover:-translate-y-1 shadow-sm">
-              <Award className="w-3.5 h-3.5" /> 
-              {isAdmin ? `Total Circles: ${summary.totalStudyCircles || 0}` : "Top Contributor"}
-            </div>
-            <div className="bg-teal-50 border border-teal-100 px-4 py-2 rounded-full flex items-center gap-2 text-teal-700 text-xs font-bold transition-transform hover:-translate-y-1 shadow-sm">
-              <Zap className="w-3.5 h-3.5" /> 
-              {isAdmin ? `Avg Engagement Score: ${Math.round(summary.engagementScore/10) || 0}` : "Fast Learner"}
-            </div>
-            <div className="bg-blue-50 border border-blue-100 px-4 py-2 rounded-full flex items-center gap-2 text-blue-700 text-xs font-bold transition-transform hover:-translate-y-1 shadow-sm">
-              <Users className="w-3.5 h-3.5" /> 
-              {isAdmin ? `Students Tracked: ${summary.totalStudents || 0}` : "Collaborator Elite"}
-            </div>
-            <div className="bg-gray-100 border border-gray-200 px-4 py-2 rounded-full flex items-center gap-2 text-gray-700 text-xs font-bold transition-transform hover:-translate-y-1 shadow-sm">
-              <Target className="w-3.5 h-3.5" /> 
-              {isAdmin ? "Goal Metrics Surpassed" : "Streak Master"}
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Stay active</span>
+                  <span className="text-xs font-semibold text-emerald-600">{progressData.activeCircles || 0}/{progressData.joinedCircles || 0}</span>
+                </div>
+                <div className="h-2 rounded-full bg-emerald-100 overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500"
+                    style={{ width: `${Math.min((progressData.joinedCircles ? (progressData.activeCircles / progressData.joinedCircles) : 0) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-gray-500 mt-3">Keep your circles active.</p>
+              </div>
+
+              <div className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold text-amber-600 uppercase tracking-widest">Message streak</span>
+                  <span className="text-xs font-semibold text-amber-600">{summary.messagesCount || 0}/10</span>
+                </div>
+                <div className="h-2 rounded-full bg-amber-100 overflow-hidden">
+                  <div
+                    className="h-full bg-amber-500"
+                    style={{ width: `${Math.min(((summary.messagesCount || 0) / 10) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-gray-500 mt-3">Send 10 helpful messages.</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Removed noisy achievement badges for a cleaner layout */}
 
       </div>
     </div>

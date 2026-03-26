@@ -1,20 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Search, Bell, LayoutDashboard, Users, FolderOpen, Calendar as CalendarIcon, 
-  TrendingUp, LogOut, ChevronRight, ChevronLeft, Plus, Star, Upload, Lock, GraduationCap, X, Mail
-} from 'lucide-react';
-import { clearAuth, getUser } from '../utils/authUtils';
-import StudentProgress from '../components/StudentProgress';
-import StudentCirclesManager from '../components/StudentCirclesManager';
-import ResourcesLibrary from '../components/ResourcesLibrary';
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || `${window.location.protocol}//${window.location.hostname}:5000`;
   Search,
   Bell,
   LayoutDashboard,
   Users,
   FolderOpen,
-  Calendar as CalendarIcon,
+  Calendar,
   TrendingUp,
   LogOut,
   ChevronRight,
@@ -28,6 +20,7 @@ const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || `${window.location.protoco
   Mail,
 } from "lucide-react";
 import { clearAuth, getUser } from "../utils/authUtils";
+import StudentProgress from "../components/StudentProgress";
 import StudentCirclesManager from "../components/StudentCirclesManager";
 import ResourcesLibrary from "../components/ResourcesLibrary";
 const API_ORIGIN =
@@ -67,7 +60,7 @@ const Sidebar = ({ currentView, setCurrentView, handleLogout }) => {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "circles", label: "Study Circles", icon: Users },
     { id: "resources", label: "Resources", icon: FolderOpen },
-    { id: "calendar", label: "Calendar", icon: CalendarIcon },
+    { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "progress", label: "Progress", icon: TrendingUp },
   ];
 
@@ -218,7 +211,7 @@ const DashboardOverview = ({
       label: "Study Time (This Week)",
       value: "12h",
       badge: null,
-      icon: CalendarIcon,
+      icon: Calendar,
       color: "text-purple-500 bg-purple-50",
     },
     {
@@ -253,7 +246,7 @@ const DashboardOverview = ({
             </p>
           </div>
           <button className="bg-blue-50 text-blue-600 font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center hover:bg-blue-100 transition-colors">
-            <CalendarIcon className="w-4 h-4 mr-2" />
+            <Calendar className="w-4 h-4 mr-2" />
             October 24, 2023
           </button>
         </div>
@@ -1137,18 +1130,6 @@ export default function StudentDashboard() {
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar user={user} currentView={currentView} setCurrentView={setCurrentView} />
-        
-        {currentView === 'dashboard' ? (
-          <DashboardOverview user={user} />
-        ) : currentView === 'progress' ? (
-          <StudentProgress user={user} role="student" />
-        ) : currentView === 'profile' ? (
-          <EditProfile user={user} setUser={setUser} />
-        ) : (
-          <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8 flex flex-col items-center justify-center text-gray-400">
-            <span className="text-4xl mb-4 opacity-50">🚧</span>
-            <p className="font-semibold">{currentView.charAt(0).toUpperCase() + currentView.slice(1)} view coming soon</p>
         <TopBar
           user={user}
           currentView={currentView}
@@ -1184,6 +1165,8 @@ export default function StudentDashboard() {
           </div>
         ) : currentView === "resources" ? (
           <ResourcesLibrary user={user} />
+        ) : currentView === "progress" ? (
+          <StudentProgress user={user} role="student" />
         ) : currentView === "profile" ? (
           <EditProfile user={user} setUser={setUser} />
         ) : (
