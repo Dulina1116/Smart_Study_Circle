@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import connectDB from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js'
+import progressRoutes from './routes/progressRoutes.js'
 
 dotenv.config()
 
@@ -20,11 +21,10 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }))
 // ── DB Connect ──
 connectDB()
 
-import userRoutes from './routes/userRoutes.js'
-
 // ── Routes ──
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/progress', progressRoutes)
 
 // Serve uploads folder
 app.use('/uploads', express.static('uploads'))

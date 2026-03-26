@@ -5,6 +5,7 @@ import {
   TrendingUp, LogOut, ChevronRight, ChevronLeft, Plus, Star, Upload, Lock, GraduationCap, X, Mail
 } from 'lucide-react';
 import { clearAuth, getUser } from '../utils/authUtils';
+import StudentProgress from '../components/StudentProgress';
 
 /* ── COMPONENTS ── */
 
@@ -34,7 +35,7 @@ const Sidebar = ({ currentView, setCurrentView, handleLogout }) => {
           return (
             <button
               key={item.id}
-              onClick={() => setCurrentView(item.id === 'dashboard' ? 'dashboard' : currentView)}
+              onClick={() => setCurrentView(item.id)}
               className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
                 isActive
                   ? 'bg-blue-50 text-blue-600'
@@ -678,8 +679,15 @@ export default function StudentDashboard() {
         
         {currentView === 'dashboard' ? (
           <DashboardOverview user={user} />
-        ) : (
+        ) : currentView === 'progress' ? (
+          <StudentProgress user={user} role="student" />
+        ) : currentView === 'profile' ? (
           <EditProfile user={user} setUser={setUser} />
+        ) : (
+          <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8 flex flex-col items-center justify-center text-gray-400">
+            <span className="text-4xl mb-4 opacity-50">🚧</span>
+            <p className="font-semibold">{currentView.charAt(0).toUpperCase() + currentView.slice(1)} view coming soon</p>
+          </div>
         )}
       </div>
     </div>
