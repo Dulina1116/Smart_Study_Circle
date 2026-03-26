@@ -1,41 +1,3 @@
-import express from 'express'
-import cors from 'cors'
-import dotenv from 'dotenv'
-import http from 'http'
-import fs from 'fs'
-import path from 'path'
-import { Server } from 'socket.io'
-import jwt from 'jsonwebtoken'
-import connectDB from './config/db.js'
-import authRoutes from './routes/authRoutes.js'
-import userRoutes from './routes/userRoutes.js'
-import progressRoutes from './routes/progressRoutes.js'
-import circleRoutes from './routes/circleRoutes.js'
-import dashboardRoutes from './routes/dashboardRoutes.js'
-import reportRoutes from './routes/reportRoutes.js'
-import resourceRoutes from './routes/resourceRoutes.js'
-import officeHourRoutes from './routes/officeHourRoutes.js'
-
-dotenv.config()
-
-const app = express()
-const httpServer = http.createServer(app)
-
-// ── Middleware ──
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
-  credentials: true
-}))
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ limit: '10mb', extended: true }))
-
- // ── DB Connect ──
-connectDB()
-
-// ── Routes ──
-app.use('/api/auth', authRoutes)
-app.use('/api/users', userRoutes)
-app.use('/api/progress', progressRoutes)
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -50,6 +12,7 @@ import connectDB from "./config/db.js";
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import progressRoutes from "./routes/progressRoutes.js";
 import studyCircleRoutes from "./routes/studyCircleRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
@@ -86,6 +49,7 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 // ── Routes ──
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/progress", progressRoutes);
 app.use("/api/circles", studyCircleRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportRoutes);

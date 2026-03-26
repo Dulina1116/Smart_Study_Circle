@@ -1,5 +1,6 @@
 import StudyCircle from "../models/StudyCircle.js";
 import CircleMessage from "../models/CircleMessage.js";
+import Resource from "../models/Resource.js";
 import User from "../models/User.js";
 import fs from "fs";
 import path from "path";
@@ -671,7 +672,7 @@ export const deleteStudyCircle = async (req, res) => {
     const { circleId } = req.params;
 
     const circle = await StudyCircle.findById(circleId);
-    if (!circle || !circle.isActive) {
+    if (!circle) {
       return res.status(404).json({ message: "Study circle not found." });
     }
 
@@ -683,8 +684,14 @@ export const deleteStudyCircle = async (req, res) => {
         });
     }
 
-    circle.isActive = false;
-    await circle.save();
+    await Promise.all([
+      StudyCircle.deleteOne({ _id: circleId }),
+      CircleMessage.deleteMany({ circle: circleId }),
+      Resource.updateMany(
+        { circleId },
+        { $set: { isActive: false } },
+      ),
+    ]);
 
     return res.json({ message: "Study circle deleted successfully." });
   } catch (err) {
