@@ -1,50 +1,50 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
 const circleMessageSchema = new mongoose.Schema(
   {
     circle: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'StudyCircle',
+      ref: "StudyCircle",
       required: true,
       index: true,
     },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     receiverId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       default: null,
     },
     groupId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'StudyCircle',
+      ref: "StudyCircle",
     },
     text: {
       type: String,
-      default: '',
+      default: "",
       trim: true,
       maxlength: 2000,
     },
     messageType: {
       type: String,
-      enum: ['text', 'link', 'file'],
-      default: 'text',
+      enum: ["text", "link", "file"],
+      default: "text",
     },
     fileUrl: {
       type: String,
-      default: '',
+      default: "",
       trim: true,
     },
     fileName: {
       type: String,
-      default: '',
+      default: "",
       trim: true,
     },
     fileSize: {
@@ -53,19 +53,19 @@ const circleMessageSchema = new mongoose.Schema(
     },
     mimeType: {
       type: String,
-      default: '',
+      default: "",
       trim: true,
     },
     status: {
       type: String,
-      enum: ['sent', 'delivered', 'read'],
-      default: 'sent',
+      enum: ["sent", "delivered", "read"],
+      default: "sent",
     },
   },
-  { timestamps: true }
-)
+  { timestamps: true },
+);
 
-circleMessageSchema.index({ circle: 1, createdAt: -1 })
+circleMessageSchema.index({ circle: 1, createdAt: -1 });
 
-const CircleMessage = mongoose.model('CircleMessage', circleMessageSchema)
-export default CircleMessage
+const CircleMessage = mongoose.model("CircleMessage", circleMessageSchema);
+export default CircleMessage;

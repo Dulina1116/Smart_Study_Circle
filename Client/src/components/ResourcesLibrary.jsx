@@ -1,365 +1,392 @@
-import React, { useState, useEffect } from 'react'
-import { Download, Eye, Grid, List, Plus, Search, X, AlertCircle, Folder, Pencil, Trash2, BookOpen } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from "react";
+import {
+  Download,
+  Eye,
+  Grid,
+  List,
+  Plus,
+  Search,
+  X,
+  AlertCircle,
+  Folder,
+  Pencil,
+  Trash2,
+  BookOpen,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || `${window.location.protocol}//${window.location.hostname}:5000`
-const API_BASE = `${API_ORIGIN}/api/resources`
+const API_ORIGIN =
+  import.meta.env.VITE_API_ORIGIN ||
+  `${window.location.protocol}//${window.location.hostname}:5000`;
+const API_BASE = `${API_ORIGIN}/api/resources`;
 
 const getAuthHeaders = () => {
-  const token = (localStorage.getItem('token') || '').replace(/[\r\n"]/g, '')
+  const token = (localStorage.getItem("token") || "").replace(/[\r\n"]/g, "");
   return {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
-  }
-}
+  };
+};
 
 const getCategoryLabel = (category) => {
   const labels = {
-    'lecture-notes': 'Lecture Notes',
-    'past-papers': 'Past Papers',
-    summaries: 'Student Summaries',
-    handout: 'Handout',
-    other: 'Other',
-  }
-  return labels[category] || category
-}
+    "lecture-notes": "Lecture Notes",
+    "past-papers": "Past Papers",
+    summaries: "Student Summaries",
+    handout: "Handout",
+    other: "Other",
+  };
+  return labels[category] || category;
+};
 
 const getCategoryStyle = (category) => {
   const styles = {
-    'lecture-notes': 'bg-blue-50 text-blue-700 border-blue-100',
-    'past-papers': 'bg-amber-50 text-amber-700 border-amber-100',
-    summaries: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    handout: 'bg-violet-50 text-violet-700 border-violet-100',
-    other: 'bg-slate-50 text-slate-700 border-slate-100',
-  }
-  return styles[category] || styles.other
-}
+    "lecture-notes": "bg-blue-50 text-blue-700 border-blue-100",
+    "past-papers": "bg-amber-50 text-amber-700 border-amber-100",
+    summaries: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    handout: "bg-violet-50 text-violet-700 border-violet-100",
+    other: "bg-slate-50 text-slate-700 border-slate-100",
+  };
+  return styles[category] || styles.other;
+};
 
 const getCategoryFolderStyle = (category) => {
   const styles = {
-    'lecture-notes': 'bg-blue-100 text-blue-700',
-    'past-papers': 'bg-amber-100 text-amber-700',
-    summaries: 'bg-emerald-100 text-emerald-700',
-    handout: 'bg-violet-100 text-violet-700',
-    other: 'bg-slate-100 text-slate-700',
-  }
-  return styles[category] || styles.other
-}
+    "lecture-notes": "bg-blue-100 text-blue-700",
+    "past-papers": "bg-amber-100 text-amber-700",
+    summaries: "bg-emerald-100 text-emerald-700",
+    handout: "bg-violet-100 text-violet-700",
+    other: "bg-slate-100 text-slate-700",
+  };
+  return styles[category] || styles.other;
+};
 
 const getTypeIcon = (type) => {
   const icons = {
-    pdf: '📄',
-    document: '📝',
-    presentation: '📊',
-    video: '🎬',
-    link: '🔗',
-    other: '📦',
-  }
-  return icons[type] || '📦'
-}
+    pdf: "📄",
+    document: "📝",
+    presentation: "📊",
+    video: "🎬",
+    link: "🔗",
+    other: "📦",
+  };
+  return icons[type] || "📦";
+};
 
 const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
-}
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+};
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
 
 export default function ResourcesLibrary({ user }) {
-  const navigate = useNavigate()
-  const [viewMode, setViewMode] = useState('grid')
-  const [resources, setResources] = useState([])
-  const [featuredResources, setFeaturedResources] = useState([])
-  const [categories, setCategories] = useState({})
-  const [selectedCategory, setSelectedCategory] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showUploadModal, setShowUploadModal] = useState(false)
+  const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState("grid");
+  const [resources, setResources] = useState([]);
+  const [featuredResources, setFeaturedResources] = useState([]);
+  const [categories, setCategories] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadForm, setUploadForm] = useState({
-    title: '',
-    description: '',
-    category: 'other',
-    type: 'pdf',
-    externalLink: '',
-  })
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [editingResource, setEditingResource] = useState(null)
+    title: "",
+    description: "",
+    category: "other",
+    type: "pdf",
+    externalLink: "",
+  });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingResource, setEditingResource] = useState(null);
   const [editForm, setEditForm] = useState({
-    title: '',
-    description: '',
-    category: 'other',
-    type: 'pdf',
-    externalLink: '',
-  })
-  const [editFile, setEditFile] = useState(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [deletingId, setDeletingId] = useState('')
-  const [showDetailsModal, setShowDetailsModal] = useState(false)
-  const [detailResource, setDetailResource] = useState(null)
+    title: "",
+    description: "",
+    category: "other",
+    type: "pdf",
+    externalLink: "",
+  });
+  const [editFile, setEditFile] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [deletingId, setDeletingId] = useState("");
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailResource, setDetailResource] = useState(null);
 
   const storedUser = (() => {
     try {
-      const raw = localStorage.getItem('user')
-      return raw ? JSON.parse(raw) : null
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
     } catch {
-      return null
+      return null;
     }
-  })()
-  const currentUserId = String(user?._id || user?.id || storedUser?._id || storedUser?.id || '')
+  })();
+  const currentUserId = String(
+    user?._id || user?.id || storedUser?._id || storedUser?.id || "",
+  );
 
   useEffect(() => {
-    fetchInitialData()
-  }, [])
+    fetchInitialData();
+  }, []);
 
   const fetchInitialData = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const [featuredRes, categoriesRes, resourcesRes] = await Promise.all([
         fetch(`${API_BASE}/featured`),
         fetch(`${API_BASE}/categories`),
         fetch(`${API_BASE}?limit=20`),
-      ])
+      ]);
 
       if (featuredRes.ok) {
-        const data = await featuredRes.json()
-        setFeaturedResources(data)
+        const data = await featuredRes.json();
+        setFeaturedResources(data);
       }
 
       if (categoriesRes.ok) {
-        const data = await categoriesRes.json()
-        setCategories(data)
+        const data = await categoriesRes.json();
+        setCategories(data);
       }
 
       if (resourcesRes.ok) {
-        const data = await resourcesRes.json()
-        setResources(data.resources)
+        const data = await resourcesRes.json();
+        setResources(data.resources);
       }
     } catch (err) {
-      console.error('Error fetching data:', err)
+      console.error("Error fetching data:", err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleCategorySelect = async (categoryId) => {
-    setSelectedCategory(categoryId)
+    setSelectedCategory(categoryId);
     try {
-      const res = await fetch(`${API_BASE}/category/${categoryId}`)
+      const res = await fetch(`${API_BASE}/category/${categoryId}`);
       if (res.ok) {
-        const data = await res.json()
-        setResources(data.resources)
+        const data = await res.json();
+        setResources(data.resources);
       }
     } catch (err) {
-      console.error('Error fetching category:', err)
+      console.error("Error fetching category:", err);
     }
-  }
+  };
 
   const handleSearch = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!searchTerm.trim()) {
-      fetchInitialData()
-      return
+      fetchInitialData();
+      return;
     }
 
     try {
-      const res = await fetch(`${API_BASE}?search=${encodeURIComponent(searchTerm)}`)
+      const res = await fetch(
+        `${API_BASE}?search=${encodeURIComponent(searchTerm)}`,
+      );
       if (res.ok) {
-        const data = await res.json()
-        setResources(data.resources)
+        const data = await res.json();
+        setResources(data.resources);
       }
     } catch (err) {
-      console.error('Error searching:', err)
+      console.error("Error searching:", err);
     }
-  }
+  };
 
   const handleUpload = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!uploadForm.title.trim()) {
-      alert('Please enter a resource title')
-      return
+      alert("Please enter a resource title");
+      return;
     }
 
-    if (uploadForm.type !== 'link' && !selectedFile) {
-      alert('Please select a file')
-      return
+    if (uploadForm.type !== "link" && !selectedFile) {
+      alert("Please select a file");
+      return;
     }
 
-    setIsUploading(true)
+    setIsUploading(true);
     try {
-      const formData = new FormData()
-      formData.append('title', uploadForm.title.trim())
-      formData.append('description', uploadForm.description.trim())
-      formData.append('category', uploadForm.category)
-      formData.append('type', uploadForm.type)
-      if (uploadForm.type === 'link' && uploadForm.externalLink) {
-        formData.append('externalLink', uploadForm.externalLink.trim())
+      const formData = new FormData();
+      formData.append("title", uploadForm.title.trim());
+      formData.append("description", uploadForm.description.trim());
+      formData.append("category", uploadForm.category);
+      formData.append("type", uploadForm.type);
+      if (uploadForm.type === "link" && uploadForm.externalLink) {
+        formData.append("externalLink", uploadForm.externalLink.trim());
       }
       if (selectedFile) {
-        formData.append('file', selectedFile)
+        formData.append("file", selectedFile);
       }
 
-      const token = localStorage.getItem('token')?.replace(/[\r\n"]/g, '')
+      const token = localStorage.getItem("token")?.replace(/[\r\n"]/g, "");
       const res = await fetch(`${API_BASE}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
-      })
+      });
 
       if (res.ok) {
-        alert('Resource uploaded successfully!')
-        setShowUploadModal(false)
-        setUploadForm({ title: '', description: '', category: 'other', type: 'pdf', externalLink: '' })
-        setSelectedFile(null)
-        fetchInitialData()
+        alert("Resource uploaded successfully!");
+        setShowUploadModal(false);
+        setUploadForm({
+          title: "",
+          description: "",
+          category: "other",
+          type: "pdf",
+          externalLink: "",
+        });
+        setSelectedFile(null);
+        fetchInitialData();
       } else {
-        const error = await res.json()
-        alert(error.message || 'Failed to upload resource')
+        const error = await res.json();
+        alert(error.message || "Failed to upload resource");
       }
     } catch (err) {
-      console.error('Upload error:', err)
-      alert('Error uploading resource')
+      console.error("Upload error:", err);
+      alert("Error uploading resource");
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleDownload = async (resource) => {
-    const resourceId = resource._id || resource.id
-    navigate(`/resources/preview/${resourceId}`)
-  }
+    const resourceId = resource._id || resource.id;
+    navigate(`/resources/preview/${resourceId}`);
+  };
 
   const getUploaderId = (resource) => {
-    const uploadedBy = resource?.uploadedBy
-    if (!uploadedBy) return ''
-    if (typeof uploadedBy === 'string') return String(uploadedBy)
-    return String(uploadedBy._id || uploadedBy.id || '')
-  }
+    const uploadedBy = resource?.uploadedBy;
+    if (!uploadedBy) return "";
+    if (typeof uploadedBy === "string") return String(uploadedBy);
+    return String(uploadedBy._id || uploadedBy.id || "");
+  };
 
   const canManageResource = (resource) => {
-    return Boolean(currentUserId) && getUploaderId(resource) === currentUserId
-  }
+    return Boolean(currentUserId) && getUploaderId(resource) === currentUserId;
+  };
 
   const openEditModal = (resource) => {
-    setEditingResource(resource)
+    setEditingResource(resource);
     setEditForm({
-      title: resource.title || '',
-      description: resource.description || '',
-      category: resource.category || 'other',
-      type: resource.type || 'other',
-      externalLink: resource.externalLink || '',
-    })
-    setEditFile(null)
-    setShowEditModal(true)
-  }
+      title: resource.title || "",
+      description: resource.description || "",
+      category: resource.category || "other",
+      type: resource.type || "other",
+      externalLink: resource.externalLink || "",
+    });
+    setEditFile(null);
+    setShowEditModal(true);
+  };
 
   const closeEditModal = () => {
-    setShowEditModal(false)
-    setEditingResource(null)
-    setEditFile(null)
+    setShowEditModal(false);
+    setEditingResource(null);
+    setEditFile(null);
     setEditForm({
-      title: '',
-      description: '',
-      category: 'other',
-      type: 'pdf',
-      externalLink: '',
-    })
-  }
+      title: "",
+      description: "",
+      category: "other",
+      type: "pdf",
+      externalLink: "",
+    });
+  };
 
   const handleUpdateResource = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!editingResource) return
+    if (!editingResource) return;
     if (!editForm.title.trim()) {
-      alert('Please enter a resource title')
-      return
+      alert("Please enter a resource title");
+      return;
     }
 
-    setIsEditing(true)
+    setIsEditing(true);
     try {
-      const formData = new FormData()
-      formData.append('title', editForm.title.trim())
-      formData.append('description', editForm.description.trim())
-      formData.append('category', editForm.category)
-      formData.append('type', editForm.type)
-      formData.append('externalLink', editForm.externalLink.trim())
+      const formData = new FormData();
+      formData.append("title", editForm.title.trim());
+      formData.append("description", editForm.description.trim());
+      formData.append("category", editForm.category);
+      formData.append("type", editForm.type);
+      formData.append("externalLink", editForm.externalLink.trim());
       if (editFile) {
-        formData.append('file', editFile)
+        formData.append("file", editFile);
       }
 
-      const token = localStorage.getItem('token')?.replace(/[\r\n"]/g, '')
-      const resourceId = editingResource._id || editingResource.id
+      const token = localStorage.getItem("token")?.replace(/[\r\n"]/g, "");
+      const resourceId = editingResource._id || editingResource.id;
       const res = await fetch(`${API_BASE}/${resourceId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
-      })
+      });
 
-      const data = await res.json().catch(() => ({}))
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to update resource')
+        throw new Error(data.message || "Failed to update resource");
       }
 
-      alert('Resource updated successfully!')
-      closeEditModal()
-      fetchInitialData()
+      alert("Resource updated successfully!");
+      closeEditModal();
+      fetchInitialData();
     } catch (err) {
-      console.error('Update resource error:', err)
-      alert(err.message || 'Error updating resource')
+      console.error("Update resource error:", err);
+      alert(err.message || "Error updating resource");
     } finally {
-      setIsEditing(false)
+      setIsEditing(false);
     }
-  }
+  };
 
   const handleDeleteResource = async (resource) => {
-    const resourceId = resource._id || resource.id
-    const ok = window.confirm('Delete this resource? This action cannot be undone.')
-    if (!ok) return
+    const resourceId = resource._id || resource.id;
+    const ok = window.confirm(
+      "Delete this resource? This action cannot be undone.",
+    );
+    if (!ok) return;
 
-    setDeletingId(String(resourceId))
+    setDeletingId(String(resourceId));
     try {
-      const token = localStorage.getItem('token')?.replace(/[\r\n"]/g, '')
+      const token = localStorage.getItem("token")?.replace(/[\r\n"]/g, "");
       const res = await fetch(`${API_BASE}/${resourceId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      })
+      });
 
-      const data = await res.json().catch(() => ({}))
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to delete resource')
+        throw new Error(data.message || "Failed to delete resource");
       }
 
-      alert('Resource deleted successfully!')
-      fetchInitialData()
+      alert("Resource deleted successfully!");
+      fetchInitialData();
     } catch (err) {
-      console.error('Delete resource error:', err)
-      alert(err.message || 'Error deleting resource')
+      console.error("Delete resource error:", err);
+      alert(err.message || "Error deleting resource");
     } finally {
-      setDeletingId('')
+      setDeletingId("");
     }
-  }
+  };
 
   const openDetailsModal = (resource) => {
-    setDetailResource(resource)
-    setShowDetailsModal(true)
-  }
+    setDetailResource(resource);
+    setShowDetailsModal(true);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white p-8">
@@ -374,8 +401,13 @@ export default function ResourcesLibrary({ user }) {
                 <BookOpen className="w-3.5 h-3.5 mr-1.5" />
                 RESOURCE HUB
               </div>
-              <h1 className="text-3xl font-extrabold text-[#0f172a] tracking-tight mb-2">Resources Library</h1>
-              <p className="text-slate-600">Access study materials, notes, readings, and curated resources in one place.</p>
+              <h1 className="text-3xl font-extrabold text-[#0f172a] tracking-tight mb-2">
+                Resources Library
+              </h1>
+              <p className="text-slate-600">
+                Access study materials, notes, readings, and curated resources
+                in one place.
+              </p>
             </div>
             <button
               onClick={() => setShowUploadModal(true)}
@@ -388,7 +420,10 @@ export default function ResourcesLibrary({ user }) {
         </div>
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
+        <form
+          onSubmit={handleSearch}
+          className="flex flex-col sm:flex-row gap-2"
+        >
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -410,8 +445,8 @@ export default function ResourcesLibrary({ user }) {
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedCategory(null)
-                  fetchInitialData()
+                  setSelectedCategory(null);
+                  fetchInitialData();
                 }}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors"
               >
@@ -424,24 +459,39 @@ export default function ResourcesLibrary({ user }) {
         {/* Featured Resources */}
         {featuredResources.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Featured Resources</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">
+              Featured Resources
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {featuredResources.slice(0, 3).map((resource) => (
-                <div key={resource._id} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                <div
+                  key={resource._id}
+                  className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                >
                   <div className="flex items-start justify-between mb-3">
-                    <span className="text-2xl">{getTypeIcon(resource.type)}</span>
+                    <span className="text-2xl">
+                      {getTypeIcon(resource.type)}
+                    </span>
                     <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-100">
                       FEATURED
                     </span>
                   </div>
-                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{resource.title}</h3>
-                  <p className="text-xs text-slate-500 mb-4 line-clamp-2">{resource.description || 'No description added yet.'}</p>
+                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">
+                    {resource.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4 line-clamp-2">
+                    {resource.description || "No description added yet."}
+                  </p>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className={`px-2 py-0.5 rounded-full border ${getCategoryStyle(resource.category)}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-full border ${getCategoryStyle(resource.category)}`}
+                    >
                       {getCategoryLabel(resource.category)}
                     </span>
-                    {resource.type === 'video' && resource.duration && <span>• {resource.duration}</span>}
-                    {resource.type === 'pdf' && resource.fileSize > 0 && (
+                    {resource.type === "video" && resource.duration && (
+                      <span>• {resource.duration}</span>
+                    )}
+                    {resource.type === "pdf" && resource.fileSize > 0 && (
                       <span>• {formatFileSize(resource.fileSize)}</span>
                     )}
                   </div>
@@ -462,7 +512,9 @@ export default function ResourcesLibrary({ user }) {
         {/* Categories */}
         {Object.keys(categories).length > 0 && (
           <section>
-            <h3 className="text-sm uppercase tracking-[0.2em] text-gray-400 font-bold mb-3">Categories</h3>
+            <h3 className="text-sm uppercase tracking-[0.2em] text-gray-400 font-bold mb-3">
+              Categories
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Object.entries(categories).map(([catId, catInfo]) => (
                 <button
@@ -470,15 +522,21 @@ export default function ResourcesLibrary({ user }) {
                   onClick={() => handleCategorySelect(catId)}
                   className={`rounded-2xl p-5 text-left border transition-all duration-200 ${
                     selectedCategory === catId
-                      ? 'bg-blue-50 border-blue-300 shadow-sm'
-                      : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
+                      ? "bg-blue-50 border-blue-300 shadow-sm"
+                      : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
                   }`}
                 >
-                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${getCategoryFolderStyle(catId)}`}>
+                  <div
+                    className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${getCategoryFolderStyle(catId)}`}
+                  >
                     <Folder className="w-6 h-6" />
                   </div>
-                  <p className="font-bold text-[28px] sm:text-[30px] text-slate-900 leading-tight">{catInfo.label}</p>
-                  <p className="text-sm text-slate-500 mt-1">{catInfo.count} files</p>
+                  <p className="font-bold text-[28px] sm:text-[30px] text-slate-900 leading-tight">
+                    {catInfo.label}
+                  </p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {catInfo.count} files
+                  </p>
                 </button>
               ))}
             </div>
@@ -488,20 +546,26 @@ export default function ResourcesLibrary({ user }) {
         {/* View Toggle */}
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-slate-500 font-medium">
-            {selectedCategory ? `Showing: ${getCategoryLabel(selectedCategory)}` : 'Showing: All resources'}
+            {selectedCategory
+              ? `Showing: ${getCategoryLabel(selectedCategory)}`
+              : "Showing: All resources"}
           </p>
           <button
-            onClick={() => setViewMode('grid')}
+            onClick={() => setViewMode("grid")}
             className={`p-2 rounded-lg transition-colors ${
-              viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              viewMode === "grid"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             <Grid className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setViewMode('list')}
+            onClick={() => setViewMode("list")}
             className={`p-2 rounded-lg transition-colors ${
-              viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              viewMode === "list"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             <List className="w-4 h-4" />
@@ -520,18 +584,27 @@ export default function ResourcesLibrary({ user }) {
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-500">No resources found</p>
           </div>
-        ) : viewMode === 'grid' ? (
+        ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {resources.map((resource) => (
-              <div key={resource._id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+              <div
+                key={resource._id}
+                className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+              >
                 <div className="flex items-end justify-between mb-2">
                   <span className="text-2xl">{getTypeIcon(resource.type)}</span>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full border ${getCategoryStyle(resource.category)}`}>
+                  <span
+                    className={`text-xs font-bold px-2 py-1 rounded-full border ${getCategoryStyle(resource.category)}`}
+                  >
                     {getCategoryLabel(resource.category)}
                   </span>
                 </div>
-                <h3 className="font-bold text-slate-900 text-base mb-1 line-clamp-2">{resource.title}</h3>
-                <p className="text-xs text-slate-500 mb-3 line-clamp-2 min-h-[2rem]">{resource.description || 'No description added yet.'}</p>
+                <h3 className="font-bold text-slate-900 text-base mb-1 line-clamp-2">
+                  {resource.title}
+                </h3>
+                <p className="text-xs text-slate-500 mb-3 line-clamp-2 min-h-[2rem]">
+                  {resource.description || "No description added yet."}
+                </p>
                 <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
                   <span className="flex items-center gap-1">
                     <Eye className="w-3 h-3" /> {resource.views || 0}
@@ -567,7 +640,9 @@ export default function ResourcesLibrary({ user }) {
                     <button
                       type="button"
                       onClick={() => handleDeleteResource(resource)}
-                      disabled={deletingId === String(resource._id || resource.id)}
+                      disabled={
+                        deletingId === String(resource._id || resource.id)
+                      }
                       className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
                     >
                       <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
@@ -582,27 +657,45 @@ export default function ResourcesLibrary({ user }) {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Name</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Type</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Size</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Modified</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Action</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                    Name
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                    Type
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                    Size
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                    Modified
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {resources.map((resource, idx) => (
                   <tr
                     key={resource._id}
-                    className={`border-b border-slate-100 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} hover:bg-slate-50`}
+                    className={`border-b border-slate-100 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"} hover:bg-slate-50`}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-gray-900 truncate">{resource.title}</span>
+                        <span className="text-sm font-semibold text-gray-900 truncate">
+                          {resource.title}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{resource.type}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{formatFileSize(resource.fileSize || 0)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{formatDate(resource.createdAt)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {resource.type}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {formatFileSize(resource.fileSize || 0)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {formatDate(resource.createdAt)}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <button
@@ -639,7 +732,10 @@ export default function ResourcesLibrary({ user }) {
                             <button
                               type="button"
                               onClick={() => handleDeleteResource(resource)}
-                              disabled={deletingId === String(resource._id || resource.id)}
+                              disabled={
+                                deletingId ===
+                                String(resource._id || resource.id)
+                              }
                               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-60"
                               title="Delete"
                               aria-label="Delete"
@@ -669,24 +765,37 @@ export default function ResourcesLibrary({ user }) {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-xl font-bold text-gray-900 mb-5">Upload Resource</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-5">
+              Upload Resource
+            </h3>
 
             <form onSubmit={handleUpload} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Title *
+                </label>
                 <input
                   value={uploadForm.title}
-                  onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setUploadForm({ ...uploadForm, title: e.target.value })
+                  }
                   placeholder="Resource title"
                   className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={uploadForm.description}
-                  onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setUploadForm({
+                      ...uploadForm,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="Brief description"
                   maxLength="300"
                   rows="3"
@@ -696,10 +805,14 @@ export default function ResourcesLibrary({ user }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Category
+                  </label>
                   <select
                     value={uploadForm.category}
-                    onChange={(e) => setUploadForm({ ...uploadForm, category: e.target.value })}
+                    onChange={(e) =>
+                      setUploadForm({ ...uploadForm, category: e.target.value })
+                    }
                     className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                   >
                     <option value="other">Other</option>
@@ -710,10 +823,14 @@ export default function ResourcesLibrary({ user }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Type
+                  </label>
                   <select
                     value={uploadForm.type}
-                    onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
+                    onChange={(e) =>
+                      setUploadForm({ ...uploadForm, type: e.target.value })
+                    }
                     className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                   >
                     <option value="pdf">PDF</option>
@@ -725,25 +842,40 @@ export default function ResourcesLibrary({ user }) {
                 </div>
               </div>
 
-              {uploadForm.type === 'link' ? (
+              {uploadForm.type === "link" ? (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">External Link *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    External Link *
+                  </label>
                   <input
                     value={uploadForm.externalLink}
-                    onChange={(e) => setUploadForm({ ...uploadForm, externalLink: e.target.value })}
+                    onChange={(e) =>
+                      setUploadForm({
+                        ...uploadForm,
+                        externalLink: e.target.value,
+                      })
+                    }
                     placeholder="https://..."
                     className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">File *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    File *
+                  </label>
                   <input
                     type="file"
-                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setSelectedFile(e.target.files?.[0] || null)
+                    }
                     className="w-full text-sm"
                   />
-                  {selectedFile && <p className="text-xs text-gray-500 mt-1">Selected: {selectedFile.name}</p>}
+                  {selectedFile && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Selected: {selectedFile.name}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -760,7 +892,7 @@ export default function ResourcesLibrary({ user }) {
                   disabled={isUploading}
                   className="h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold disabled:opacity-50"
                 >
-                  {isUploading ? 'Uploading...' : 'Upload'}
+                  {isUploading ? "Uploading..." : "Upload"}
                 </button>
               </div>
             </form>
@@ -774,53 +906,71 @@ export default function ResourcesLibrary({ user }) {
           <div className="w-full max-w-xl bg-white rounded-2xl border border-gray-100 shadow-xl p-6 relative">
             <button
               onClick={() => {
-                setShowDetailsModal(false)
-                setDetailResource(null)
+                setShowDetailsModal(false);
+                setDetailResource(null);
               }}
               className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Resource Details</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Resource Details
+            </h3>
 
             <div className="space-y-3 text-sm">
               <div>
                 <p className="text-gray-500">Title</p>
-                <p className="font-semibold text-gray-900">{detailResource.title || '-'}</p>
+                <p className="font-semibold text-gray-900">
+                  {detailResource.title || "-"}
+                </p>
               </div>
               <div>
                 <p className="text-gray-500">Description</p>
-                <p className="text-gray-800">{detailResource.description || 'No description added yet.'}</p>
+                <p className="text-gray-800">
+                  {detailResource.description || "No description added yet."}
+                </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <p className="text-gray-500">Category</p>
-                  <p className="font-semibold text-gray-900">{getCategoryLabel(detailResource.category)}</p>
+                  <p className="font-semibold text-gray-900">
+                    {getCategoryLabel(detailResource.category)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500">Type</p>
-                  <p className="font-semibold text-gray-900">{detailResource.type || '-'}</p>
+                  <p className="font-semibold text-gray-900">
+                    {detailResource.type || "-"}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <p className="text-gray-500">File Size</p>
-                  <p className="font-semibold text-gray-900">{formatFileSize(detailResource.fileSize || 0)}</p>
+                  <p className="font-semibold text-gray-900">
+                    {formatFileSize(detailResource.fileSize || 0)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500">Modified</p>
-                  <p className="font-semibold text-gray-900">{formatDate(detailResource.createdAt)}</p>
+                  <p className="font-semibold text-gray-900">
+                    {formatDate(detailResource.createdAt)}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <p className="text-gray-500">Views</p>
-                  <p className="font-semibold text-gray-900">{detailResource.views || 0}</p>
+                  <p className="font-semibold text-gray-900">
+                    {detailResource.views || 0}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500">Downloads</p>
-                  <p className="font-semibold text-gray-900">{detailResource.downloads || 0}</p>
+                  <p className="font-semibold text-gray-900">
+                    {detailResource.downloads || 0}
+                  </p>
                 </div>
               </div>
             </div>
@@ -829,8 +979,8 @@ export default function ResourcesLibrary({ user }) {
               <button
                 type="button"
                 onClick={() => {
-                  setShowDetailsModal(false)
-                  setDetailResource(null)
+                  setShowDetailsModal(false);
+                  setDetailResource(null);
                 }}
                 className="h-10 px-4 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold"
               >
@@ -852,24 +1002,37 @@ export default function ResourcesLibrary({ user }) {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-xl font-bold text-gray-900 mb-5">Edit Resource</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-5">
+              Edit Resource
+            </h3>
 
             <form onSubmit={handleUpdateResource} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Title *
+                </label>
                 <input
                   value={editForm.title}
-                  onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, title: e.target.value }))
+                  }
                   placeholder="Resource title"
                   className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={editForm.description}
-                  onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   placeholder="Brief description"
                   maxLength="300"
                   rows="3"
@@ -879,10 +1042,17 @@ export default function ResourcesLibrary({ user }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Category
+                  </label>
                   <select
                     value={editForm.category}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        category: e.target.value,
+                      }))
+                    }
                     className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                   >
                     <option value="other">Other</option>
@@ -893,10 +1063,14 @@ export default function ResourcesLibrary({ user }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Type
+                  </label>
                   <select
                     value={editForm.type}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, type: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({ ...prev, type: e.target.value }))
+                    }
                     className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                   >
                     <option value="pdf">PDF</option>
@@ -908,25 +1082,38 @@ export default function ResourcesLibrary({ user }) {
                 </div>
               </div>
 
-              {editForm.type === 'link' ? (
+              {editForm.type === "link" ? (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">External Link</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    External Link
+                  </label>
                   <input
                     value={editForm.externalLink}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, externalLink: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        externalLink: e.target.value,
+                      }))
+                    }
                     placeholder="https://..."
                     className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Replace File (optional)</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Replace File (optional)
+                  </label>
                   <input
                     type="file"
                     onChange={(e) => setEditFile(e.target.files?.[0] || null)}
                     className="w-full text-sm"
                   />
-                  {editFile ? <p className="text-xs text-gray-500 mt-1">Selected: {editFile.name}</p> : null}
+                  {editFile ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Selected: {editFile.name}
+                    </p>
+                  ) : null}
                 </div>
               )}
 
@@ -943,7 +1130,7 @@ export default function ResourcesLibrary({ user }) {
                   disabled={isEditing}
                   className="h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold disabled:opacity-50"
                 >
-                  {isEditing ? 'Saving...' : 'Update'}
+                  {isEditing ? "Saving..." : "Update"}
                 </button>
               </div>
             </form>
@@ -951,5 +1138,5 @@ export default function ResourcesLibrary({ user }) {
         </div>
       ) : null}
     </div>
-  )
+  );
 }

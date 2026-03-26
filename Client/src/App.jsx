@@ -1,30 +1,30 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Register from './pages/Register'
-import Verify from './pages/Verify'
-import Interests from './pages/Interests'
-import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/LoginPage'
-import AdminLogin from './pages/AdminLogin'
-import AdminDashboard from './pages/AdminDashboard'
-import StudentDashboard from './pages/StudentDashboard'
-import LecturerDashboard from './pages/LecturerDashboard'
-import StudyCircleChatPage from './pages/StudyCircleChatPage'
-import ResourcePreviewPage from './pages/ResourcePreviewPage'
-import StudyGuides from './pages/StudyGuides'
-import Blog from './pages/Blog'
-import Community from './pages/Community'
-import HelpCenter from './pages/HelpCenter'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import TermsOfService from './pages/TermsOfService'
-import CookiePolicy from './pages/CookiePolicy'
-import { getUser } from './utils/authUtils'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Register from "./pages/Register";
+import Verify from "./pages/Verify";
+import Interests from "./pages/Interests";
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
+import LecturerDashboard from "./pages/LecturerDashboard";
+import StudyCircleChatPage from "./pages/StudyCircleChatPage";
+import ResourcePreviewPage from "./pages/ResourcePreviewPage";
+import StudyGuides from "./pages/StudyGuides";
+import Blog from "./pages/Blog";
+import Community from "./pages/Community";
+import HelpCenter from "./pages/HelpCenter";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import CookiePolicy from "./pages/CookiePolicy";
+import { getUser } from "./utils/authUtils";
 
 /** Redirects unauthenticated users away from protected admin routes */
 function ProtectedAdminRoute({ children }) {
-  if (sessionStorage.getItem('adminAuth') !== 'true') {
-    return <Navigate to="/admin" replace />
+  if (sessionStorage.getItem("adminAuth") !== "true") {
+    return <Navigate to="/admin" replace />;
   }
-  return children
+  return children;
 }
 
 /**
@@ -33,22 +33,24 @@ function ProtectedAdminRoute({ children }) {
  * redirects to the correct dashboard instead of the requested one.
  */
 function ProtectedRoute({ role, children }) {
-  const user = getUser()
-  const token = localStorage.getItem('token')
+  const user = getUser();
+  const token = localStorage.getItem("token");
 
-  if (!token || !user) return <Navigate to="/login" replace />
+  if (!token || !user) return <Navigate to="/login" replace />;
 
   if (role && user.role !== role) {
     // Wrong role — send to the right dashboard
-    return <Navigate to={`/dashboard/${user.role}`} replace />
+    return <Navigate to={`/dashboard/${user.role}`} replace />;
   }
 
-  return children
+  return children;
 }
 
 function App() {
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <BrowserRouter
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
@@ -112,7 +114,7 @@ function App() {
         />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;
