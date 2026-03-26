@@ -1,11 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Search, Bell, LayoutDashboard, Users, FolderOpen, Calendar as CalendarIcon, 
   TrendingUp, LogOut, ChevronRight, ChevronLeft, Plus, Star, Upload, Lock, GraduationCap, X, Mail
 } from 'lucide-react';
 import { clearAuth, getUser } from '../utils/authUtils';
 import StudentProgress from '../components/StudentProgress';
+import StudentCirclesManager from '../components/StudentCirclesManager';
+import ResourcesLibrary from '../components/ResourcesLibrary';
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || `${window.location.protocol}//${window.location.hostname}:5000`;
+const CIRCLES_API_BASE = `${API_ORIGIN}/api/circles`;
+const USERS_API_BASE = `${API_ORIGIN}/api/users`;
+const RESOURCES_API_BASE = `${API_ORIGIN}/api/resources`;
+
+const resolveImageUrl = (value) => {
+  if (!value || typeof value !== 'string') return '';
+  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:') || value.startsWith('blob:')) return value;
+  if (value.startsWith('/')) return `${API_ORIGIN}${value}`;
+  if (value.startsWith('uploads/')) return `${API_ORIGIN}/${value}`;
+  if (value.startsWith('profile-')) return `${API_ORIGIN}/uploads/${value}`;
+  return value;
+};
+
+const getAuthHeaders = () => {
+  const token = (localStorage.getItem('token') || '').replace(/[\r\n"]/g, '');
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
+};
 
 /* ── COMPONENTS ── */
 
@@ -19,7 +42,7 @@ const Sidebar = ({ currentView, setCurrentView, handleLogout }) => {
   ];
 
   return (
-    <div className="w-64 bg-white h-screen border-r border-gray-100 flex flex-col hidden md:flex shrink-0">
+    <div className="w-64 bg-white h-screen border-r border-gray-100 hidden md:flex md:flex-col shrink-0">
       {/* Logo */}
       <div className="h-20 flex items-center px-6 border-b border-gray-50">
         <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
@@ -78,6 +101,8 @@ const Sidebar = ({ currentView, setCurrentView, handleLogout }) => {
 };
 
 const TopBar = ({ user, currentView, setCurrentView }) => {
+  const resolvedAvatar = resolveImageUrl(user?.avatar || user?.profilePicture || '');
+
   return (
     <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 shrink-0">
       {/* Search */}
@@ -111,9 +136,9 @@ const TopBar = ({ user, currentView, setCurrentView }) => {
           </div>
           <div className={`w-10 h-10 rounded-full ${user?.avatar ? 'bg-white' : 'bg-orange-100'} border-2 border-white shadow-sm overflow-hidden flex-shrink-0`}>
             <img 
-              src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'student'}`} 
+              src={resolvedAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'student'}`} 
               alt="Avatar" 
-              className={`w-full h-full object-cover ${user?.avatar ? '' : 'pt-1'}`}
+              className={`w-full h-full object-cover ${resolvedAvatar ? '' : 'pt-1'}`}
             />
           </div>
         </button>
@@ -122,11 +147,21 @@ const TopBar = ({ user, currentView, setCurrentView }) => {
   );
 };
 
-const DashboardOverview = ({ user }) => {
+const DashboardOverview = ({
+  user,
+  myCircles = [],
+  isCirclesLoading = false,
+  setCurrentView,
+  recentResources = [],
+  isResourcesLoading = false,
+  savedResourcesCount = 0,
+  onPreviewResource,
+}) => {
+  const dashboardCircles = myCircles.slice(0, 3);
   const stats = [
-    { label: 'Joined Circles', value: '5', badge: '+2 new', badgeColor: 'text-emerald-600 bg-emerald-50', icon: Users, color: 'text-blue-500 bg-blue-50' },
+    { label: 'Joined Circles', value: String(myCircles.length), badge: myCircles.length > 0 ? `${myCircles.length} total` : null, badgeColor: 'text-emerald-600 bg-emerald-50', icon: Users, color: 'text-blue-500 bg-blue-50' },
     { label: 'Study Time (This Week)', value: '12h', badge: null, icon: CalendarIcon, color: 'text-purple-500 bg-purple-50' },
-    { label: 'Saved Resources', value: '14', badge: null, icon: FolderOpen, color: 'text-orange-500 bg-orange-50' },
+    { label: 'Saved Resources', value: String(savedResourcesCount), badge: null, icon: FolderOpen, color: 'text-orange-500 bg-orange-50' },
     { label: 'Engagement Score', value: '85%', badge: 'Top 10%', badgeColor: 'text-blue-600 bg-blue-50', icon: TrendingUp, color: 'text-emerald-500 bg-emerald-50' },
   ];
 
@@ -178,76 +213,59 @@ const DashboardOverview = ({ user }) => {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-gray-900">My Study Circles</h2>
-                <button className="text-sm font-semibold text-blue-600 hover:text-blue-700">View All</button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('circles')}
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  View All
+                </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Circle 1 */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2 py-1 rounded-lg">CS101</span>
-                    <span className="flex items-center text-xs font-bold text-emerald-500">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                      Active Now
-                    </span>
+                {isCirclesLoading ? (
+                  <div className="md:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-sm text-gray-500">
+                    Loading your circles...
                   </div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-blue-600 transition-colors">Intro to Computer Science</h3>
-                  <p className="text-sm text-gray-500 mb-6 line-clamp-2">Focus group for Algorithms and Data Structures assignment.</p>
-                  <div className="flex justify-between items-center">
-                    <div className="flex -space-x-2">
-                       <img className="w-8 h-8 rounded-full border-2 border-white object-cover bg-orange-100" src="https://api.dicebear.com/7.x/avataaars/svg?seed=1" alt="Member" />
-                       <img className="w-8 h-8 rounded-full border-2 border-white object-cover bg-green-100" src="https://api.dicebear.com/7.x/avataaars/svg?seed=2" alt="Member" />
-                       <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[10px] font-bold text-gray-500">+10</div>
-                    </div>
-                    <button className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center shadow-sm shadow-blue-200 transition-colors">
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                ) : dashboardCircles.length === 0 ? (
+                  <div className="md:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-sm text-gray-500">
+                    No study circles yet. Join or create one from the Study Circles tab.
                   </div>
-                </div>
+                ) : (
+                  dashboardCircles.map((circle, idx) => {
+                    const accent = idx % 3 === 0 ? 'bg-blue-500' : idx % 3 === 1 ? 'bg-purple-500' : 'bg-orange-500';
+                    const moduleBadge = idx % 3 === 0 ? 'bg-blue-50 text-blue-600' : idx % 3 === 1 ? 'bg-purple-50 text-purple-600' : 'bg-orange-50 text-orange-600';
 
-                {/* Circle 2 */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group hover:border-purple-200 transition-colors">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-purple-500" />
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="bg-purple-50 text-purple-600 text-xs font-bold px-2 py-1 rounded-lg">ECO202</span>
-                    <span className="text-xs font-bold text-gray-400">Tue, 2pm</span>
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-purple-600 transition-colors">Macroeconomics</h3>
-                  <p className="text-sm text-gray-500 mb-6 line-clamp-2">Weekly discussion on global markets and fiscal policy.</p>
-                  <div className="flex justify-between items-center">
-                    <div className="flex -space-x-2">
-                       <img className="w-8 h-8 rounded-full border-2 border-white object-cover bg-yellow-100" src="https://api.dicebear.com/7.x/avataaars/svg?seed=3" alt="Member" />
-                       <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[10px] font-bold text-gray-500">+6</div>
-                    </div>
-                    <button className="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors">
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Circle 3 */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group hover:border-orange-200 transition-colors">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-orange-500" />
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="bg-orange-50 text-orange-600 text-xs font-bold px-2 py-1 rounded-lg">HIS105</span>
-                    <span className="text-xs font-bold text-gray-400">Inactive</span>
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-orange-600 transition-colors">Modern World History</h3>
-                  <p className="text-sm text-gray-500 mb-6 line-clamp-2">Collaborative notes sharing and essay review.</p>
-                  <div className="flex justify-between items-center">
-                    <div className="flex -space-x-2">
-                       <img className="w-8 h-8 rounded-full border-2 border-white object-cover bg-red-100" src="https://api.dicebear.com/7.x/avataaars/svg?seed=4" alt="Member" />
-                       <img className="w-8 h-8 rounded-full border-2 border-white object-cover bg-blue-100" src="https://api.dicebear.com/7.x/avataaars/svg?seed=5" alt="Member" />
-                       <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[10px] font-bold text-gray-500">+3</div>
-                    </div>
-                    <button className="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors">
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                    return (
+                      <div key={circle.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group transition-colors hover:border-blue-200">
+                        <div className={`absolute top-0 left-0 w-1 h-full ${accent}`} />
+                        <div className="flex justify-between items-start mb-3">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-lg ${moduleBadge}`}>{circle.moduleCode}</span>
+                          <span className="text-xs font-bold text-gray-400">{circle.visibility}</span>
+                        </div>
+                        <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-blue-600 transition-colors">{circle.subject}</h3>
+                        <p className="text-sm text-gray-500 mb-6 line-clamp-2">{circle.semester} • Year {circle.year}</p>
+                        <div className="flex justify-between items-center">
+                          <div className="text-xs text-gray-500 font-semibold">{circle.memberCount ?? 0} members</div>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentView('circles')}
+                            className="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
+                            aria-label="Open circles"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
 
                 {/* Join New */}
-                <button className="bg-transparent border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('circles')}
+                  className="bg-transparent border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all group"
+                >
                   <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
                     <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
                   </div>
@@ -261,43 +279,62 @@ const DashboardOverview = ({ user }) => {
             <section>
               <div className="flex items-center justify-between mb-4 mt-6">
                 <h2 className="text-lg font-bold text-gray-900">Recent Resources</h2>
-                <button className="text-sm font-semibold text-blue-600 hover:text-blue-700">Browse Library</button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('resources')}
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  Browse Library
+                </button>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/50">
                       <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
-                      <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Module</th>
-                      <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Rating</th>
+                      <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Views</th>
                       <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    <tr className="hover:bg-gray-50/50 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-red-50 flex items-center justify-center text-red-500 flex-shrink-0">
-                            <span className="text-[10px] font-bold">PDF</span>
-                          </div>
-                          <span className="text-sm font-bold text-gray-900">Data Structures Summary</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-blue-50 text-blue-600">CS101</span>
-                      </td>
-                      <td className="py-4 px-6 hidden sm:table-cell">
-                        <div className="flex items-center gap-1 text-amber-400">
-                          <Star className="w-3.5 h-3.5 fill-current" />
-                          <span className="text-xs font-bold text-gray-600 ml-1">4.8</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <button className="text-gray-400 hover:text-blue-600 transition-colors">
-                          <ChevronRight className="w-5 h-5 ml-auto" />
-                        </button>
-                      </td>
-                    </tr>
+                    {isResourcesLoading ? (
+                      <tr>
+                        <td colSpan={4} className="py-6 px-6 text-sm text-gray-500">Loading recent resources...</td>
+                      </tr>
+                    ) : recentResources.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-6 px-6 text-sm text-gray-500">No resources available yet.</td>
+                      </tr>
+                    ) : (
+                      recentResources.map((resource) => (
+                        <tr key={resource._id || resource.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                <span className="text-[10px] font-bold uppercase">{String(resource.type || 'file').slice(0, 3)}</span>
+                              </div>
+                              <span className="text-sm font-bold text-gray-900 line-clamp-1">{resource.title}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-slate-100 text-slate-700 uppercase">{resource.type || 'file'}</span>
+                          </td>
+                          <td className="py-4 px-6 hidden sm:table-cell text-xs font-bold text-gray-600">
+                            {resource.views || 0}
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <button
+                              type="button"
+                              onClick={() => onPreviewResource?.(resource)}
+                              className="text-gray-400 hover:text-blue-600 transition-colors"
+                            >
+                              <ChevronRight className="w-5 h-5 ml-auto" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -398,6 +435,8 @@ const DashboardOverview = ({ user }) => {
 const EditProfile = ({ user, setUser }) => {
   const fileInputRef = React.useRef(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [isPhotoRemoved, setIsPhotoRemoved] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
     displayName: user?.displayName || (user?.fullName || 'Student User').split(' ')[0],
@@ -406,7 +445,7 @@ const EditProfile = ({ user, setUser }) => {
     bio: user?.bio || '',
     emailAlerts: user?.emailAlerts ?? true,
     pushNotifications: user?.pushNotifications ?? false,
-    avatar: user?.avatar || ''
+    avatar: user?.avatar || user?.profilePicture || ''
   });
 
   const handlePhotoUpload = (e) => {
@@ -421,6 +460,8 @@ const EditProfile = ({ user, setUser }) => {
         setFormData(prev => ({ ...prev, avatar: reader.result }));
       };
       reader.readAsDataURL(file);
+      setSelectedPhoto(file);
+      setIsPhotoRemoved(false);
     }
   };
 
@@ -439,13 +480,53 @@ const EditProfile = ({ user, setUser }) => {
       const storedToken = localStorage.getItem('token') || '';
       const cleanToken = storedToken.replace(/[\r\n"]/g, ''); // Ensure no invalid header chars
 
-      const res = await fetch('http://localhost:5000/api/users/profile', {
+      let photoData = null;
+
+      if (selectedPhoto) {
+        const uploadBody = new FormData();
+        uploadBody.append('image', selectedPhoto);
+
+        const uploadRes = await fetch(`${USERS_API_BASE}/profile/photo`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${cleanToken}`,
+          },
+          body: uploadBody,
+        });
+
+        const uploadRawText = await uploadRes.text();
+        try {
+          photoData = uploadRawText ? JSON.parse(uploadRawText) : {};
+        } catch {
+          photoData = {};
+        }
+
+        if (!uploadRes.ok) {
+          throw new Error(photoData.message || 'Error uploading profile photo');
+        }
+      } else if (isPhotoRemoved && (user?.profilePicture || user?.avatar)) {
+        const removeRes = await fetch(`${USERS_API_BASE}/profile/photo`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${cleanToken}`,
+          },
+        });
+
+        if (!removeRes.ok) {
+          const removeData = await removeRes.json().catch(() => ({}));
+          throw new Error(removeData.message || 'Error removing profile photo');
+        }
+      }
+
+      const { avatar, emailAlerts, pushNotifications, ...profilePayload } = formData;
+
+      const res = await fetch(`${USERS_API_BASE}/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${cleanToken}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(profilePayload)
       });
       
       const rawText = await res.text();
@@ -457,9 +538,21 @@ const EditProfile = ({ user, setUser }) => {
       }
       
       if (!res.ok) throw new Error(data.message || 'Error updating profile');
+
+      const nextUser = {
+        ...data,
+        avatar: photoData?.avatar ?? data.avatar,
+        profilePicture: photoData?.profilePicture ?? data.profilePicture,
+      };
       
-      setUser(data);
-      localStorage.setItem('user', JSON.stringify(data));
+      setUser(nextUser);
+      localStorage.setItem('user', JSON.stringify(nextUser));
+      setSelectedPhoto(null);
+      setIsPhotoRemoved(false);
+      setFormData(prev => ({
+        ...prev,
+        avatar: nextUser.avatar || nextUser.profilePicture || '',
+      }));
       alert("Profile saved successfully!");
     } catch (err) {
       console.error("Save Error:", err);
@@ -482,7 +575,7 @@ const EditProfile = ({ user, setUser }) => {
         <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <div className={`w-24 h-24 rounded-full ${formData.avatar ? 'bg-white' : 'bg-orange-100'} overflow-hidden ring-4 ring-white shadow-md flex-shrink-0`}>
             <img 
-              src={formData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'student'}`} 
+              src={resolveImageUrl(formData.avatar) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'student'}`} 
               alt="Profile" 
               className={`w-full h-full object-cover ${formData.avatar ? '' : 'pt-2'}`}
             />
@@ -507,7 +600,11 @@ const EditProfile = ({ user, setUser }) => {
               </button>
               <button 
                 type="button"
-                onClick={() => setFormData(prev => ({...prev, avatar: ''}))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, avatar: '' }));
+                  setSelectedPhoto(null);
+                  setIsPhotoRemoved(true);
+                }}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-2 px-4 rounded-xl transition-colors"
               >
                 Remove
@@ -651,8 +748,16 @@ const EditProfile = ({ user, setUser }) => {
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' or 'profile'
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [myCircles, setMyCircles] = useState([]);
+  const [discoverCircles, setDiscoverCircles] = useState([]);
+  const [isCirclesLoading, setIsCirclesLoading] = useState(false);
+  const [hasLoadedDiscover, setHasLoadedDiscover] = useState(false);
+  const [recentResources, setRecentResources] = useState([]);
+  const [savedResourcesCount, setSavedResourcesCount] = useState(0);
+  const [isResourcesLoading, setIsResourcesLoading] = useState(false);
 
   useEffect(() => {
     const u = getUser();
@@ -663,6 +768,98 @@ export default function StudentDashboard() {
     setUser(u);
   }, [navigate]);
 
+  const refreshCircles = async (silent = false, options = {}) => {
+    const includeDiscover = options.includeDiscover ?? false;
+
+    if (!silent) setIsCirclesLoading(true);
+
+    try {
+      const requests = [
+        fetch(`${CIRCLES_API_BASE}/my`, { headers: getAuthHeaders() }),
+      ];
+
+      if (includeDiscover) {
+        requests.push(fetch(`${CIRCLES_API_BASE}/discover`, { headers: getAuthHeaders() }));
+      }
+
+      const [myRes, discoverRes] = await Promise.all(requests);
+
+      if (myRes.status === 401 || discoverRes?.status === 401) {
+        clearAuth();
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      const myData = await myRes.json();
+
+      if (!myRes.ok) throw new Error(myData.message || 'Failed to load your circles.');
+
+      setMyCircles(Array.isArray(myData.circles) ? myData.circles : []);
+
+      if (includeDiscover && discoverRes) {
+        const discoverData = await discoverRes.json();
+        if (!discoverRes.ok) throw new Error(discoverData.message || 'Failed to load discover circles.');
+        setDiscoverCircles(Array.isArray(discoverData.circles) ? discoverData.circles : []);
+        setHasLoadedDiscover(true);
+      }
+    } catch (err) {
+      console.error('Failed to refresh circles:', err);
+    } finally {
+      setIsCirclesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    refreshCircles(false, { includeDiscover: false });
+  }, [user]);
+
+  const refreshOverviewResources = async () => {
+    setIsResourcesLoading(true);
+    try {
+      const res = await fetch(`${RESOURCES_API_BASE}?sort=-createdAt&limit=5&page=1`, { headers: getAuthHeaders() });
+
+      if (res.status === 401) {
+        clearAuth();
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to load resources.');
+
+      const list = Array.isArray(data.resources) ? data.resources : [];
+      setRecentResources(list);
+      setSavedResourcesCount(Number(data?.pagination?.total || 0));
+    } catch (err) {
+      console.error('Failed to load overview resources:', err);
+      setRecentResources([]);
+      setSavedResourcesCount(0);
+    } finally {
+      setIsResourcesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    refreshOverviewResources();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (currentView !== 'circles') return;
+    if (hasLoadedDiscover) return;
+    refreshCircles(false, { includeDiscover: true });
+  }, [currentView, user, hasLoadedDiscover]);
+
+  useEffect(() => {
+    const view = new URLSearchParams(location.search).get('view');
+    const allowed = ['dashboard', 'circles', 'resources', 'calendar', 'progress', 'profile'];
+    if (view && allowed.includes(view)) {
+      setCurrentView(view);
+    }
+  }, [location.search]);
+
   const handleLogout = () => {
     clearAuth();
     navigate('/', { replace: true });
@@ -671,7 +868,7 @@ export default function StudentDashboard() {
   if (!user) return null;
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden font-sans">
+    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} handleLogout={handleLogout} />
       
       <div className="flex-1 flex flex-col min-w-0">
@@ -687,6 +884,37 @@ export default function StudentDashboard() {
           <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8 flex flex-col items-center justify-center text-gray-400">
             <span className="text-4xl mb-4 opacity-50">🚧</span>
             <p className="font-semibold">{currentView.charAt(0).toUpperCase() + currentView.slice(1)} view coming soon</p>
+          <DashboardOverview
+            user={user}
+            myCircles={myCircles}
+            isCirclesLoading={isCirclesLoading}
+            setCurrentView={setCurrentView}
+            recentResources={recentResources}
+            isResourcesLoading={isResourcesLoading}
+            savedResourcesCount={savedResourcesCount}
+            onPreviewResource={(resource) => navigate(`/resources/preview/${resource._id || resource.id}`)}
+          />
+        ) : currentView === 'circles' ? (
+          <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8">
+            <div className="max-w-7xl mx-auto">
+              <StudentCirclesManager
+                user={user}
+                myCircles={myCircles}
+                discoverCircles={discoverCircles}
+                refreshCircles={(silent) => refreshCircles(silent, { includeDiscover: true })}
+                isLoadingExternal={isCirclesLoading}
+              />
+            </div>
+          </div>
+        ) : currentView === 'resources' ? (
+          <ResourcesLibrary user={user} />
+        ) : currentView === 'profile' ? (
+          <EditProfile user={user} setUser={setUser} />
+        ) : (
+          <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-gray-500 text-lg">This section is coming soon.</p>
+            </div>
           </div>
         )}
       </div>
