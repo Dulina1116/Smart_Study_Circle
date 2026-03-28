@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  AtSign,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  Lock,
+  Sparkles,
+  User,
+} from "lucide-react";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -14,14 +23,13 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [pwStrength, setPwStrength] = useState(null); // null = no bar yet
+  const [pwStrength, setPwStrength] = useState(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (e.target.name === "password") checkStrength(e.target.value);
   };
 
-  // ── FIX: score=0 now maps to a real "Too Short" level; bar only shown when pw non-empty ──
   const checkStrength = (pw) => {
     if (!pw) {
       setPwStrength(null);
@@ -36,16 +44,18 @@ export default function Register() {
     if (/[^A-Za-z0-9]/.test(pw)) score++;
 
     const levels = [
-      { width: "10%", color: "#ef4444", label: "Too Short" }, // score = 0
-      { width: "20%", color: "#ef4444", label: "Very Weak" }, // score = 1
-      { width: "40%", color: "#f97316", label: "Weak" }, // score = 2
-      { width: "60%", color: "#eab308", label: "Fair" }, // score = 3
-      { width: "80%", color: "#22c55e", label: "Strong" }, // score = 4
-      { width: "100%", color: "#00b8a9", label: "Very Strong" }, // score = 5
+      { width: "10%", color: "#ef4444", label: "Too Short" },
+      { width: "20%", color: "#ef4444", label: "Very Weak" },
+      { width: "40%", color: "#f97316", label: "Weak" },
+      { width: "60%", color: "#eab308", label: "Fair" },
+      { width: "80%", color: "#22c55e", label: "Strong" },
+      { width: "100%", color: "#00b8a9", label: "Very Strong" },
     ];
 
     setPwStrength(levels[Math.min(score, 5)]);
   };
+
+  const studentEmailPattern = /^[^\s@]+@my\.sliit\.lk$/i;
 
   const validate = () => {
     const e = {};
@@ -56,6 +66,11 @@ export default function Register() {
     if (!formData.email.trim()) e.email = "⚠ Email is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       e.email = "⚠ Enter a valid email address.";
+    else if (
+      formData.role === "student" &&
+      !studentEmailPattern.test(formData.email.trim())
+    )
+      e.email = "⚠ Student email must end with @my.sliit.lk";
 
     if (!formData.password) e.password = "⚠ Password is required.";
     else if (formData.password.length < 8)
@@ -88,263 +103,183 @@ export default function Register() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden font-body">
-      {/* ── LEFT PANEL ── */}
-      <div
-        className="w-[42%] min-w-[320px] flex flex-col justify-between px-10 py-9"
-        style={{ background: "linear-gradient(155deg, #00b8a9, #007a6e)" }}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-lg bg-white"
-            style={{ color: "#00b8a9" }}
+    <div className="min-h-screen bg-white font-sans flex text-gray-900">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#123533] bg-gradient-to-br from-[#123533] to-[#0c2422] p-12 flex-col justify-between relative overflow-hidden">
+        <div className="absolute top-1/4 -right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10 w-full max-w-lg mx-auto flex flex-col h-full">
+          <Link
+            to="/"
+            className="flex items-center gap-3 w-fit mb-16 hover:opacity-90 transition-opacity"
           >
-            ✦
+            <div className="w-10 h-10 bg-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <GraduationCap className="w-6 h-6 text-[#123533]" />
+            </div>
+            <span className="text-xl font-bold text-white tracking-tight">
+              Smart Study Circle
+            </span>
+          </Link>
+
+          <div className="mb-12">
+            <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+              <span className="text-white block">Unlock Your</span>
+              <span className="text-cyan-400 block">Academic</span>
+              <span className="text-cyan-400 block">Potential</span>
+            </h1>
+            <p className="text-teal-50 text-lg leading-relaxed max-w-md">
+              Join the most innovative peer-led learning platform. Connect with
+              experts, share resources, and excel together.
+            </p>
           </div>
-          <span className="font-bold text-white text-sm">
-            Smart Study Circle
-          </span>
-        </div>
 
-        {/* Hero */}
-        <div className="flex flex-col gap-4">
-          <h1 className="text-4xl font-extrabold text-white leading-tight font-head">
-            Unlock Your
-            <br />
-            <span className="text-white/80">Academic Potential</span>
-          </h1>
-          <p className="text-sm leading-relaxed text-white/70">
-            Join over 50,000 students from top universities globally.
-            Collaborate on projects, share insights, and excel together.
-          </p>
+          <div className="mt-auto relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-white/10 group">
+            <img
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+              alt="Students studying"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#123533]/90 via-[#123533]/20 to-transparent"></div>
 
-          <div className="flex flex-col gap-3 mt-2">
-            {[
-              {
-                icon: "👥",
-                title: "Study Circles",
-                desc: "Join real-time peer groups for your modules.",
-              },
-              {
-                icon: "📊",
-                title: "AI Insights",
-                desc: "Track your learning progress with smart analytics.",
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="flex items-center gap-4 p-4 rounded-2xl border border-white/20
-                  bg-white/10 backdrop-blur-sm transition-all hover:bg-white/20"
-              >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center
-                  text-xl flex-shrink-0 bg-white/20"
-                >
-                  {f.icon}
+            <div className="absolute top-6 left-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
+              <div className="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 text-[#123533]" />
+              </div>
+              <span className="text-white text-sm font-semibold tracking-wide">
+                AI Study Buddy Active
+              </span>
+            </div>
+
+            <div className="absolute bottom-6 right-6 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
+              <div className="flex -space-x-3">
+                <div className="w-8 h-8 rounded-full border-2 border-[#123533] bg-gray-300">
+                  <img
+                    src="https://i.pravatar.cc/100?img=1"
+                    alt="Avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">{f.title}</h4>
-                  <p className="text-xs mt-0.5 text-white/70">{f.desc}</p>
+                <div className="w-8 h-8 rounded-full border-2 border-[#123533] bg-gray-400">
+                  <img
+                    src="https://i.pravatar.cc/100?img=2"
+                    alt="Avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </div>
+                <div className="w-8 h-8 rounded-full border-2 border-[#123533] bg-gray-500">
+                  <img
+                    src="https://i.pravatar.cc/100?img=3"
+                    alt="Avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 </div>
               </div>
-            ))}
+              <span className="text-white text-xs font-medium">
+                <strong className="font-bold text-white">1.2k</strong> students
+                studying right now
+              </span>
+            </div>
           </div>
-        </div>
-
-        {/* Trusted */}
-        <div className="flex items-center gap-3 pt-4 border-t border-white/20">
-          <div className="flex">
-            {[11, 22, 33].map((n) => (
-              <img
-                key={n}
-                src={`https://i.pravatar.cc/36?img=${n}`}
-                alt="s"
-                className="w-8 h-8 rounded-full border-2 border-white -ml-2 first:ml-0"
-              />
-            ))}
-          </div>
-          <p className="text-xs text-white/70">
-            Trusted by students at{" "}
-            <strong className="text-white">Stanford, MIT &amp; Oxford</strong>
-          </p>
         </div>
       </div>
 
-      {/* ── RIGHT PANEL ── */}
-      <div className="flex-1 overflow-y-auto flex flex-col px-14 py-9 gap-6 bg-[#f8f9fa]">
-        {/* Steps */}
-        <div className="flex items-center self-end">
-          {["ACCOUNT", "VERIFICATION", "INTERESTS"].map((s, i) => (
-            <div key={s} className="flex items-center">
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center
-                  font-bold text-sm border-2 transition-all ${
-                    i === 0
-                      ? "bg-[#00b8a9] border-[#00b8a9] text-white shadow-[0_0_0_4px_rgba(0,184,169,0.2)]"
-                      : "bg-white border-gray-200 text-gray-400"
-                  }`}
-                >
-                  {i + 1}
-                </div>
-                <span
-                  className={`text-[0.58rem] font-bold tracking-widest ${
-                    i === 0 ? "text-[#00b8a9]" : "text-gray-400"
-                  }`}
-                >
-                  {s}
-                </span>
-              </div>
-              {i < 2 && <div className="w-16 h-0.5 mx-2 mb-5 bg-gray-200" />}
-            </div>
-          ))}
-        </div>
-
-        {/* Form */}
-        <div className="max-w-[460px] w-full">
-          <div className="mb-7">
-            <h2 className="text-3xl font-extrabold text-[#1a1a2e] mb-1 font-head">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16">
+        <div className="w-full max-w-md">
+          <div className="mb-10 text-center lg:text-left">
+            <h2 className="text-3xl font-extrabold text-[#111827] mb-3 tracking-tight">
               Create Account
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-gray-500 text-sm font-medium">
               Start your journey to smarter learning today.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate>
-            {/* Full Name */}
-            <div className="mb-5">
-              <label className="block text-sm font-semibold text-[#1a1a2e] mb-2">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-[#111827]">
                 Full Name
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  👤
-                </span>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
                 <input
                   type="text"
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
+                  className={`block w-full pl-11 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 hover:border-gray-300 transition-colors bg-white text-gray-900 placeholder-gray-400 outline-none ${
+                    errors.fullName ? "border-red-400" : "border-gray-200"
+                  }`}
                   placeholder="Enter your full name"
-                  className={`w-full pl-10 pr-4 py-3 rounded-2xl text-sm text-[#1a1a2e]
-                    outline-none border bg-white transition-all
-                    focus:border-[#00b8a9] focus:shadow-[0_0_0_3px_rgba(0,184,169,0.15)] ${
-                      errors.fullName ? "border-red-400" : "border-gray-200"
-                    }`}
                 />
               </div>
               {errors.fullName && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
+                <p className="text-red-500 text-xs font-medium">
                   {errors.fullName}
                 </p>
               )}
             </div>
 
-            {/* Email */}
-            <div className="mb-5">
-              <label className="block text-sm font-semibold text-[#1a1a2e] mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-[#111827]">
                 Email Address
               </label>
               <div className="relative">
-                <span
-                  className="absolute left-4 top-1/2 -translate-y-1/2
-                  font-bold text-gray-400 text-base"
-                >
-                  @
-                </span>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <AtSign className="h-5 w-5 text-gray-400" />
+                </div>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="name@example.com"
-                  className={`w-full pl-10 pr-4 py-3 rounded-2xl text-sm text-[#1a1a2e]
-                    outline-none border bg-white transition-all
-                    focus:border-[#00b8a9] focus:shadow-[0_0_0_3px_rgba(0,184,169,0.15)] ${
-                      errors.email ? "border-red-400" : "border-gray-200"
-                    }`}
+                  className={`block w-full pl-11 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 hover:border-gray-300 transition-colors bg-white text-gray-900 placeholder-gray-400 outline-none ${
+                    errors.email ? "border-red-400" : "border-gray-200"
+                  }`}
+                  placeholder={
+                    formData.role === "student"
+                      ? "registrationnumber@my.sliit.lk"
+                      : "name@example.com"
+                  }
                 />
               </div>
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
+                <p className="text-red-500 text-xs font-medium">
                   {errors.email}
                 </p>
               )}
             </div>
 
-            {/* Password */}
-            <div className="mb-5">
-              <label className="block text-sm font-semibold text-[#1a1a2e] mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-[#111827]">
                 Create Password
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  🔒
-                </span>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
                 <input
                   type={showPw ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                  className={`block w-full pl-11 pr-11 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 hover:border-gray-300 transition-colors bg-white text-gray-900 placeholder-gray-400 outline-none ${
+                    errors.password ? "border-red-400" : "border-gray-200"
+                  }`}
                   placeholder="Min. 8 characters"
-                  className={`w-full pl-10 pr-10 py-3 rounded-2xl text-sm text-[#1a1a2e]
-                    outline-none border bg-white transition-all
-                    focus:border-[#00b8a9] focus:shadow-[0_0_0_3px_rgba(0,184,169,0.15)] ${
-                      errors.password ? "border-red-400" : "border-gray-200"
-                    }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2
-                    text-gray-400 hover:text-[#00b8a9] transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-cyan-500 transition-colors"
                 >
                   {showPw ? (
-                    // Eye-off icon
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path
-                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8
-                        a18.45 18.45 0 0 1 5.06-5.94"
-                      />
-                      <path
-                        d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8
-                        a18.5 18.5 0 0 1-2.16 3.19"
-                      />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    // Eye icon
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
               </div>
-
-              {/* ── Strength bar: only renders when pwStrength is not null ── */}
               {pwStrength && (
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
@@ -364,17 +299,15 @@ export default function Register() {
                   </span>
                 </div>
               )}
-
               {errors.password && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
+                <p className="text-red-500 text-xs font-medium">
                   {errors.password}
                 </p>
               )}
             </div>
 
-            {/* Role */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-[#1a1a2e] mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-[#111827]">
                 Join as a
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -386,19 +319,18 @@ export default function Register() {
                     key={r.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, role: r.value })}
-                    className={`flex flex-col items-center gap-2 py-4 rounded-2xl
-                      border-2 transition-all ${
-                        formData.role === r.value
-                          ? "border-[#00b8a9] bg-[#e0f7f5] shadow-[0_0_0_3px_rgba(0,184,169,0.15)]"
-                          : "border-gray-200 bg-white hover:border-[#00b8a9]/50"
-                      }`}
+                    className={`flex flex-col items-center gap-2 py-4 rounded-2xl border-2 transition-all ${
+                      formData.role === r.value
+                        ? "border-cyan-500 bg-cyan-50 shadow-[0_0_0_3px_rgba(6,182,212,0.2)]"
+                        : "border-gray-200 bg-white hover:border-cyan-300"
+                    }`}
                   >
                     <span className="text-2xl">{r.icon}</span>
                     <strong
                       className={`text-sm font-semibold ${
                         formData.role === r.value
-                          ? "text-[#00b8a9]"
-                          : "text-[#1a1a2e]"
+                          ? "text-cyan-600"
+                          : "text-[#111827]"
                       }`}
                     >
                       {r.label}
@@ -409,53 +341,36 @@ export default function Register() {
             </div>
 
             {errors.api && (
-              <p className="text-red-500 text-sm text-center mb-3">
+              <p className="text-red-500 text-sm text-center">
                 {errors.api}
               </p>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 rounded-2xl font-bold text-sm text-white
-                flex items-center justify-center gap-2 transition-all duration-200
-                hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70
-                disabled:cursor-not-allowed"
-              style={{
-                background: "linear-gradient(135deg, #00b8a9, #007a6e)",
-              }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm bg-cyan-400 text-[#0c2422] hover:bg-cyan-300 transition-colors shadow-lg shadow-cyan-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? (
-                "⏳ Creating Account..."
-              ) : (
-                <>
-                  Create Account <span>→</span>
-                </>
-              )}
+              {loading ? "⏳ Creating Account..." : "Create Account →"}
             </button>
           </form>
 
-          <p
-            className="text-center text-[0.7rem] tracking-widest mt-5
-            leading-loose text-gray-400"
-          >
-            ALREADY HAVE AN ACCOUNT?
-            <br />
-            <a
-              href="/login"
-              className="text-[#00b8a9] font-bold text-sm hover:underline"
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="font-semibold text-cyan-600 hover:text-cyan-500"
             >
               Log in to your account
-            </a>
+            </Link>
           </p>
           <p className="text-center text-[0.68rem] mt-3 leading-relaxed text-gray-400">
             By signing up, you agree to our{" "}
-            <a href="#" className="text-[#00b8a9] hover:underline">
+            <a href="#" className="text-cyan-600 hover:underline">
               Terms of Service
             </a>{" "}
             and{" "}
-            <a href="#" className="text-[#00b8a9] hover:underline">
+            <a href="#" className="text-cyan-600 hover:underline">
               Privacy Policy
             </a>
             .

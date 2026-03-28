@@ -106,6 +106,7 @@ export default function StudentCirclesManager({
   const [editCircleId, setEditCircleId] = useState(null);
   const [editForm, setEditForm] = useState(initialCreateForm);
   const [createForm, setCreateForm] = useState(initialCreateForm);
+  const [createErrors, setCreateErrors] = useState({});
   const [inviteCodeInput, setInviteCodeInput] = useState("");
   const [activeAction, setActiveAction] = useState("");
 
@@ -152,18 +153,49 @@ export default function StudentCirclesManager({
     }
   };
 
+  const validateCreateForm = (values) => {
+    const errors = {};
+    const subjectValue = values.subject.trim();
+    const moduleValue = values.moduleCode.trim();
+    if (!subjectValue) errors.subject = "Subject is required.";
+    if (!moduleValue) errors.moduleCode = "Module code is required.";
+    if (!values.semester.trim()) errors.semester = "Semester is required.";
+    if (!values.year) errors.year = "Year is required.";
+    if (values.description && values.description.length > 250) {
+      errors.description = "Description must be 250 characters or less.";
+    }
+
+    if (subjectValue) {
+      const normalizedSubject = subjectValue.toLowerCase();
+      const hasSubjectDuplicate = myCircles.some(
+        (circle) =>
+          String(circle.subject || "").trim().toLowerCase() ===
+          normalizedSubject,
+      );
+      if (hasSubjectDuplicate) {
+        errors.subject = "A circle with this subject already exists.";
+      }
+    }
+
+    if (moduleValue) {
+      const normalizedModule = moduleValue.toUpperCase();
+      const hasModuleDuplicate = myCircles.some(
+        (circle) =>
+          String(circle.moduleCode || "").trim().toUpperCase() ===
+          normalizedModule,
+      );
+      if (hasModuleDuplicate) {
+        errors.moduleCode = "A circle with this module code already exists.";
+      }
+    }
+    return errors;
+  };
+
   const createCircle = async (e) => {
     e.preventDefault();
-
-    if (
-      !createForm.subject.trim() ||
-      !createForm.moduleCode.trim() ||
-      !createForm.semester.trim() ||
-      !createForm.year
-    ) {
-      alert("Please fill all create-circle fields.");
-      return;
-    }
+    const errors = validateCreateForm(createForm);
+    setCreateErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     await performAction("create", async () => {
       const res = await fetch(API_BASE, {
@@ -181,6 +213,7 @@ export default function StudentCirclesManager({
       await parseResponse(res);
       setShowCreateModal(false);
       setCreateForm(initialCreateForm);
+      setCreateErrors({});
     });
   };
 
@@ -210,15 +243,23 @@ export default function StudentCirclesManager({
     });
   };
 
-  const openCircleDetails = async (circleId) => {
+  const openCircleDetails = async (circle) => {
+    const circleId = typeof circle === "object" ? circle.id : circle;
+    if (circle && typeof circle === "object") {
+      setDetailCircle(circle);
+      setShowDetailsModal(true);
+    } else {
+      setDetailCircle(null);
+      setShowDetailsModal(true);
+    }
+
     setIsDetailLoading(true);
     try {
       const res = await fetch(`${API_BASE}/${circleId}`, {
         headers: createHeaders(),
       });
       const data = await parseResponse(res);
-      setDetailCircle(data.circle);
-      setShowDetailsModal(true);
+      setDetailCircle(data.circle || circle || null);
     } catch (err) {
       alert(err.message);
     } finally {
@@ -395,35 +436,42 @@ export default function StudentCirclesManager({
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-gray-900">Study Circles</h2>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="relative overflow-hidden rounded-3xl border border-[var(--dash-border)] bg-[var(--dash-surface)] p-5 sm:p-6 shadow-[0_16px_30px_rgba(31,41,51,0.08)]">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[rgba(15,118,110,0.14)] blur-2xl" />
+        <div className="pointer-events-none absolute -left-12 -bottom-12 h-32 w-32 rounded-full bg-[rgba(245,158,11,0.18)] blur-2xl" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-[var(--dash-ink)] font-head">
+              Study Circles
+            </h2>
+            <p className="text-xs text-[var(--dash-muted)] mt-1">
+              Public circles can be joined directly. Invite code is only for private circles.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
           <input
             value={inviteCodeInput}
             onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
             placeholder="Invite code"
-            className="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+            className="h-10 rounded-xl border border-[var(--dash-border)] bg-[var(--dash-surface-2)] px-3 text-sm text-[var(--dash-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--dash-accent-soft)]"
           />
           <button
             type="button"
             onClick={joinByCode}
             disabled={activeAction === "joinByCode"}
-            className="h-10 px-4 rounded-lg text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700"
+            className="h-10 px-4 rounded-xl text-sm font-semibold bg-[var(--dash-surface-2)] hover:bg-[rgba(15,118,110,0.1)] text-[var(--dash-ink)]"
           >
             Request Private Circle
           </button>
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="h-10 px-4 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center"
+            className="h-10 px-4 rounded-xl text-sm font-semibold bg-[linear-gradient(135deg,#0f766e,#14b8a6)] hover:brightness-110 text-white inline-flex items-center shadow-[0_10px_24px_rgba(15,118,110,0.35)]"
           >
             <Plus className="w-4 h-4 mr-1" /> Create Circle
           </button>
         </div>
-        <p className="text-xs text-gray-500 w-full">
-          Public circles can be joined directly. Invite code is only for private
-          circles.
-        </p>
+        </div>
       </div>
 
       {error ? (
@@ -440,7 +488,7 @@ export default function StudentCirclesManager({
         )}
 
         {myCircles.length === 0 ? (
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-sm text-gray-500 lg:col-span-2">
+          <div className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_16px_28px_rgba(31,41,51,0.08)] text-sm text-[var(--dash-muted)] lg:col-span-2">
             You are not in any circles yet. Create one or join with an invite
             code.
           </div>
@@ -452,24 +500,24 @@ export default function StudentCirclesManager({
             return (
               <div
                 key={circle.id}
-                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4"
+                className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_30px_rgba(31,41,51,0.08)] space-y-4 animate-fade-up"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold px-2 py-1 rounded-lg bg-blue-50 text-blue-600">
+                      <span className="text-xs font-bold px-2 py-1 rounded-lg bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]">
                         {circle.moduleCode}
                       </span>
                       <span
-                        className={`text-xs font-bold px-2 py-1 rounded-lg ${circle.visibility === "public" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-700"}`}
+                        className={`text-xs font-bold px-2 py-1 rounded-lg ${circle.visibility === "public" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
                       >
                         {circle.visibility}
                       </span>
                     </div>
-                    <h3 className="mt-2 text-base font-bold text-gray-900">
+                    <h3 className="mt-2 text-base font-bold text-[var(--dash-ink)] font-head">
                       {circle.subject}
                     </h3>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--dash-muted)]">
                       {circle.semester} • {circle.year}
                     </p>
                   </div>
@@ -478,7 +526,7 @@ export default function StudentCirclesManager({
                       <button
                         type="button"
                         onClick={() => openEditCircle(circle)}
-                        className="w-8 h-8 rounded-full hover:bg-blue-50 text-blue-600 inline-flex items-center justify-center"
+                        className="w-8 h-8 rounded-full hover:bg-[var(--dash-surface-2)] text-[var(--dash-accent)] inline-flex items-center justify-center"
                         title="Edit circle"
                       >
                         <Edit className="w-4 h-4" />
@@ -494,27 +542,27 @@ export default function StudentCirclesManager({
                   </div>
                 </div>
 
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-[var(--dash-muted)]">
                   Members:{" "}
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-[var(--dash-ink)]">
                     {circle.memberCount ?? circle.members.length}
                   </span>
                 </div>
 
                 {circle.visibility === "private" ? (
-                  <div className="rounded-xl bg-gray-50 px-3 py-2 flex items-center justify-between gap-3">
+                  <div className="rounded-xl bg-[var(--dash-surface-2)] px-3 py-2 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-[11px] text-gray-500">
+                      <p className="text-[11px] text-[var(--dash-muted)]">
                         Private Invite Code
                       </p>
-                      <p className="font-mono text-sm font-bold text-gray-900 tracking-wider">
+                      <p className="font-mono text-sm font-bold text-[var(--dash-ink)] tracking-wider">
                         {circle.inviteCode}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => copyInviteCode(circle.inviteCode)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-white border border-gray-200 font-semibold text-gray-700 inline-flex items-center"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--dash-surface)] border border-[var(--dash-border)] font-semibold text-[var(--dash-ink)] inline-flex items-center"
                     >
                       <Copy className="w-3.5 h-3.5 mr-1" /> Copy
                     </button>
@@ -529,16 +577,16 @@ export default function StudentCirclesManager({
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => openCircleDetails(circle.id)}
+                    onClick={() => openCircleDetails(circle)}
                     disabled={isDetailLoading}
-                    className="h-9 px-3 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 inline-flex items-center"
+                    className="h-9 px-3 rounded-lg text-xs font-semibold bg-[var(--dash-surface-2)] text-[var(--dash-ink)] inline-flex items-center"
                   >
                     <Eye className="w-3.5 h-3.5 mr-1" /> See Details
                   </button>
                   <button
                     type="button"
                     onClick={() => openChatPage(circle)}
-                    className="h-9 px-3 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 inline-flex items-center"
+                    className="h-9 px-3 rounded-lg text-xs font-semibold bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] inline-flex items-center"
                   >
                     <MessageCircle className="w-3.5 h-3.5 mr-1" /> Open Chat
                     Page
@@ -547,27 +595,27 @@ export default function StudentCirclesManager({
 
                 {canModerate ? (
                   <div className="space-y-2">
-                    <h4 className="text-xs uppercase tracking-wide text-gray-400 font-bold">
+                    <h4 className="text-xs uppercase tracking-wide text-[var(--dash-muted)] font-bold">
                       Join Requests ({circle.pendingJoinRequests.length})
                     </h4>
                     {circle.pendingJoinRequests.length === 0 ? (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--dash-muted)]">
                         No pending requests.
                       </p>
                     ) : (
                       circle.pendingJoinRequests.map((req, idx) => (
                         <div
                           key={req.id}
-                          className="rounded-lg border border-gray-100 p-3 flex items-center justify-between gap-3"
+                          className="rounded-lg border border-[var(--dash-border)] p-3 flex items-center justify-between gap-3"
                         >
                           <div className="min-w-0">
-                            <p className="text-sm text-gray-800 truncate font-semibold">
+                            <p className="text-sm text-[var(--dash-ink)] truncate font-semibold">
                               #{idx + 1}{" "}
                               {req.user.displayName ||
                                 req.user.fullName ||
                                 `Student ${String(req.user.id || "").slice(-4)}`}
                             </p>
-                            <p className="text-xs text-gray-500 truncate">
+                            <p className="text-xs text-[var(--dash-muted)] truncate">
                               {req.user.email || "Email not available"}
                             </p>
                           </div>
@@ -601,7 +649,7 @@ export default function StudentCirclesManager({
 
                 {isCreator ? (
                   <div className="space-y-2">
-                    <h4 className="text-xs uppercase tracking-wide text-gray-400 font-bold">
+                    <h4 className="text-xs uppercase tracking-wide text-[var(--dash-muted)] font-bold">
                       Co-Moderators
                     </h4>
                     <div className="flex flex-wrap items-center gap-2">
@@ -615,18 +663,18 @@ export default function StudentCirclesManager({
                           }))
                         }
                         placeholder="Student email"
-                        className="h-9 rounded-lg border border-gray-200 px-2.5 text-sm"
+                        className="h-9 rounded-lg border border-[var(--dash-border)] bg-[var(--dash-surface-2)] px-2.5 text-sm text-[var(--dash-ink)]"
                       />
                       <button
                         type="button"
                         onClick={() => assignCoModerator(circle.id)}
                         disabled={activeAction === `assign-${circle.id}`}
-                        className="h-9 px-3 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 inline-flex items-center"
+                        className="h-9 px-3 rounded-lg text-xs font-semibold bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] inline-flex items-center"
                       >
                         <UserPlus className="w-3.5 h-3.5 mr-1" /> Assign
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--dash-muted)]">
                       Enter student email. They will be auto-joined and assigned
                       as co-moderator (max 2).
                     </p>
@@ -636,7 +684,7 @@ export default function StudentCirclesManager({
                         {circle.coModerators.map((mod) => (
                           <div
                             key={mod.id}
-                            className="text-xs rounded-lg bg-blue-50 text-blue-700 px-2 py-1 flex items-center justify-between"
+                            className="text-xs rounded-lg bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] px-2 py-1 flex items-center justify-between"
                           >
                             <span className="inline-flex items-center">
                               <Shield className="w-3 h-3 mr-1" />{" "}
@@ -647,7 +695,7 @@ export default function StudentCirclesManager({
                               onClick={() =>
                                 removeCoModerator(circle.id, mod.id)
                               }
-                              className="text-blue-800 font-semibold"
+                              className="text-[var(--dash-accent-strong)] font-semibold"
                             >
                               Remove
                             </button>
@@ -655,7 +703,7 @@ export default function StudentCirclesManager({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--dash-muted)]">
                         No co-moderators assigned.
                       </p>
                     )}
@@ -667,13 +715,13 @@ export default function StudentCirclesManager({
                     type="button"
                     onClick={() => leaveCircle(circle.id)}
                     disabled={activeAction === `leave-${circle.id}`}
-                    className="text-xs font-semibold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    className="text-xs font-semibold px-3 py-2 rounded-lg bg-[var(--dash-surface-2)] hover:bg-[rgba(15,118,110,0.1)] text-[var(--dash-ink)]"
                   >
                     Leave Circle
                   </button>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--dash-muted)]">
                       You are the creator of this circle.
                     </p>
                     <button
@@ -682,7 +730,10 @@ export default function StudentCirclesManager({
                       disabled={activeAction === `delete-${circle.id}`}
                       className="text-xs font-semibold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 inline-flex items-center"
                     >
-                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete Circle
+                      <Trash2 className="w-3.5 h-3.5 mr-1" />
+                      {activeAction === `delete-${circle.id}`
+                        ? "Deleting..."
+                        : "Delete Circle"}
                     </button>
                   </div>
                 )}
@@ -692,8 +743,8 @@ export default function StudentCirclesManager({
         )}
       </div>
 
-      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="text-base font-bold text-gray-900 mb-4 font-sans">
+      <div className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_30px_rgba(31,41,51,0.08)]">
+        <h3 className="text-base font-bold text-[var(--dash-ink)] mb-4 font-head">
           Discover Public Circles
         </h3>
         {isLoadingExternal ? (
@@ -701,12 +752,12 @@ export default function StudentCirclesManager({
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="h-20 bg-gray-50 rounded-xl border border-gray-100"
+                className="h-20 bg-[var(--dash-surface-2)] rounded-xl border border-[var(--dash-border)]"
               ></div>
             ))}
           </div>
         ) : discoverDisplayCircles.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[var(--dash-muted)]">
             No public circles available right now.
           </p>
         ) : (
@@ -716,16 +767,16 @@ export default function StudentCirclesManager({
               return (
                 <div
                   key={circle.id}
-                  className="border border-gray-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="border border-[var(--dash-border)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div>
-                    <p className="text-xs font-bold text-blue-600">
+                    <p className="text-xs font-bold text-[var(--dash-accent)]">
                       {circle.moduleCode} • {circle.semester} {circle.year}
                     </p>
-                    <h4 className="font-bold text-gray-900">
+                    <h4 className="font-bold text-[var(--dash-ink)]">
                       {circle.subject}
                     </h4>
-                    <p className="text-xs text-gray-500 inline-flex items-center">
+                    <p className="text-xs text-[var(--dash-muted)] inline-flex items-center">
                       <Users className="w-3.5 h-3.5 mr-1" />{" "}
                       {circle.memberCount ?? circle.members.length} members
                     </p>
@@ -744,7 +795,7 @@ export default function StudentCirclesManager({
                       disabled={
                         alreadyJoined || activeAction === `join-${circle.id}`
                       }
-                      className="text-xs px-3 py-2 rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-60"
+                      className="text-xs px-3 py-2 rounded-lg bg-[var(--dash-accent)] text-white font-semibold disabled:opacity-60"
                     >
                       {alreadyJoined
                         ? "Joined"
@@ -789,8 +840,17 @@ export default function StudentCirclesManager({
                     }))
                   }
                   placeholder="e.g. Data Structures"
-                  className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className={`w-full h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                    createErrors.subject
+                      ? "border-red-300 focus:ring-red-100"
+                      : "border-gray-200"
+                  }`}
                 />
+                {createErrors.subject ? (
+                  <p className="text-xs text-red-600 mt-1">
+                    {createErrors.subject}
+                  </p>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -807,8 +867,17 @@ export default function StudentCirclesManager({
                       }))
                     }
                     placeholder="CS101"
-                    className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className={`w-full h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                      createErrors.moduleCode
+                        ? "border-red-300 focus:ring-red-100"
+                        : "border-gray-200"
+                    }`}
                   />
+                  {createErrors.moduleCode ? (
+                    <p className="text-xs text-red-600 mt-1">
+                      {createErrors.moduleCode}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -823,8 +892,17 @@ export default function StudentCirclesManager({
                       }))
                     }
                     placeholder="Semester 1"
-                    className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className={`w-full h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                      createErrors.semester
+                        ? "border-red-300 focus:ring-red-100"
+                        : "border-gray-200"
+                    }`}
                   />
+                  {createErrors.semester ? (
+                    <p className="text-xs text-red-600 mt-1">
+                      {createErrors.semester}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -841,13 +919,22 @@ export default function StudentCirclesManager({
                         year: e.target.value,
                       }))
                     }
-                    className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className={`w-full h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                      createErrors.year
+                        ? "border-red-300 focus:ring-red-100"
+                        : "border-gray-200"
+                    }`}
                   >
                     <option value="1">Year 1</option>
                     <option value="2">Year 2</option>
                     <option value="3">Year 3</option>
                     <option value="4">Year 4</option>
                   </select>
+                  {createErrors.year ? (
+                    <p className="text-xs text-red-600 mt-1">
+                      {createErrors.year}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -885,11 +972,20 @@ export default function StudentCirclesManager({
                   placeholder="Add a brief description of what this study circle is about..."
                   maxLength="250"
                   rows="3"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none ${
+                    createErrors.description
+                      ? "border-red-300 focus:ring-red-100"
+                      : "border-gray-200"
+                  }`}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   {createForm.description.length}/250 characters
                 </p>
+                {createErrors.description ? (
+                  <p className="text-xs text-red-600 mt-1">
+                    {createErrors.description}
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -903,9 +999,13 @@ export default function StudentCirclesManager({
                 <button
                   type="submit"
                   disabled={activeAction === "create"}
-                  className="h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold"
+                  className={`h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold ${
+                    activeAction === "create"
+                      ? "opacity-80 cursor-not-allowed"
+                      : ""
+                  }`}
                 >
-                  Create Circle
+                  {activeAction === "create" ? "Creating..." : "Create Circle"}
                 </button>
               </div>
             </form>

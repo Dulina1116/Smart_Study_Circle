@@ -65,13 +65,13 @@ const Sidebar = ({ currentView, setCurrentView, handleLogout }) => {
   ];
 
   return (
-    <div className="w-64 bg-white h-screen border-r border-gray-100 hidden md:flex md:flex-col shrink-0">
+    <div className="w-64 bg-[var(--dash-surface)] h-screen border-r border-[var(--dash-border)] hidden md:flex md:flex-col shrink-0 shadow-[0_18px_40px_rgba(31,41,51,0.08)]">
       {/* Logo */}
-      <div className="h-20 flex items-center px-6 border-b border-gray-50">
-        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+      <div className="h-20 flex items-center px-6 border-b border-[var(--dash-border)]">
+        <div className="w-9 h-9 bg-[linear-gradient(135deg,#0f766e,#14b8a6)] rounded-xl flex items-center justify-center mr-3 shadow-[0_10px_20px_rgba(15,118,110,0.35)] animate-scale-in">
           <GraduationCap className="text-white w-5 h-5" />
         </div>
-        <span className="text-xl font-bold text-gray-900 tracking-tight">
+        <span className="text-xl font-bold text-[var(--dash-ink)] tracking-tight font-head">
           SmartStudy
         </span>
       </div>
@@ -86,14 +86,14 @@ const Sidebar = ({ currentView, setCurrentView, handleLogout }) => {
             <button
               key={item.id}
               onClick={() => setCurrentView(item.id)}
-              className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
+              className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 isActive
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] shadow-[0_12px_24px_rgba(15,118,110,0.18)]"
+                  : "text-[var(--dash-muted)] hover:bg-[var(--dash-surface-2)] hover:text-[var(--dash-ink)]"
               }`}
             >
               <item.icon
-                className={`w-5 h-5 mr-3 ${isActive ? "text-blue-600" : "text-gray-400"}`}
+                className={`w-5 h-5 mr-3 ${isActive ? "text-[var(--dash-accent)]" : "text-gray-400"}`}
               />
               {item.label}
             </button>
@@ -103,9 +103,9 @@ const Sidebar = ({ currentView, setCurrentView, handleLogout }) => {
 
       {/* Premium Banner */}
       <div className="p-4">
-        <div className="bg-blue-500 rounded-2xl p-5 text-white relative overflow-hidden">
+        <div className="bg-[linear-gradient(135deg,#0f766e,#0ea5a4)] rounded-2xl p-5 text-white relative overflow-hidden">
           <div className="relative z-10">
-            <h4 className="font-bold text-sm mb-1">Premium Plan</h4>
+            <h4 className="font-bold text-sm mb-1 font-head">Premium Plan</h4>
             <p className="text-blue-100 text-xs mb-3">
               Get unlimited AI summaries.
             </p>
@@ -113,15 +113,15 @@ const Sidebar = ({ currentView, setCurrentView, handleLogout }) => {
               Upgrade
             </button>
           </div>
-          <Star className="absolute -bottom-4 -right-4 w-24 h-24 text-white/10" />
+          <Star className="absolute -bottom-6 -right-6 w-28 h-28 text-white/15" />
         </div>
       </div>
 
       {/* Logout */}
-      <div className="p-4 border-t border-gray-50">
+      <div className="p-4 border-t border-[var(--dash-border)]">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center px-4 py-3 text-sm font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+          className="w-full flex items-center px-4 py-3 text-sm font-semibold text-[var(--dash-muted)] hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
         >
           <LogOut className="w-5 h-5 mr-3" />
           Logout
@@ -137,7 +137,7 @@ const TopBar = ({ user, currentView, setCurrentView }) => {
   );
 
   return (
-    <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 shrink-0">
+    <header className="h-20 bg-[var(--dash-surface)] border-b border-[var(--dash-border)] flex items-center justify-between px-8 shrink-0">
       {/* Search */}
       <div className="flex-1 max-w-2xl">
         <div className="relative">
@@ -145,14 +145,14 @@ const TopBar = ({ user, currentView, setCurrentView }) => {
           <input
             type="text"
             placeholder="Search for notes, modules, or circles..."
-            className="w-full bg-gray-50 border-none rounded-full py-2.5 pl-10 pr-4 text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:outline-none placeholder-gray-400"
+            className="w-full bg-[var(--dash-surface-2)] border border-[var(--dash-border)] rounded-2xl py-2.5 pl-10 pr-4 text-sm text-[var(--dash-ink)] focus:ring-2 focus:ring-[var(--dash-accent-soft)] focus:outline-none placeholder-gray-400"
           />
         </div>
       </div>
 
       {/* Right side */}
       <div className="flex items-center gap-6 ml-4">
-        <button className="relative text-gray-400 hover:text-gray-600 transition-colors">
+        <button className="relative text-gray-400 hover:text-[var(--dash-ink)] transition-colors">
           <Bell className="w-5 h-5" />
           <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
@@ -162,15 +162,15 @@ const TopBar = ({ user, currentView, setCurrentView }) => {
           className="flex items-center gap-3 text-left group"
         >
           <div className="hidden md:block text-right">
-            <p className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+            <p className="text-sm font-bold text-[var(--dash-ink)] group-hover:text-[var(--dash-accent)] transition-colors">
               {user?.fullName || "Student User"}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--dash-muted)]">
               {user?.department || "Computer Science"}
             </p>
           </div>
           <div
-            className={`w-10 h-10 rounded-full ${user?.avatar ? "bg-white" : "bg-orange-100"} border-2 border-white shadow-sm overflow-hidden flex-shrink-0`}
+            className={`w-10 h-10 rounded-full ${user?.avatar ? "bg-white" : "bg-amber-100"} border-2 border-white shadow-sm overflow-hidden flex-shrink-0`}
           >
             <img
               src={
@@ -203,49 +203,51 @@ const DashboardOverview = ({
       label: "Joined Circles",
       value: String(myCircles.length),
       badge: myCircles.length > 0 ? `${myCircles.length} total` : null,
-      badgeColor: "text-emerald-600 bg-emerald-50",
+      badgeColor: "text-[var(--dash-accent)] bg-[var(--dash-accent-soft)]",
       icon: Users,
-      color: "text-blue-500 bg-blue-50",
+      color: "text-[var(--dash-accent)] bg-[var(--dash-accent-soft)]",
     },
     {
       label: "Study Time (This Week)",
       value: "12h",
       badge: null,
       icon: Calendar,
-      color: "text-purple-500 bg-purple-50",
+      color: "text-amber-600 bg-amber-50",
     },
     {
       label: "Saved Resources",
       value: String(savedResourcesCount),
       badge: null,
       icon: FolderOpen,
-      color: "text-orange-500 bg-orange-50",
+      color: "text-slate-600 bg-slate-100",
     },
     {
       label: "Engagement Score",
       value: "85%",
       badge: "Top 10%",
-      badgeColor: "text-blue-600 bg-blue-50",
+      badgeColor: "text-emerald-700 bg-emerald-50",
       icon: TrendingUp,
-      color: "text-emerald-500 bg-emerald-50",
+      color: "text-emerald-600 bg-emerald-50",
     },
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="relative flex-1 overflow-y-auto overflow-x-hidden bg-[var(--dash-bg)] p-8">
+      <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[rgba(245,158,11,0.22)] blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-[rgba(15,118,110,0.18)] blur-3xl" />
+      <div className="relative max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#0f172a] tracking-tight mb-2">
+            <h1 className="text-4xl font-extrabold text-[var(--dash-ink)] tracking-tight mb-2 font-head">
               Dashboard Overview
             </h1>
-            <p className="text-gray-500">
+            <p className="text-[var(--dash-muted)]">
               Welcome back, {(user?.fullName || "Student User").split(" ")[0]}!
               You have 3 upcoming sessions this week.
             </p>
           </div>
-          <button className="bg-blue-50 text-blue-600 font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center hover:bg-blue-100 transition-colors">
+          <button className="bg-[var(--dash-surface)] border border-[var(--dash-border)] text-[var(--dash-accent)] font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center hover:bg-[var(--dash-surface-2)] transition-colors shadow-[0_10px_20px_rgba(31,41,51,0.08)]">
             <Calendar className="w-4 h-4 mr-2" />
             October 24, 2023
           </button>
@@ -256,7 +258,8 @@ const DashboardOverview = ({
           {stats.map((stat, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between h-36"
+              className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_35px_rgba(31,41,51,0.08)] flex flex-col justify-between h-36 animate-fade-up"
+              style={{ animationDelay: `${idx * 70}ms` }}
             >
               <div className="flex justify-between items-start">
                 <div
@@ -273,10 +276,10 @@ const DashboardOverview = ({
                 )}
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-2xl font-bold text-[var(--dash-ink)]">
                   {stat.value}
                 </h3>
-                <p className="text-sm font-medium text-gray-500 mt-1">
+                <p className="text-sm font-medium text-[var(--dash-muted)] mt-1">
                   {stat.label}
                 </p>
               </div>
@@ -291,46 +294,46 @@ const DashboardOverview = ({
             {/* Study Circles */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="text-lg font-bold text-[var(--dash-ink)] font-head">
                   My Study Circles
                 </h2>
                 <button
                   type="button"
                   onClick={() => setCurrentView("circles")}
-                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                  className="text-sm font-semibold text-[var(--dash-accent)] hover:text-[var(--dash-accent-strong)]"
                 >
                   View All
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {isCirclesLoading ? (
-                  <div className="md:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-sm text-gray-500">
+                  <div className="md:col-span-2 bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_16px_28px_rgba(31,41,51,0.08)] text-sm text-[var(--dash-muted)]">
                     Loading your circles...
                   </div>
                 ) : dashboardCircles.length === 0 ? (
-                  <div className="md:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-sm text-gray-500">
+                  <div className="md:col-span-2 bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_16px_28px_rgba(31,41,51,0.08)] text-sm text-[var(--dash-muted)]">
                     No study circles yet. Join or create one from the Study
                     Circles tab.
                   </div>
                 ) : (
                   dashboardCircles.map((circle, idx) => {
-                    const accent =
-                      idx % 3 === 0
-                        ? "bg-blue-500"
-                        : idx % 3 === 1
-                          ? "bg-purple-500"
-                          : "bg-orange-500";
+                      const accent =
+                        idx % 3 === 0
+                          ? "bg-[var(--dash-accent)]"
+                          : idx % 3 === 1
+                            ? "bg-amber-500"
+                            : "bg-emerald-500";
                     const moduleBadge =
                       idx % 3 === 0
-                        ? "bg-blue-50 text-blue-600"
-                        : idx % 3 === 1
-                          ? "bg-purple-50 text-purple-600"
-                          : "bg-orange-50 text-orange-600";
+                          ? "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]"
+                          : idx % 3 === 1
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-emerald-50 text-emerald-700";
 
                     return (
                       <div
                         key={circle.id}
-                        className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group transition-colors hover:border-blue-200"
+                        className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_30px_rgba(31,41,51,0.08)] relative overflow-hidden group transition-colors hover:border-[rgba(15,118,110,0.4)]"
                       >
                         <div
                           className={`absolute top-0 left-0 w-1 h-full ${accent}`}
@@ -341,24 +344,24 @@ const DashboardOverview = ({
                           >
                             {circle.moduleCode}
                           </span>
-                          <span className="text-xs font-bold text-gray-400">
+                          <span className="text-xs font-bold text-[var(--dash-muted)]">
                             {circle.visibility}
                           </span>
                         </div>
-                        <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-blue-600 transition-colors">
+                        <h3 className="font-bold text-[var(--dash-ink)] text-lg mb-1 group-hover:text-[var(--dash-accent)] transition-colors font-head">
                           {circle.subject}
                         </h3>
-                        <p className="text-sm text-gray-500 mb-6 line-clamp-2">
+                        <p className="text-sm text-[var(--dash-muted)] mb-6 line-clamp-2">
                           {circle.semester} • Year {circle.year}
                         </p>
                         <div className="flex justify-between items-center">
-                          <div className="text-xs text-gray-500 font-semibold">
+                          <div className="text-xs text-[var(--dash-muted)] font-semibold">
                             {circle.memberCount ?? 0} members
                           </div>
                           <button
                             type="button"
                             onClick={() => setCurrentView("circles")}
-                            className="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
+                            className="w-8 h-8 rounded-full bg-[var(--dash-surface-2)] hover:bg-white text-[var(--dash-ink)] flex items-center justify-center transition-colors shadow-[0_8px_16px_rgba(31,41,51,0.08)]"
                             aria-label="Open circles"
                           >
                             <ChevronRight className="w-4 h-4" />
@@ -373,15 +376,15 @@ const DashboardOverview = ({
                 <button
                   type="button"
                   onClick={() => setCurrentView("circles")}
-                  className="bg-transparent border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all group"
+                  className="bg-transparent border-2 border-dashed border-[var(--dash-border)] rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[var(--dash-accent)] hover:bg-[rgba(15,118,110,0.06)] transition-all group"
                 >
                   <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
-                    <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
+                    <Plus className="w-5 h-5 text-gray-400 group-hover:text-[var(--dash-accent)]" />
                   </div>
-                  <h3 className="font-bold text-gray-700 group-hover:text-blue-700">
+                  <h3 className="font-bold text-[var(--dash-ink)] group-hover:text-[var(--dash-accent)] font-head">
                     Join New Circle
                   </h3>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-[var(--dash-muted)] mt-1">
                     Discover groups for your modules
                   </p>
                 </button>
@@ -391,31 +394,31 @@ const DashboardOverview = ({
             {/* Recent Resources */}
             <section>
               <div className="flex items-center justify-between mb-4 mt-6">
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="text-lg font-bold text-[var(--dash-ink)] font-head">
                   Recent Resources
                 </h2>
                 <button
                   type="button"
                   onClick={() => setCurrentView("resources")}
-                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                  className="text-sm font-semibold text-[var(--dash-accent)] hover:text-[var(--dash-accent-strong)]"
                 >
                   Browse Library
                 </button>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="bg-[var(--dash-surface)] rounded-2xl border border-[var(--dash-border)] shadow-[0_18px_30px_rgba(31,41,51,0.08)] overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50/50">
-                      <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <tr className="border-b border-[var(--dash-border)] bg-[var(--dash-surface-2)]">
+                      <th className="py-4 px-6 text-xs font-bold text-[var(--dash-muted)] uppercase tracking-wider">
                         Name
                       </th>
-                      <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="py-4 px-6 text-xs font-bold text-[var(--dash-muted)] uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                      <th className="py-4 px-6 text-xs font-bold text-[var(--dash-muted)] uppercase tracking-wider hidden sm:table-cell">
                         Views
                       </th>
-                      <th className="py-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">
+                      <th className="py-4 px-6 text-xs font-bold text-[var(--dash-muted)] uppercase tracking-wider text-right">
                         Action
                       </th>
                     </tr>
@@ -425,7 +428,7 @@ const DashboardOverview = ({
                       <tr>
                         <td
                           colSpan={4}
-                          className="py-6 px-6 text-sm text-gray-500"
+                          className="py-6 px-6 text-sm text-[var(--dash-muted)]"
                         >
                           Loading recent resources...
                         </td>
@@ -434,7 +437,7 @@ const DashboardOverview = ({
                       <tr>
                         <td
                           colSpan={4}
-                          className="py-6 px-6 text-sm text-gray-500"
+                          className="py-6 px-6 text-sm text-[var(--dash-muted)]"
                         >
                           No resources available yet.
                         </td>
@@ -443,33 +446,33 @@ const DashboardOverview = ({
                       recentResources.map((resource) => (
                         <tr
                           key={resource._id || resource.id}
-                          className="hover:bg-gray-50/50 transition-colors"
+                          className="hover:bg-[var(--dash-surface-2)] transition-colors"
                         >
                           <td className="py-4 px-6">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
+                              <div className="w-8 h-8 rounded bg-[var(--dash-accent-soft)] flex items-center justify-center text-[var(--dash-accent)] flex-shrink-0">
                                 <span className="text-[10px] font-bold uppercase">
                                   {String(resource.type || "file").slice(0, 3)}
                                 </span>
                               </div>
-                              <span className="text-sm font-bold text-gray-900 line-clamp-1">
+                              <span className="text-sm font-bold text-[var(--dash-ink)] line-clamp-1">
                                 {resource.title}
                               </span>
                             </div>
                           </td>
                           <td className="py-4 px-6">
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-slate-100 text-slate-700 uppercase">
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-[var(--dash-surface-2)] text-[var(--dash-ink)] uppercase">
                               {resource.type || "file"}
                             </span>
                           </td>
-                          <td className="py-4 px-6 hidden sm:table-cell text-xs font-bold text-gray-600">
+                          <td className="py-4 px-6 hidden sm:table-cell text-xs font-bold text-[var(--dash-muted)]">
                             {resource.views || 0}
                           </td>
                           <td className="py-4 px-6 text-right">
                             <button
                               type="button"
                               onClick={() => onPreviewResource?.(resource)}
-                              className="text-gray-400 hover:text-blue-600 transition-colors"
+                              className="text-gray-400 hover:text-[var(--dash-accent)] transition-colors"
                             >
                               <ChevronRight className="w-5 h-5 ml-auto" />
                             </button>
@@ -486,64 +489,64 @@ const DashboardOverview = ({
           {/* Right Column (Sessions & Calendar) */}
           <div className="space-y-8">
             {/* Upcoming Sessions */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 mb-6">
+            <div className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_30px_rgba(31,41,51,0.08)]">
+              <h2 className="text-lg font-bold text-[var(--dash-ink)] mb-6 font-head">
                 Upcoming Sessions
               </h2>
 
-              <div className="relative border-l-2 border-gray-100 ml-3 space-y-8 pb-4">
+              <div className="relative border-l-2 border-[var(--dash-border)] ml-3 space-y-8 pb-4">
                 {/* Session 1 */}
                 <div className="relative pl-6">
-                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-blue-500 shadow-sm"></span>
-                  <p className="text-xs font-bold text-blue-500 mb-1">
+                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-[var(--dash-accent)] shadow-sm"></span>
+                  <p className="text-xs font-bold text-[var(--dash-accent)] mb-1">
                     TODAY, 14:00
                   </p>
-                  <h4 className="text-sm font-bold text-gray-900 mb-1">
+                  <h4 className="text-sm font-bold text-[var(--dash-ink)] mb-1">
                     CS101 Group Study
                   </h4>
-                  <p className="text-xs text-gray-500 mb-3">
+                  <p className="text-xs text-[var(--dash-muted)] mb-3">
                     Virtual • Zoom Link
                   </p>
-                  <button className="bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">
+                  <button className="bg-[var(--dash-accent-soft)] hover:bg-[rgba(15,118,110,0.2)] text-[var(--dash-accent)] text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">
                     Join Meeting
                   </button>
                 </div>
 
                 {/* Session 2 */}
                 <div className="relative pl-6">
-                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-gray-300 shadow-sm"></span>
-                  <p className="text-xs font-bold text-gray-500 mb-1">
+                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-amber-300 shadow-sm"></span>
+                  <p className="text-xs font-bold text-[var(--dash-muted)] mb-1">
                     TOMORROW, 10:00
                   </p>
-                  <h4 className="text-sm font-bold text-gray-900 mb-1">
+                  <h4 className="text-sm font-bold text-[var(--dash-ink)] mb-1">
                     Exam Prep: History
                   </h4>
-                  <p className="text-xs text-gray-500">Library Room 302</p>
+                  <p className="text-xs text-[var(--dash-muted)]">Library Room 302</p>
                 </div>
 
                 {/* Session 3 */}
                 <div className="relative pl-6">
-                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-gray-300 shadow-sm"></span>
-                  <p className="text-xs font-bold text-gray-500 mb-1">
+                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-amber-300 shadow-sm"></span>
+                  <p className="text-xs font-bold text-[var(--dash-muted)] mb-1">
                     FRI, 13:00
                   </p>
-                  <h4 className="text-sm font-bold text-gray-900 mb-1">
+                  <h4 className="text-sm font-bold text-[var(--dash-ink)] mb-1">
                     Eco Policy Review
                   </h4>
-                  <p className="text-xs text-gray-500">Campus Cafe</p>
+                  <p className="text-xs text-[var(--dash-muted)]">Campus Cafe</p>
                 </div>
               </div>
             </div>
 
             {/* Calendar Widget placeholder */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_30px_rgba(31,41,51,0.08)]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900">October 2023</h3>
+                <h3 className="font-bold text-[var(--dash-ink)] font-head">October 2023</h3>
                 <div className="flex gap-2">
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="text-gray-400 hover:text-[var(--dash-ink)]">
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="text-gray-400 hover:text-[var(--dash-ink)]">
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -551,7 +554,7 @@ const DashboardOverview = ({
 
               <div className="grid grid-cols-7 text-center gap-1 mb-2">
                 {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-                  <div key={i} className="text-xs font-bold text-gray-400 py-1">
+                  <div key={i} className="text-xs font-bold text-[var(--dash-muted)] py-1">
                     {day}
                   </div>
                 ))}
@@ -564,7 +567,7 @@ const DashboardOverview = ({
                   return (
                     <div key={i} className="py-1">
                       <span
-                        className={`inline-flex items-center justify-center w-7 h-7 text-xs font-semibold rounded-full ${isToday ? "bg-blue-500 text-white shadow-md" : "text-gray-700 hover:bg-gray-100"}`}
+                        className={`inline-flex items-center justify-center w-7 h-7 text-xs font-semibold rounded-full ${isToday ? "bg-[var(--dash-accent)] text-white shadow-md" : "text-[var(--dash-ink)] hover:bg-[var(--dash-surface-2)]"}`}
                       >
                         {day}
                       </span>
@@ -579,15 +582,15 @@ const DashboardOverview = ({
 
       {/* Floating Action Buttons */}
       <div className="fixed bottom-8 right-8 flex flex-col items-end gap-3 z-50">
-        <div className="bg-white rounded-2xl shadow-xl w-48 text-sm overflow-hidden border border-gray-100 opacity-90 hover:opacity-100 transition-opacity hidden md:block">
-          <button className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-50">
-            <span className="text-amber-500">✨</span> Summarize notes
+        <div className="bg-[var(--dash-surface)] rounded-2xl shadow-xl w-48 text-sm overflow-hidden border border-[var(--dash-border)] opacity-90 hover:opacity-100 transition-opacity hidden md:block">
+          <button className="w-full text-left px-4 py-2 hover:bg-[var(--dash-surface-2)] flex items-center gap-2 border-b border-[var(--dash-border)]">
+            <span className="text-amber-500">*</span> Summarize notes
           </button>
-          <button className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
-            <span className="text-blue-500">📝</span> Quiz me on History
+          <button className="w-full text-left px-4 py-2 hover:bg-[var(--dash-surface-2)] flex items-center gap-2">
+            <span className="text-[var(--dash-accent)]">*</span> Quiz me on History
           </button>
         </div>
-        <button className="w-14 h-14 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105">
+        <button className="w-14 h-14 bg-[linear-gradient(135deg,#0f766e,#14b8a6)] hover:brightness-110 rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105">
           <GraduationCap className="w-6 h-6" />
         </button>
       </div>
@@ -1122,14 +1125,14 @@ export default function StudentDashboard() {
   if (!user) return null;
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+    <div className="flex h-screen bg-[var(--dash-bg)] font-body text-[var(--dash-ink)] overflow-hidden">
       <Sidebar
         currentView={currentView}
         setCurrentView={setCurrentView}
         handleLogout={handleLogout}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         <TopBar
           user={user}
           currentView={currentView}
