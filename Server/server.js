@@ -20,6 +20,7 @@ import resourceRoutes from "./routes/resourceRoutes.js";
 import officeHourRoutes from "./routes/officeHourRoutes.js";
 import circleRoutes from "./routes/circleRoutes.js";
 import lecturerResourceRoute from "./routes/lecturerResourceRoute.js";
+import eventRoutes from "./routes/eventRoutes.js";
 
 // Models
 import User from "./models/User.js";
@@ -57,6 +58,7 @@ app.use("/api/resources", resourceRoutes);
 app.use("/api/office-hours", officeHourRoutes);
 app.use("/api/lecturer-circles", circleRoutes);
 app.use("/api/lecturer-resources", lecturerResourceRoute);
+app.use("/api/events", eventRoutes);
 
 // Serve uploads folder
 import { fileURLToPath } from "url";

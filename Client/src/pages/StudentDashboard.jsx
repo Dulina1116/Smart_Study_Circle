@@ -23,6 +23,7 @@ import { clearAuth, getUser } from "../utils/authUtils";
 import StudentProgress from "../components/StudentProgress";
 import StudentCirclesManager from "../components/StudentCirclesManager";
 import ResourcesLibrary from "../components/ResourcesLibrary";
+import CalendarView from "../components/CalendarView";
 const API_ORIGIN =
   import.meta.env.VITE_API_ORIGIN ||
   `${window.location.protocol}//${window.location.hostname}:5000`;
@@ -1165,6 +1166,8 @@ export default function StudentDashboard() {
           </div>
         ) : currentView === "resources" ? (
           <ResourcesLibrary user={user} />
+        ) : currentView === "calendar" ? (
+          <CalendarView circles={myCircles} />
         ) : currentView === "progress" ? (
           <StudentProgress user={user} role="student" />
         ) : currentView === "profile" ? (
