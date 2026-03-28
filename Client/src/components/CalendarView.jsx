@@ -20,6 +20,7 @@ import {
   Grid,
   ExternalLink,
   Lock,
+  Bell,
 } from "lucide-react";
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -32,31 +33,31 @@ const EVENTS_API = `${API_ORIGIN}/api/events`;
 const EVENT_TYPES = {
   study_session: {
     label: "Study Session",
-    color: "bg-blue-500",
-    lightBg: "bg-blue-50",
-    textColor: "text-blue-700",
-    borderColor: "border-blue-200",
-    dotColor: "bg-blue-500",
+    color: "bg-[var(--dash-accent)]",
+    lightBg: "bg-[var(--dash-accent-soft)]",
+    textColor: "text-[var(--dash-accent)]",
+    borderColor: "border-[var(--dash-accent-soft)]",
+    dotColor: "bg-[var(--dash-accent)]",
     icon: BookOpen,
-    badgeClass: "bg-blue-100 text-blue-700 border border-blue-200",
+    badgeClass: "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] border border-[var(--dash-accent-soft)] shadow-sm",
   },
   deadline: {
     label: "Deadline",
-    color: "bg-rose-500",
+    color: "bg-rose-500 shadow-md shadow-rose-200",
     lightBg: "bg-rose-50",
     textColor: "text-rose-700",
-    borderColor: "border-rose-200",
+    borderColor: "border-rose-100",
     dotColor: "bg-rose-500",
     icon: Target,
     badgeClass: "bg-rose-100 text-rose-700 border border-rose-200",
   },
   exam: {
     label: "Exam",
-    color: "bg-amber-500",
+    color: "bg-[var(--dash-warm)] shadow-md shadow-amber-200",
     lightBg: "bg-amber-50",
     textColor: "text-amber-700",
     borderColor: "border-amber-200",
-    dotColor: "bg-amber-500",
+    dotColor: "bg-[var(--dash-warm)]",
     icon: GraduationCap,
     badgeClass: "bg-amber-100 text-amber-700 border border-amber-200",
   },
@@ -67,6 +68,13 @@ const MONTH_NAMES = [
   "January","February","March","April","May","June",
   "July","August","September","October","November","December",
 ];
+
+// Per-type title placeholder examples
+const TITLE_PLACEHOLDERS = {
+  study_session: "e.g. CS101 Group Study, Math Revision",
+  deadline:      "e.g. Assignment 3 Submission, Lab Report Due",
+  exam:          "e.g. CS101 Final Exam, Biology Midterm",
+};
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -289,40 +297,40 @@ const DateTimePicker = ({ value, onChange, error }) => {
       <button
         type="button"
         onClick={() => setCalOpen((o) => !o)}
-        className={`w-full flex items-center gap-3 px-4 py-3 border-2 rounded-xl transition-all text-left ${
+        className={`w-full flex items-center gap-3 px-4 py-3 border rounded-xl transition-all text-left ${
           error
             ? "border-rose-400 bg-rose-50"
             : calOpen
-            ? "border-blue-400 bg-blue-50/40"
-            : "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/30"
+            ? "border-[var(--dash-accent)] bg-[var(--dash-accent-soft)]/20 shadow-sm"
+            : "border-[var(--dash-border)] bg-[var(--dash-surface)] hover:border-[var(--dash-accent)] hover:bg-[var(--dash-surface-2)]"
         }`}
       >
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-          hasValue ? "bg-blue-100" : "bg-gray-100"
+          hasValue ? "bg-[var(--dash-accent-soft)]" : "bg-[var(--dash-surface-2)]"
         }`}>
-          <Calendar className={`w-4 h-4 ${hasValue ? "text-blue-600" : "text-gray-400"}`} />
+          <Calendar className={`w-4 h-4 ${hasValue ? "text-[var(--dash-accent)]" : "text-[var(--dash-muted)]"}`} />
         </div>
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-bold ${
-            hasValue ? "text-gray-900" : "text-gray-400"
+            hasValue ? "text-[var(--dash-ink)]" : "text-[var(--dash-muted)]"
           }`}>{displayDate}</p>
           <p className={`text-xs mt-0.5 flex items-center gap-1 ${
-            hasValue ? "text-blue-500 font-semibold" : "text-gray-400"
+            hasValue ? "text-[var(--dash-accent)] font-semibold" : "text-[var(--dash-muted)]"
           }`}>
             <Clock className="w-3 h-3" />{displayTime}
           </p>
         </div>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${
+        <ChevronDown className={`w-4 h-4 text-[var(--dash-muted)] transition-transform flex-shrink-0 ${
           calOpen ? "rotate-180" : ""
         }`} />
       </button>
 
       {/* Inline expandable picker */}
       {calOpen && (
-        <div className="mt-2 bg-white border-2 border-blue-100 rounded-2xl overflow-hidden shadow-lg">
+        <div className="mt-2 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-2xl overflow-hidden shadow-xl animate-scale-in">
 
           {/* ── Month navigation ── */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600">
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[var(--dash-accent)] to-[var(--dash-accent-strong)]">
             <button
               type="button"
               onClick={prevMonth}
@@ -368,10 +376,10 @@ const DateTimePicker = ({ value, onChange, error }) => {
                     !day
                       ? "invisible"
                       : isSelected
-                      ? "bg-blue-500 text-white shadow-sm"
+                      ? "bg-[var(--dash-accent)] text-white shadow-md shadow-[var(--dash-accent-soft)]"
                       : todayMark
-                      ? "border-2 border-blue-300 text-blue-600"
-                      : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                      ? "border-2 border-[var(--dash-accent-soft)] text-[var(--dash-accent)]"
+                      : "text-[var(--dash-ink)] hover:bg-[var(--dash-accent-soft)]/40 hover:text-[var(--dash-accent)]"
                   }`}
                 >
                   {day}
@@ -381,8 +389,8 @@ const DateTimePicker = ({ value, onChange, error }) => {
           </div>
 
           {/* ── Time picker ── */}
-          <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-4">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1">
+          <div className="border-t border-[var(--dash-border)] bg-[var(--dash-surface-2)]/50 px-4 py-4">
+            <p className="text-[10px] font-bold text-[var(--dash-muted)] uppercase tracking-wider mb-3 flex items-center gap-1">
               <Clock className="w-3 h-3" /> Time
             </p>
             <div className="flex items-center justify-center gap-3">
@@ -396,38 +404,38 @@ const DateTimePicker = ({ value, onChange, error }) => {
                 >
                   <ChevronUp className="w-4 h-4 text-gray-500" />
                 </button>
-                <div className="w-14 h-10 bg-white border-2 border-blue-200 rounded-xl flex items-center justify-center">
-                  <span className="text-xl font-black text-blue-600">{String(hour12).padStart(2, "0")}</span>
+                <div className="w-14 h-10 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl flex items-center justify-center focus-within:border-[var(--dash-accent)] transition-colors">
+                  <span className="text-xl font-bold text-[var(--dash-accent)]">{String(hour12).padStart(2, "0")}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => adjustHour(-1)}
-                  className="w-8 h-6 rounded-lg bg-white border border-gray-200 hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center transition-colors"
+                  className="w-8 h-6 rounded-lg bg-[var(--dash-surface)] border border-[var(--dash-border)] hover:bg-[var(--dash-accent-soft)]/30 hover:border-[var(--dash-accent)] flex items-center justify-center transition-colors"
                 >
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                  <ChevronDown className="w-4 h-4 text-[var(--dash-muted)]" />
                 </button>
               </div>
 
-              <span className="text-2xl font-black text-gray-300 mb-0.5">:</span>
+              <span className="text-2xl font-black text-[var(--dash-border)] mb-0.5">:</span>
 
               {/* Minute */}
               <div className="flex flex-col items-center gap-1">
                 <button
                   type="button"
                   onClick={() => adjustMinute(1)}
-                  className="w-8 h-6 rounded-lg bg-white border border-gray-200 hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center transition-colors"
+                  className="w-8 h-6 rounded-lg bg-[var(--dash-surface)] border border-[var(--dash-border)] hover:bg-[var(--dash-accent-soft)]/30 hover:border-[var(--dash-accent)] flex items-center justify-center transition-colors"
                 >
-                  <ChevronUp className="w-4 h-4 text-gray-500" />
+                  <ChevronUp className="w-4 h-4 text-[var(--dash-muted)]" />
                 </button>
-                <div className="w-14 h-10 bg-white border-2 border-blue-200 rounded-xl flex items-center justify-center">
-                  <span className="text-xl font-black text-blue-600">{minuteStr}</span>
+                <div className="w-14 h-10 bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl flex items-center justify-center focus-within:border-[var(--dash-accent)] transition-colors">
+                  <span className="text-xl font-bold text-[var(--dash-accent)]">{minuteStr}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => adjustMinute(-1)}
-                  className="w-8 h-6 rounded-lg bg-white border border-gray-200 hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center transition-colors"
+                  className="w-8 h-6 rounded-lg bg-[var(--dash-surface)] border border-[var(--dash-border)] hover:bg-[var(--dash-accent-soft)]/30 hover:border-[var(--dash-accent)] flex items-center justify-center transition-colors"
                 >
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                  <ChevronDown className="w-4 h-4 text-[var(--dash-muted)]" />
                 </button>
               </div>
 
@@ -436,10 +444,10 @@ const DateTimePicker = ({ value, onChange, error }) => {
                 <button
                   type="button"
                   onClick={() => parsed.hour >= 12 && toggleAMPM()}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
                     ampm === "AM"
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-blue-300"
+                      ? "bg-[var(--dash-accent)] text-white border-[var(--dash-accent)] shadow-sm shadow-[var(--dash-accent-soft)]"
+                      : "bg-[var(--dash-surface)] text-[var(--dash-muted)] border-[var(--dash-border)] hover:border-[var(--dash-accent)]"
                   }`}
                 >
                   AM
@@ -447,10 +455,10 @@ const DateTimePicker = ({ value, onChange, error }) => {
                 <button
                   type="button"
                   onClick={() => parsed.hour < 12 && toggleAMPM()}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
                     ampm === "PM"
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-blue-300"
+                      ? "bg-[var(--dash-accent)] text-white border-[var(--dash-accent)] shadow-sm shadow-[var(--dash-accent-soft)]"
+                      : "bg-[var(--dash-surface)] text-[var(--dash-muted)] border-[var(--dash-border)] hover:border-[var(--dash-accent)]"
                   }`}
                 >
                   PM
@@ -467,8 +475,8 @@ const DateTimePicker = ({ value, onChange, error }) => {
                   onClick={() => emit(parsed.year, parsed.month, parsed.day, parsed.hour, m)}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all border ${
                     parsed.minute === m
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-600"
+                      ? "bg-[var(--dash-accent)] text-white border-[var(--dash-accent)]"
+                      : "bg-[var(--dash-surface)] text-[var(--dash-muted)] border-[var(--dash-border)] hover:border-[var(--dash-accent)] hover:text-[var(--dash-accent)]"
                   }`}
                 >
                   :{String(m).padStart(2, "0")}
@@ -537,7 +545,8 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
     if (!form.date) e.date = "Date is required";
     if (!form.type) e.type = "Event type is required";
     if (form.description.length > 500) e.description = "Max 500 characters";
-    if (form.link && !/^https?:\/\/.+/.test(form.link.trim())) {
+    // Link is only relevant for study sessions
+    if (form.type === "study_session" && form.link && !/^https?:\/\/.+/.test(form.link.trim())) {
       e.link = "Please enter a valid URL (starting with http:// or https://)";
     }
     return e;
@@ -549,13 +558,15 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
     if (Object.keys(e).length) { setErrors(e); return; }
     setSaving(true);
     try {
+      const isPrivateType = form.type === "deadline" || form.type === "exam";
       const payload = {
         title: form.title.trim(),
         description: form.description.trim(),
         date: new Date(form.date).toISOString(),
         type: form.type,
-        location: form.link.trim(),
-        circle: form.circle || null,
+        // Deadlines and exams don't have meeting links or circle associations
+        location: isPrivateType ? "" : form.link.trim(),
+        circle: isPrivateType ? null : (form.circle || null),
       };
       await onSave(payload);
       onClose();
@@ -567,31 +578,39 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
   };
 
   const handleChange = (field, value) => {
-    setForm((p) => ({ ...p, [field]: value }));
+    setForm((p) => {
+      const next = { ...p, [field]: value };
+      // When switching to deadline or exam, clear link and circle
+      if (field === "type" && (value === "deadline" || value === "exam")) {
+        next.link = "";
+        next.circle = "";
+      }
+      return next;
+    });
     setErrors((p) => ({ ...p, [field]: undefined, general: undefined }));
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[9980] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-scale-in">
+    <div className="fixed inset-0 z-[9980] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[var(--dash-ink)]/20 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-[var(--dash-surface)] rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.2)] w-full max-w-lg mx-auto overflow-hidden animate-scale-in border border-[var(--dash-border)]">
         {/* Header */}
         <div className="px-8 pt-8 pb-0 flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-[var(--dash-ink)] font-head">
               {editEvent ? "Edit Event" : "New Event"}
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-[var(--dash-muted)] mt-1">
               {editEvent ? "Update the details below." : "Add a new event to your calendar."}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+            className="w-9 h-9 rounded-full bg-[var(--dash-surface-2)] hover:bg-[var(--dash-surface)] border border-[var(--dash-border)] flex items-center justify-center transition-colors"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-[var(--dash-muted)]" />
           </button>
         </div>
 
@@ -604,30 +623,28 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
             </div>
           )}
 
-          {/* Title */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">
-              Title <span className="text-rose-500">*</span>
+            <label className="block text-sm font-bold text-[var(--dash-ink)] mb-2">
+              Title <span className="text-rose-500 text-xs">required</span>
             </label>
             <input
               ref={titleRef}
               type="text"
               value={form.title}
               onChange={(e) => handleChange("title", e.target.value)}
-              placeholder="e.g. CS101 Group Study"
-              className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-900 outline-none transition-all focus:ring-2 focus:ring-blue-100 focus:border-blue-400 placeholder-gray-400 ${
-                errors.title ? "border-rose-400 bg-rose-50" : "border-gray-200 bg-white"
+              placeholder={TITLE_PLACEHOLDERS[form.type] || "e.g. CS101 Group Study"}
+              className={`w-full border rounded-xl px-4 py-3 text-sm text-[var(--dash-ink)] outline-none transition-all focus:ring-4 focus:ring-[var(--dash-accent-soft)] focus:border-[var(--dash-accent)] placeholder-[var(--dash-muted)]/50 ${
+                errors.title ? "border-rose-400 bg-rose-50" : "border-[var(--dash-border)] bg-[var(--dash-surface)]"
               }`}
             />
-            {errors.title && <p className="mt-1 text-xs text-rose-600">{errors.title}</p>}
+            {errors.title && <p className="mt-1.5 text-xs text-rose-600 font-medium">{errors.title}</p>}
           </div>
 
-          {/* Type */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">
-              Event Type <span className="text-rose-500">*</span>
+            <label className="block text-sm font-bold text-[var(--dash-ink)] mb-1.5 flex justify-between">
+              <span>Event Type</span>
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {Object.entries(EVENT_TYPES).map(([key, cfg]) => {
                 const Icon = cfg.icon;
                 const isSelected = form.type === key;
@@ -636,13 +653,13 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
                     key={key}
                     type="button"
                     onClick={() => handleChange("type", key)}
-                    className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 text-xs font-bold transition-all ${
+                    className={`flex flex-col items-center gap-2 py-3 px-2 rounded-xl border-2 text-[10px] font-bold transition-all ${
                       isSelected
-                        ? `${cfg.lightBg} ${cfg.borderColor} ${cfg.textColor}`
-                        : "border-gray-100 text-gray-500 hover:border-gray-200 hover:bg-gray-50"
+                        ? `${cfg.lightBg} ${cfg.borderColor} ${cfg.textColor} shadow-sm`
+                        : "border-[var(--dash-surface-2)] text-[var(--dash-muted)] hover:border-[var(--dash-border)] bg-[var(--dash-surface-2)]"
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-5 h-5" />
                     {cfg.label}
                   </button>
                 );
@@ -683,7 +700,8 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
             {errors.description && <p className="mt-1 text-xs text-rose-600">{errors.description}</p>}
           </div>
 
-          {/* Meeting Link */}
+          {/* Meeting Link — only for study sessions */}
+          {form.type === "study_session" && (
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1.5">
               Meeting Link <span className="text-gray-400 font-normal">(optional)</span>
@@ -705,9 +723,10 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
               <ExternalLink className="w-3 h-3" /> Supports Zoom, Google Meet, Microsoft Teams, Webex
             </p>
           </div>
+          )}
 
-          {/* Circle */}
-          {circles.length > 0 && (
+          {/* Circle — only visible for study sessions */}
+          {form.type === "study_session" && circles.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-bold text-gray-700">
@@ -743,18 +762,18 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-4 pt-4 border-t border-[var(--dash-border)]">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3.5 rounded-xl border border-[var(--dash-border)] text-sm font-bold text-[var(--dash-muted)] hover:bg-[var(--dash-surface-2)] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="flex-1 py-3.5 rounded-xl bg-[var(--dash-accent)] text-white text-sm font-bold hover:bg-[var(--dash-accent-strong)] transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-lg shadow-[var(--dash-accent-soft)]"
             >
               {saving ? (
                 <>
@@ -847,13 +866,13 @@ const EventDetail = ({ event, onEdit, onDelete, onClose, currentUserId }) => {
           <div className="flex gap-2 mt-4">
             <button
               onClick={onEdit}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[var(--dash-border)] text-xs font-bold text-[var(--dash-ink)] hover:bg-[var(--dash-surface-2)] transition-colors"
             >
               <Edit2 className="w-3.5 h-3.5" /> Edit
             </button>
             <button
               onClick={onDelete}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-rose-200 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-rose-100 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>
@@ -878,12 +897,12 @@ const UpcomingEventList = ({ events, onEventClick, onAddEvent }) => {
     .slice(0, 8);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-[var(--dash-surface)] rounded-2xl border border-[var(--dash-border)] shadow-[0_18px_40px_rgba(31,41,51,0.06)] p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-gray-900">Upcoming Events</h3>
+        <h3 className="text-sm font-bold text-[var(--dash-ink)] font-head">Upcoming Events</h3>
         <button
           onClick={onAddEvent}
-          className="w-7 h-7 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-colors"
+          className="w-7 h-7 rounded-lg bg-[var(--dash-accent-soft)] hover:bg-[var(--dash-accent)]/20 text-[var(--dash-accent)] flex items-center justify-center transition-colors"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -906,10 +925,10 @@ const UpcomingEventList = ({ events, onEventClick, onAddEvent }) => {
               >
                 <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${cfg.color}`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                  <p className="text-xs font-bold text-[var(--dash-ink)] truncate group-hover:text-[var(--dash-accent)] transition-colors">
                     {event.title}
                   </p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="text-[11px] text-[var(--dash-muted)] mt-0.5">
                     {formatDate(event.date)} · {formatTime(event.date)}
                   </p>
                 </div>
@@ -976,8 +995,8 @@ const MonthView = ({ year, month, events, selectedDay, onDayClick, onEventClick 
                 <>
                   <div className="flex items-start justify-between mb-1">
                     <span
-                      className={`inline-flex items-center justify-center w-7 h-7 text-xs font-bold rounded-full transition-colors
-                        ${today ? "bg-blue-500 text-white shadow-md" : isSelected ? "bg-blue-100 text-blue-700" : "text-gray-700 group-hover:bg-blue-100 group-hover:text-blue-700"}
+                      className={`inline-flex items-center justify-center w-7 h-7 text-xs font-bold rounded-full transition-all
+                        ${today ? "bg-[var(--dash-accent)] text-white shadow-lg shadow-[var(--dash-accent-soft)]" : isSelected ? "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]" : "text-[var(--dash-ink)] group-hover:bg-[var(--dash-surface-2)] group-hover:text-[var(--dash-accent)]"}
                       `}
                     >
                       {day}
@@ -1115,17 +1134,17 @@ const DayView = ({ currentDate, events, onEventClick, onAddEvent }) => {
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.lightBg}`}>
                     <Icon className={`w-5 h-5 ${cfg.textColor}`} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{ev.title}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="font-bold text-[var(--dash-ink)] group-hover:text-[var(--dash-accent)] transition-colors">{ev.title}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-[var(--dash-muted)]">
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatTime(ev.date)}</span>
                       {ev.location && (
-                        <span className="flex items-center gap-1 text-blue-500 font-semibold">
+                        <span className="flex items-center gap-1 text-[var(--dash-accent)] font-semibold">
                           <Link2 className="w-3 h-3" />{getLinkPlatform(ev.location)}
                         </span>
                       )}
                     </div>
-                    {ev.description && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{ev.description}</p>}
+                    {ev.description && <p className="text-xs text-[var(--dash-muted)] mt-1.5 line-clamp-2">{ev.description}</p>}
                   </div>
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-lg flex-shrink-0 ${cfg.badgeClass}`}>{cfg.label}</span>
                 </button>
@@ -1138,6 +1157,83 @@ const DayView = ({ currentDate, events, onEventClick, onAddEvent }) => {
   );
 };
 
+// ── Notification Hook ───────────────────────────────────────────────────
+// Schedules browser notifications 12h and 30min before each event.
+// Clears old timers whenever events list changes.
+
+const REMIND_OFFSETS = [
+  { ms: 12 * 60 * 60 * 1000, label: "12 hours" },
+  { ms: 30 * 60 * 1000,      label: "30 minutes" },
+];
+
+const TYPE_EMOJI = {
+  study_session: "📚",
+  deadline:      "⏰",
+  exam:          "🎓",
+};
+
+function useEventNotifications(events) {
+  const timerIdsRef = useRef([]);
+
+  useEffect(() => {
+    // Request permission once
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Clear previous timers
+    timerIdsRef.current.forEach(clearTimeout);
+    timerIdsRef.current = [];
+
+    if (!events.length) return;
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    const now = Date.now();
+
+    events.forEach((event) => {
+      const eventTime = new Date(event.date).getTime();
+      if (isNaN(eventTime) || eventTime <= now) return;
+
+      const emoji = TYPE_EMOJI[event.type] || "📅";
+      const typeCfg = EVENT_TYPES[event.type] || EVENT_TYPES.study_session;
+
+      REMIND_OFFSETS.forEach(({ ms, label }) => {
+        const fireAt = eventTime - ms;
+        const delay = fireAt - now;
+        if (delay <= 0) return; // already passed
+
+        const id = setTimeout(() => {
+          try {
+            const n = new Notification(
+              `${emoji} Reminder: ${event.title}`,
+              {
+                body: `${typeCfg.label} in ${label} · ${new Date(event.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}`,
+                icon: "/favicon.ico",
+                tag:  `ssc-event-${event._id}-${ms}`,
+                requireInteraction: true,
+              }
+            );
+            // Auto-close after 10s
+            setTimeout(() => n.close(), 10000);
+          } catch (_) {}
+        }, delay);
+
+        timerIdsRef.current.push(id);
+      });
+    });
+
+    return () => {
+      timerIdsRef.current.forEach(clearTimeout);
+      timerIdsRef.current = [];
+    };
+  }, [events]);
+}
+
 // ── Main CalendarView ───────────────────────────────────────────────────
 
 export default function CalendarView({ circles = [] }) {
@@ -1147,6 +1243,9 @@ export default function CalendarView({ circles = [] }) {
   const [viewMode, setViewMode] = useState("month"); // month | week | day
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Schedule browser notifications for all loaded events
+  useEventNotifications(events);
 
   // Modal states
   const [formOpen, setFormOpen] = useState(false);
@@ -1324,25 +1423,25 @@ export default function CalendarView({ circles = [] }) {
           <div className="flex items-center gap-3">
             <button
               onClick={goToday}
-              className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+              className="px-3 py-1.5 rounded-xl border border-[var(--dash-border)] text-xs font-bold text-[var(--dash-ink)] hover:bg-[var(--dash-surface-2)] transition-colors"
             >
               Today
             </button>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => navigate(-1)}
-                className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                className="w-8 h-8 rounded-lg hover:bg-[var(--dash-surface-2)] flex items-center justify-center text-[var(--dash-muted)] transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => navigate(1)}
-                className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                className="w-8 h-8 rounded-lg hover:bg-[var(--dash-surface-2)] flex items-center justify-center text-[var(--dash-muted)] transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-            <h2 className="text-base font-bold text-gray-900 min-w-[180px]">{getNavLabel()}</h2>
+            <h2 className="text-base font-bold text-[var(--dash-ink)] min-w-[180px] font-head">{getNavLabel()}</h2>
           </div>
 
           {/* Center: View toggle */}
@@ -1355,10 +1454,10 @@ export default function CalendarView({ circles = [] }) {
               <button
                 key={key}
                 onClick={() => setViewMode(key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   viewMode === key
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-800"
+                    ? "bg-[var(--dash-surface)] text-[var(--dash-ink)] shadow-sm"
+                    : "text-[var(--dash-muted)] hover:text-[var(--dash-ink)]"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -1377,7 +1476,7 @@ export default function CalendarView({ circles = [] }) {
             )}
             <button
               onClick={() => handleAddEvent(null)}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm shadow-blue-200"
+              className="flex items-center gap-2 bg-[var(--dash-accent)] hover:bg-[var(--dash-accent-strong)] text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-[var(--dash-accent-soft)]"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Event</span>
@@ -1386,17 +1485,17 @@ export default function CalendarView({ circles = [] }) {
         </div>
 
         {/* Legend */}
-        <div className="bg-white border-b border-gray-50 px-6 py-2 flex items-center gap-4 flex-shrink-0">
+        <div className="bg-[var(--dash-surface)] border-b border-[var(--dash-border)] px-6 py-2.5 flex items-center gap-6 flex-shrink-0">
           {Object.entries(EVENT_TYPES).map(([key, cfg]) => (
-            <div key={key} className="flex items-center gap-1.5">
+            <div key={key} className="flex items-center gap-2">
               <span className={`w-2.5 h-2.5 rounded-full ${cfg.color}`} />
-              <span className="text-xs text-gray-500 font-medium">{cfg.label}</span>
+              <span className="text-[10px] text-[var(--dash-muted)] font-bold uppercase tracking-wider">{cfg.label}</span>
             </div>
           ))}
         </div>
 
         {/* Calendar Body */}
-        <div className="flex-1 overflow-hidden bg-white relative">
+        <div className="flex-1 overflow-hidden bg-[var(--dash-surface)] relative">
           {viewMode === "month" && (
             <MonthView
               year={currentDate.getFullYear()}
@@ -1428,9 +1527,10 @@ export default function CalendarView({ circles = [] }) {
           {detailEvent && (
             <div
               ref={detailRef}
-              className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
+              className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none p-4"
             >
-              <div className="pointer-events-auto">
+              <div className="pointer-events-auto bg-[var(--dash-ink)]/5 backdrop-blur-sm inset-0 absolute" onClick={() => setDetailEvent(null)} />
+              <div className="pointer-events-auto relative">
                 <EventDetail
                   event={detailEvent}
                   currentUserId={currentUserId}
@@ -1445,15 +1545,15 @@ export default function CalendarView({ circles = [] }) {
       </div>
 
       {/* Right Sidebar */}
-      <div className="hidden xl:flex flex-col w-72 border-l border-gray-100 bg-white p-4 gap-4 overflow-y-auto">
+      <div className="hidden xl:flex flex-col w-72 border-l border-[var(--dash-border)] bg-[var(--dash-surface-2)]/30 p-4 gap-4 overflow-y-auto">
         {/* Mini calendar month indicator */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
-          <p className="text-xs font-bold opacity-80 uppercase tracking-wider mb-0.5">
+        <div className="bg-[linear-gradient(135deg,#0f766e,#14b8a6)] rounded-2xl p-4 text-white shadow-lg shadow-[var(--dash-accent-soft)]">
+          <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1 font-head">
             {MONTH_NAMES[currentDate.getMonth()]}
           </p>
           <p className="text-3xl font-black">{currentDate.getFullYear()}</p>
           <div className="mt-3 pt-3 border-t border-white/20">
-            <p className="text-xs opacity-80">
+            <p className="text-xs opacity-90 font-medium">
               {events.filter((e) => {
                 const d = new Date(e.date);
                 return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
@@ -1463,9 +1563,9 @@ export default function CalendarView({ circles = [] }) {
         </div>
 
         {/* Type summary */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
-            This Month
+        <div className="bg-[var(--dash-surface)] rounded-2xl border border-[var(--dash-border)] shadow-[0_12px_24px_rgba(31,41,51,0.04)] p-4">
+          <h4 className="text-[10px] font-bold text-[var(--dash-muted)] uppercase tracking-wider mb-4 font-head">
+            Quick Summary
           </h4>
           <div className="space-y-2.5">
             {Object.entries(EVENT_TYPES).map(([key, cfg]) => {
