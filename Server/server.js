@@ -20,12 +20,14 @@ import resourceRoutes from "./routes/resourceRoutes.js";
 import officeHourRoutes from "./routes/officeHourRoutes.js";
 import circleRoutes from "./routes/circleRoutes.js";
 import lecturerResourceRoute from "./routes/lecturerResourceRoute.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 // Models
 import User from "./models/User.js";
 import StudyCircle from "./models/StudyCircle.js";
 import CircleMessage from "./models/CircleMessage.js";
 import Resource from "./models/Resource.js";
+import Notification from "./models/Notification.js";
 
 // Utils
 import { normalizeAvatar } from "./utils/avatarHelper.js";
@@ -57,6 +59,7 @@ app.use("/api/resources", resourceRoutes);
 app.use("/api/office-hours", officeHourRoutes);
 app.use("/api/lecturer-circles", circleRoutes);
 app.use("/api/lecturer-resources", lecturerResourceRoute);
+app.use("/api/notifications", notificationRoutes);
 
 // Serve uploads folder
 import { fileURLToPath } from "url";

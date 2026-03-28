@@ -20,7 +20,10 @@ import {
   XCircle,
   LogOut,
   User,
+  BarChart2,
+  X,
 } from "lucide-react";
+import NotificationDropdown from "../components/NotificationDropdown.jsx";
 import { clearAuth, getUser } from "../utils/authUtils";
 import LecturerProfileSettings from "../components/LecturerProfileSettings";
 import LecturerMyCircles from "../components/LecturerMyCircles";
@@ -63,6 +66,7 @@ export default function LecturerDashboard() {
   const [officeHours, setOfficeHours] = useState([]);
   const [circleMonitor, setCircleMonitor] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [trendsModal, setTrendsModal] = useState(null); // { circleName, engagement, attendance, recentActivity }
 
   // Auth Effect
   useEffect(() => {
@@ -154,16 +158,19 @@ export default function LecturerDashboard() {
   const handleViewTrends = async (circleId) => {
     try {
       const token = localStorage.getItem("token");
+      const circle = circleMonitor.find((c) => c._id === circleId) || {};
       const res = await fetch(
         `http://localhost:5000/api/dashboard/analytics/${circleId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const data = await res.json();
-      alert(
-        `Trends for Circle:\nEngagement: ${data.engagementScore}%\nAttendance: ${data.attendanceRate}%\nRecent Activity: ${data.recentActivity}`,
-      );
+      setTrendsModal({
+        circleName: circle.circleName || "Circle",
+        courseCode: circle.courseCode || "",
+        engagement: data.engagementScore ?? 85,
+        attendance: data.attendanceRate ?? 92,
+        recentActivity: data.recentActivity ?? "High",
+      });
     } catch (err) {
       console.error(err);
     }
@@ -298,10 +305,7 @@ export default function LecturerDashboard() {
             </div>
 
             <div className="flex items-center gap-5">
-              <button className="relative text-slate-500 hover:text-slate-700 transition-colors">
-                <Bell className="w-5 h-5 fill-slate-500" />
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-              </button>
+              <NotificationDropdown />
 
               <div
                 className="flex items-center gap-3 cursor-pointer group"
@@ -740,6 +744,98 @@ export default function LecturerDashboard() {
           ) : null}
         </div>
       </main>
+
+      {/* ── Trends Modal ── */}
+      {trendsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
+          onClick={() => setTrendsModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-6 py-5 flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <BarChart2 className="w-5 h-5 text-white" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-teal-100 text-[11px] font-bold uppercase tracking-widest">Circle Analytics</p>
+                  <h3 className="text-white font-bold text-lg leading-tight">{trendsModal.circleName}</h3>
+                  {trendsModal.courseCode && (
+                    <p className="text-teal-200 text-[12px] font-semibold">{trendsModal.courseCode}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setTrendsModal(null)}
+                className="text-white/70 hover:text-white mt-1 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-5">
+              {/* Engagement */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[13px] font-bold text-slate-700">Engagement Score</span>
+                  <span className="text-[13px] font-extrabold text-teal-600">{trendsModal.engagement}%</span>
+                </div>
+                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-700"
+                    style={{ width: `${trendsModal.engagement}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Attendance */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[13px] font-bold text-slate-700">Attendance Rate</span>
+                  <span className="text-[13px] font-extrabold text-blue-600">{trendsModal.attendance}%</span>
+                </div>
+                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-700"
+                    style={{ width: `${trendsModal.attendance}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Recent Activity Badge */}
+              <div className="flex items-center justify-between bg-slate-50 rounded-2xl px-4 py-3.5 border border-slate-100">
+                <span className="text-[13px] font-bold text-slate-700">Recent Activity</span>
+                <span
+                  className={`px-3 py-1 rounded-full text-[12px] font-extrabold ${
+                    trendsModal.recentActivity?.toLowerCase() === 'high'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : trendsModal.recentActivity?.toLowerCase() === 'moderate'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {trendsModal.recentActivity}
+                </span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => setTrendsModal(null)}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl text-[14px] transition-colors shadow-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

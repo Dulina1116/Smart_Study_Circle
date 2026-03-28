@@ -160,7 +160,34 @@ export default function LecturerResourceLibrary() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0])
+      const file = e.target.files[0]
+      const fileName = file.name.toLowerCase()
+
+      if (formData.type === 'PDF' && !fileName.endsWith('.pdf') && file.type !== 'application/pdf') {
+        alert('Please select a valid PDF file.')
+        e.target.value = ''
+        return
+      }
+      
+      if (formData.type === 'DOCX' && !fileName.endsWith('.doc') && !fileName.endsWith('.docx') && !file.type.includes('word')) {
+        alert('Please select a valid Word Document (.doc, .docx).')
+        e.target.value = ''
+        return
+      }
+      
+      if (formData.type === 'PPTX' && !fileName.endsWith('.ppt') && !fileName.endsWith('.pptx') && !file.type.includes('presentation')) {
+        alert('Please select a valid PowerPoint presentation (.ppt, .pptx).')
+        e.target.value = ''
+        return
+      }
+
+      if (formData.type === 'MP4' && !fileName.endsWith('.mp4') && file.type !== 'video/mp4') {
+        alert('Please select a valid MP4 video.')
+        e.target.value = ''
+        return
+      }
+
+      setSelectedFile(file)
     }
   }
 
@@ -601,6 +628,7 @@ export default function LecturerResourceLibrary() {
                   <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})} className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none appearance-none">
                     <option>PDF</option>
                     <option>DOCX</option>
+                    <option>PPTX</option>
                     <option>MP4</option>
                   </select>
                 </div>
@@ -618,7 +646,7 @@ export default function LecturerResourceLibrary() {
               <div>
                 <label className="block text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2">File Attachment</label>
                 <label className="border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-2xl p-8 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors cursor-pointer text-center block w-full relative">
-                  <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileChange} />
+                  <input type="file" accept={formData.type === 'PDF' ? '.pdf,application/pdf' : formData.type === 'PPTX' ? '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation' : formData.type === 'DOCX' ? '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' : formData.type === 'MP4' ? 'video/mp4,.mp4' : '*/*'} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileChange} />
                   
                   {selectedFile ? (
                     <div className="bg-[#E6EFFF] text-teal-600 px-4 py-2 rounded-lg inline-flex items-center gap-2 font-bold text-[13px] shadow-sm mb-1">
