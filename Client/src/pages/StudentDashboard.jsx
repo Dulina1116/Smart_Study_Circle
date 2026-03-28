@@ -154,10 +154,6 @@ const TopBar = ({ user, currentView, setCurrentView }) => {
 
       {/* Right side */}
       <div className="flex items-center gap-6 ml-4">
-        <button className="relative text-gray-400 hover:text-[var(--dash-ink)] transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
         <NotificationDropdown />
 
         <button
