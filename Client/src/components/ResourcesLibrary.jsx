@@ -73,6 +73,17 @@ const getTypeIcon = (type) => {
   return icons[type] || "📦";
 };
 
+// Maps each resource type to allowed file extensions and the browser accept string
+const ACCEPTED_FILES = {
+  pdf:          { exts: [".pdf"],                          accept: ".pdf" },
+  document:     { exts: [".doc", ".docx", ".txt", ".odt"], accept: ".doc,.docx,.txt,.odt" },
+  presentation: { exts: [".ppt", ".pptx", ".odp"],       accept: ".ppt,.pptx,.odp" },
+  video:        { exts: [".mp4", ".mov", ".avi", ".mkv", ".webm"], accept: "video/*" },
+  other:        { exts: [],                                accept: "*" },
+};
+
+const getAcceptAttr = (type) => ACCEPTED_FILES[type]?.accept ?? "*";
+
 const formatFileSize = (bytes) => {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -108,6 +119,7 @@ export default function ResourcesLibrary({ user }) {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadErrors, setUploadErrors] = useState({ title: "", externalLink: "", file: "" });
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingResource, setEditingResource] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -119,6 +131,7 @@ export default function ResourcesLibrary({ user }) {
   });
   const [editFile, setEditFile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [editErrors, setEditErrors] = useState({ title: "", externalLink: "" });
   const [deletingId, setDeletingId] = useState("");
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailResource, setDetailResource] = useState(null);
@@ -202,18 +215,48 @@ export default function ResourcesLibrary({ user }) {
     }
   };
 
+  const validateUploadForm = () => {
+    const errors = { title: "", externalLink: "", file: "" };
+    const title = uploadForm.title.trim();
+    if (!title) {
+      errors.title = "Title is required.";
+    } else if (title.length < 3) {
+      errors.title = "Title must be at least 3 characters.";
+    } else if (title.length > 100) {
+      errors.title = "Title must be 100 characters or fewer.";
+    }
+    if (uploadForm.type === "link") {
+      const link = uploadForm.externalLink.trim();
+      if (!link) {
+        errors.externalLink = "A URL is required for link-type resources.";
+      } else if (!/^https?:\/\/.+/.test(link)) {
+        errors.externalLink = "URL must start with http:// or https://.";
+      }
+    } else {
+      if (!selectedFile) {
+        errors.file = "Please select a file to upload.";
+      } else {
+        const allowed = ACCEPTED_FILES[uploadForm.type];
+        if (allowed && allowed.exts.length > 0) {
+          const ext = "." + selectedFile.name.split(".").pop().toLowerCase();
+          if (!allowed.exts.includes(ext)) {
+            const typeLabel = uploadForm.type.charAt(0).toUpperCase() + uploadForm.type.slice(1);
+            errors.file = `${typeLabel} type only accepts: ${allowed.exts.join(", ")} files.`;
+          }
+        }
+      }
+    }
+    return errors;
+  };
+
   const handleUpload = async (e) => {
     e.preventDefault();
-
-    if (!uploadForm.title.trim()) {
-      alert("Please enter a resource title");
+    const errors = validateUploadForm();
+    if (errors.title || errors.externalLink || errors.file) {
+      setUploadErrors(errors);
       return;
     }
-
-    if (uploadForm.type !== "link" && !selectedFile) {
-      alert("Please select a file");
-      return;
-    }
+    setUploadErrors({ title: "", externalLink: "", file: "" });
 
     setIsUploading(true);
     try {
@@ -239,7 +282,6 @@ export default function ResourcesLibrary({ user }) {
       });
 
       if (res.ok) {
-        alert("Resource uploaded successfully!");
         setShowUploadModal(false);
         setUploadForm({
           title: "",
@@ -249,14 +291,15 @@ export default function ResourcesLibrary({ user }) {
           externalLink: "",
         });
         setSelectedFile(null);
+        setUploadErrors({ title: "", externalLink: "", file: "" });
         fetchInitialData();
       } else {
         const error = await res.json();
-        alert(error.message || "Failed to upload resource");
+        setUploadErrors((prev) => ({ ...prev, title: error.message || "Failed to upload resource." }));
       }
     } catch (err) {
       console.error("Upload error:", err);
-      alert("Error uploading resource");
+      setUploadErrors((prev) => ({ ...prev, title: "An unexpected error occurred. Please try again." }));
     } finally {
       setIsUploading(false);
     }
@@ -304,14 +347,37 @@ export default function ResourcesLibrary({ user }) {
     });
   };
 
+  const validateEditForm = () => {
+    const errors = { title: "", externalLink: "" };
+    const title = editForm.title.trim();
+    if (!title) {
+      errors.title = "Title is required.";
+    } else if (title.length < 3) {
+      errors.title = "Title must be at least 3 characters.";
+    } else if (title.length > 100) {
+      errors.title = "Title must be 100 characters or fewer.";
+    }
+    if (editForm.type === "link") {
+      const link = editForm.externalLink.trim();
+      if (!link) {
+        errors.externalLink = "A URL is required for link-type resources.";
+      } else if (!/^https?:\/\/.+/.test(link)) {
+        errors.externalLink = "URL must start with http:// or https://.";
+      }
+    }
+    return errors;
+  };
+
   const handleUpdateResource = async (e) => {
     e.preventDefault();
-
     if (!editingResource) return;
-    if (!editForm.title.trim()) {
-      alert("Please enter a resource title");
+
+    const errors = validateEditForm();
+    if (errors.title || errors.externalLink) {
+      setEditErrors(errors);
       return;
     }
+    setEditErrors({ title: "", externalLink: "" });
 
     setIsEditing(true);
     try {
@@ -337,15 +403,15 @@ export default function ResourcesLibrary({ user }) {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || "Failed to update resource");
+        setEditErrors((prev) => ({ ...prev, title: data.message || "Failed to update resource." }));
+        return;
       }
 
-      alert("Resource updated successfully!");
       closeEditModal();
       fetchInitialData();
     } catch (err) {
       console.error("Update resource error:", err);
-      alert(err.message || "Error updating resource");
+      setEditErrors((prev) => ({ ...prev, title: err.message || "An unexpected error occurred." }));
     } finally {
       setIsEditing(false);
     }
@@ -373,11 +439,10 @@ export default function ResourcesLibrary({ user }) {
         throw new Error(data.message || "Failed to delete resource");
       }
 
-      alert("Resource deleted successfully!");
       fetchInitialData();
     } catch (err) {
       console.error("Delete resource error:", err);
-      alert(err.message || "Error deleting resource");
+      window.alert(err.message || "Error deleting resource");
     } finally {
       setDeletingId("");
     }
@@ -776,12 +841,20 @@ export default function ResourcesLibrary({ user }) {
                 </label>
                 <input
                   value={uploadForm.title}
-                  onChange={(e) =>
-                    setUploadForm({ ...uploadForm, title: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setUploadForm({ ...uploadForm, title: e.target.value });
+                    if (uploadErrors.title) setUploadErrors((prev) => ({ ...prev, title: "" }));
+                  }}
                   placeholder="Resource title"
-                  className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className={`w-full h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 ${
+                    uploadErrors.title
+                      ? "border-red-400 focus:ring-red-100"
+                      : "border-gray-200 focus:ring-blue-100"
+                  }`}
                 />
+                {uploadErrors.title && (
+                  <p className="mt-1 text-xs text-red-500">{uploadErrors.title}</p>
+                )}
               </div>
 
               <div>
@@ -849,15 +922,23 @@ export default function ResourcesLibrary({ user }) {
                   </label>
                   <input
                     value={uploadForm.externalLink}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setUploadForm({
                         ...uploadForm,
                         externalLink: e.target.value,
-                      })
-                    }
+                      });
+                      if (uploadErrors.externalLink) setUploadErrors((prev) => ({ ...prev, externalLink: "" }));
+                    }}
                     placeholder="https://..."
-                    className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className={`w-full h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 ${
+                      uploadErrors.externalLink
+                        ? "border-red-400 focus:ring-red-100"
+                        : "border-gray-200 focus:ring-blue-100"
+                    }`}
                   />
+                  {uploadErrors.externalLink && (
+                    <p className="mt-1 text-xs text-red-500">{uploadErrors.externalLink}</p>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -866,12 +947,19 @@ export default function ResourcesLibrary({ user }) {
                   </label>
                   <input
                     type="file"
-                    onChange={(e) =>
-                      setSelectedFile(e.target.files?.[0] || null)
-                    }
-                    className="w-full text-sm"
+                    accept={getAcceptAttr(uploadForm.type)}
+                    onChange={(e) => {
+                      setSelectedFile(e.target.files?.[0] || null);
+                      if (uploadErrors.file) setUploadErrors((prev) => ({ ...prev, file: "" }));
+                    }}
+                    className={`w-full text-sm rounded ${
+                      uploadErrors.file ? "outline outline-1 outline-red-400" : ""
+                    }`}
                   />
-                  {selectedFile && (
+                  {uploadErrors.file && (
+                    <p className="mt-1 text-xs text-red-500">{uploadErrors.file}</p>
+                  )}
+                  {selectedFile && !uploadErrors.file && (
                     <p className="text-xs text-gray-500 mt-1">
                       Selected: {selectedFile.name}
                     </p>
@@ -1013,12 +1101,20 @@ export default function ResourcesLibrary({ user }) {
                 </label>
                 <input
                   value={editForm.title}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, title: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    setEditForm((prev) => ({ ...prev, title: e.target.value }));
+                    if (editErrors.title) setEditErrors((prev) => ({ ...prev, title: "" }));
+                  }}
                   placeholder="Resource title"
-                  className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className={`w-full h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 ${
+                    editErrors.title
+                      ? "border-red-400 focus:ring-red-100"
+                      : "border-gray-200 focus:ring-blue-100"
+                  }`}
                 />
+                {editErrors.title && (
+                  <p className="mt-1 text-xs text-red-500">{editErrors.title}</p>
+                )}
               </div>
 
               <div>
@@ -1085,19 +1181,27 @@ export default function ResourcesLibrary({ user }) {
               {editForm.type === "link" ? (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    External Link
+                    External Link *
                   </label>
                   <input
                     value={editForm.externalLink}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setEditForm((prev) => ({
                         ...prev,
                         externalLink: e.target.value,
-                      }))
-                    }
+                      }));
+                      if (editErrors.externalLink) setEditErrors((prev) => ({ ...prev, externalLink: "" }));
+                    }}
                     placeholder="https://..."
-                    className="w-full h-11 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className={`w-full h-11 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 ${
+                      editErrors.externalLink
+                        ? "border-red-400 focus:ring-red-100"
+                        : "border-gray-200 focus:ring-blue-100"
+                    }`}
                   />
+                  {editErrors.externalLink && (
+                    <p className="mt-1 text-xs text-red-500">{editErrors.externalLink}</p>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -1106,6 +1210,7 @@ export default function ResourcesLibrary({ user }) {
                   </label>
                   <input
                     type="file"
+                    accept={getAcceptAttr(editForm.type)}
                     onChange={(e) => setEditFile(e.target.files?.[0] || null)}
                     className="w-full text-sm"
                   />
