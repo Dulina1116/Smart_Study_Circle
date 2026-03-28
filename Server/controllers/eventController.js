@@ -46,10 +46,11 @@ export const getEvents = async (req, res) => {
       .populate("circle", "subject moduleCode members")
       .lean();
 
-    // 2. Events from other creators that are circle-linked
+    // 2. Events from other creators that are circle-linked — only study_session can be shared
     const otherCircleEvents = await Event.find({
       user: { $ne: userId },
       circle: { $ne: null },
+      type: "study_session", // deadlines and exams are strictly private to their creator
       ...dateCondition,
     })
       .sort({ date: 1 })
@@ -104,6 +105,10 @@ export const getEventById = async (req, res) => {
 
     const isOwner = String(event.user) === String(userId);
     if (!isOwner) {
+      // Deadlines and exams are strictly private — only the creator can access them
+      if (event.type === "deadline" || event.type === "exam") {
+        return res.status(403).json({ error: "Access denied. Deadlines and exams are private." });
+      }
       if (!event.circle) {
         return res.status(403).json({ error: "Access denied" });
       }

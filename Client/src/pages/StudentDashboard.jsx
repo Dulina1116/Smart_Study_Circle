@@ -31,6 +31,12 @@ const API_ORIGIN =
 const CIRCLES_API_BASE = `${API_ORIGIN}/api/circles`;
 const USERS_API_BASE = `${API_ORIGIN}/api/users`;
 const RESOURCES_API_BASE = `${API_ORIGIN}/api/resources`;
+const EVENTS_API = `${API_ORIGIN}/api/events`;
+const DAY_NAMES = ["S", "M", "T", "W", "T", "F", "S"];
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
 const resolveImageUrl = (value) => {
   if (!value || typeof value !== "string") return "";
@@ -199,8 +205,18 @@ const DashboardOverview = ({
   isResourcesLoading = false,
   savedResourcesCount = 0,
   onPreviewResource,
+  events = [],
 }) => {
+  const [calDate, setCalDate] = useState(new Date());
+
   const dashboardCircles = myCircles.slice(0, 3);
+  
+  // Real Upcoming Events (Next 3 sessions, deadlines, or exams)
+  const upcomingEvents = events
+    .filter(e => new Date(e.date) >= new Date())
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(0, 3);
+
   const stats = [
     {
       label: "Joined Circles",
@@ -491,92 +507,144 @@ const DashboardOverview = ({
 
           {/* Right Column (Sessions & Calendar) */}
           <div className="space-y-8">
-            {/* Upcoming Sessions */}
+            {/* Upcoming Events (Sessions, Deadlines, Exams) */}
             <div className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_30px_rgba(31,41,51,0.08)]">
               <h2 className="text-lg font-bold text-[var(--dash-ink)] mb-6 font-head">
-                Upcoming Sessions
+                Upcoming Events
               </h2>
 
               <div className="relative border-l-2 border-[var(--dash-border)] ml-3 space-y-8 pb-4">
-                {/* Session 1 */}
-                <div className="relative pl-6">
-                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-[var(--dash-accent)] shadow-sm"></span>
-                  <p className="text-xs font-bold text-[var(--dash-accent)] mb-1">
-                    TODAY, 14:00
-                  </p>
-                  <h4 className="text-sm font-bold text-[var(--dash-ink)] mb-1">
-                    CS101 Group Study
-                  </h4>
-                  <p className="text-xs text-[var(--dash-muted)] mb-3">
-                    Virtual • Zoom Link
-                  </p>
-                  <button className="bg-[var(--dash-accent-soft)] hover:bg-[rgba(15,118,110,0.2)] text-[var(--dash-accent)] text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">
-                    Join Meeting
-                  </button>
-                </div>
+                {upcomingEvents.length === 0 ? (
+                  <div className="pl-6 text-sm text-[var(--dash-muted)]">
+                    No upcoming events scheduled.
+                  </div>
+                ) : (
+                  upcomingEvents.map((event, idx) => {
+                    const eventDate = new Date(event.date);
+                    const isToday = eventDate.toDateString() === new Date().toDateString();
+                    const isTomorrow = eventDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+                    
+                    let dateLabel = eventDate.toLocaleDateString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" });
+                    if (isToday) dateLabel = `TODAY, ${eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                    else if (isTomorrow) dateLabel = `TOMORROW, ${eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
-                {/* Session 2 */}
-                <div className="relative pl-6">
-                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-amber-300 shadow-sm"></span>
-                  <p className="text-xs font-bold text-[var(--dash-muted)] mb-1">
-                    TOMORROW, 10:00
-                  </p>
-                  <h4 className="text-sm font-bold text-[var(--dash-ink)] mb-1">
-                    Exam Prep: History
-                  </h4>
-                  <p className="text-xs text-[var(--dash-muted)]">Library Room 302</p>
-                </div>
+                    // Type-specific styling
+                    const typeStyles = {
+                      study_session: { dot: "bg-[var(--dash-accent)]", text: "text-[var(--dash-accent)]", label: "Session" },
+                      deadline: { dot: "bg-rose-500", text: "text-rose-600", label: "Deadline" },
+                      exam: { dot: "bg-[var(--dash-warm)]", text: "text-[var(--dash-warm)]", label: "Exam" }
+                    };
+                    const style = typeStyles[event.type] || typeStyles.study_session;
 
-                {/* Session 3 */}
-                <div className="relative pl-6">
-                  <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white bg-amber-300 shadow-sm"></span>
-                  <p className="text-xs font-bold text-[var(--dash-muted)] mb-1">
-                    FRI, 13:00
-                  </p>
-                  <h4 className="text-sm font-bold text-[var(--dash-ink)] mb-1">
-                    Eco Policy Review
-                  </h4>
-                  <p className="text-xs text-[var(--dash-muted)]">Campus Cafe</p>
-                </div>
+                    return (
+                      <div key={event._id || idx} className="relative pl-6 group cursor-pointer" onClick={() => setCurrentView("calendar")}>
+                        <span className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-125 ${style.dot}`}></span>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className={`text-[10px] font-black uppercase tracking-widest ${style.text}`}>
+                            {dateLabel}
+                          </p>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase border ${event.type === 'deadline' ? 'border-rose-100 bg-rose-50 text-rose-600' : event.type === 'exam' ? 'border-amber-100 bg-amber-50 text-amber-700' : 'border-[var(--dash-accent-soft)] bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]'}`}>
+                            {style.label}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-[var(--dash-ink)] mb-1 group-hover:text-[var(--dash-accent)] transition-colors">
+                          {event.title}
+                        </h4>
+                        <p className="text-xs text-[var(--dash-muted)] mb-3 line-clamp-1">
+                          {event.location ? (event.location.includes("http") ? "Virtual Session" : event.location) : "Details not specified"}
+                        </p>
+                        {event.location && event.location.includes("http") && (
+                          <a 
+                            href={event.location} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-block bg-[var(--dash-surface-2)] hover:bg-[var(--dash-accent-soft)] border border-[var(--dash-border)] hover:border-[var(--dash-accent)] text-[var(--dash-accent)] text-[10px] font-bold py-1 px-3 rounded-lg transition-all"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Join Meeting
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
-            {/* Calendar Widget placeholder */}
+            {/* Dynamic Calendar Widget */}
             <div className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_30px_rgba(31,41,51,0.08)]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[var(--dash-ink)] font-head">October 2023</h3>
+                <h3 className="font-bold text-[var(--dash-ink)] font-head">
+                  {MONTH_NAMES[calDate.getMonth()]} {calDate.getFullYear()}
+                </h3>
                 <div className="flex gap-2">
-                  <button className="text-gray-400 hover:text-[var(--dash-ink)]">
+                  <button 
+                    onClick={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() - 1, 1))}
+                    className="text-gray-400 hover:text-[var(--dash-ink)] transition-colors"
+                  >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <button className="text-gray-400 hover:text-[var(--dash-ink)]">
+                  <button 
+                    onClick={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() + 1, 1))}
+                    className="text-gray-400 hover:text-[var(--dash-ink)] transition-colors"
+                  >
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
               <div className="grid grid-cols-7 text-center gap-1 mb-2">
-                {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-                  <div key={i} className="text-xs font-bold text-[var(--dash-muted)] py-1">
+                {DAY_NAMES.map((day, i) => (
+                  <div key={i} className="text-[10px] font-bold text-[var(--dash-muted)] py-1 uppercase tracking-tighter">
                     {day}
                   </div>
                 ))}
               </div>
               <div className="grid grid-cols-7 text-center gap-1">
-                {/* Dummy calendar dates */}
-                {Array.from({ length: 31 }, (_, i) => {
-                  const day = i + 1;
-                  const isToday = day === 24;
-                  return (
-                    <div key={i} className="py-1">
-                      <span
-                        className={`inline-flex items-center justify-center w-7 h-7 text-xs font-semibold rounded-full ${isToday ? "bg-[var(--dash-accent)] text-white shadow-md" : "text-[var(--dash-ink)] hover:bg-[var(--dash-surface-2)]"}`}
-                      >
-                        {day}
-                      </span>
-                    </div>
-                  );
-                })}
+                {(() => {
+                  const year = calDate.getFullYear();
+                  const month = calDate.getMonth();
+                  const firstDay = new Date(year, month, 1).getDay();
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  const today = new Date();
+                  
+                  const cells = [];
+                  for (let i = 0; i < firstDay; i++) cells.push(null);
+                  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+                  return cells.map((day, i) => {
+                    const isToday = 
+                      day === today.getDate() && 
+                      month === today.getMonth() && 
+                      year === today.getFullYear();
+                    
+                    const hasEvent = day && events.some(e => {
+                      const d = new Date(e.date);
+                      return d.getDate() === day && d.getMonth() === month && d.getFullYear() === year;
+                    });
+
+                    return (
+                      <div key={i} className="py-1 relative group cursor-pointer" onClick={() => setCurrentView("calendar")}>
+                        {day && (
+                          <>
+                            <span
+                              className={`inline-flex items-center justify-center w-7 h-7 text-xs font-bold rounded-full transition-all ${
+                                isToday 
+                                  ? "bg-[var(--dash-accent)] text-white shadow-md shadow-[var(--dash-accent-soft)]" 
+                                  : "text-[var(--dash-ink)] group-hover:bg-[var(--dash-surface-2)]"
+                              }`}
+                            >
+                              {day}
+                            </span>
+                            {hasEvent && !isToday && (
+                              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[var(--dash-accent)] rounded-full"></span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           </div>
@@ -1000,6 +1068,7 @@ export default function StudentDashboard() {
   const [recentResources, setRecentResources] = useState([]);
   const [savedResourcesCount, setSavedResourcesCount] = useState(0);
   const [isResourcesLoading, setIsResourcesLoading] = useState(false);
+  const [events, setEvents] = useState([]);
 
   useEffect(() => {
     const u = getUser();
@@ -1009,6 +1078,28 @@ export default function StudentDashboard() {
     }
     setUser(u);
   }, [navigate]);
+
+  const refreshEvents = async () => {
+    try {
+      const res = await fetch(`${EVENTS_API}`, { headers: getAuthHeaders() });
+      if (res.status === 401) {
+        clearAuth();
+        navigate("/login", { replace: true });
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to load events.");
+      setEvents(Array.isArray(data.events) ? data.events : []);
+    } catch (err) {
+      console.error("Failed to load dashboard events:", err);
+      setEvents([]);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    refreshEvents();
+  }, [user]);
 
   const refreshCircles = async (silent = false, options = {}) => {
     const includeDiscover = options.includeDiscover ?? false;
@@ -1154,6 +1245,7 @@ export default function StudentDashboard() {
             onPreviewResource={(resource) =>
               navigate(`/resources/preview/${resource._id || resource.id}`)
             }
+            events={events}
           />
         ) : currentView === "circles" ? (
           <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8">
