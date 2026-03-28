@@ -61,10 +61,8 @@ app.use("/api/lecturer-circles", circleRoutes);
 app.use("/api/lecturer-resources", lecturerResourceRoute);
 app.use("/api/notifications", notificationRoutes);
 
-// Serve uploads folder
-import { fileURLToPath } from "url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve uploads folder from workspace root (matches multer destinations)
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ── Health Check ──
 app.get("/", (req, res) => res.send("Smart Study Circle API Running ✦"));

@@ -41,10 +41,10 @@ const getCategoryLabel = (category) => {
 
 const getCategoryStyle = (category) => {
   const styles = {
-    "lecture-notes": "bg-blue-50 text-blue-700 border-blue-100",
+    "lecture-notes": "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] border-[rgba(15,118,110,0.25)]",
     "past-papers": "bg-amber-50 text-amber-700 border-amber-100",
     summaries: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    handout: "bg-violet-50 text-violet-700 border-violet-100",
+    handout: "bg-sky-50 text-sky-700 border-sky-100",
     other: "bg-slate-50 text-slate-700 border-slate-100",
   };
   return styles[category] || styles.other;
@@ -52,10 +52,10 @@ const getCategoryStyle = (category) => {
 
 const getCategoryFolderStyle = (category) => {
   const styles = {
-    "lecture-notes": "bg-blue-100 text-blue-700",
+    "lecture-notes": "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]",
     "past-papers": "bg-amber-100 text-amber-700",
     summaries: "bg-emerald-100 text-emerald-700",
-    handout: "bg-violet-100 text-violet-700",
+    handout: "bg-sky-100 text-sky-700",
     other: "bg-slate-100 text-slate-700",
   };
   return styles[category] || styles.other;
@@ -389,29 +389,31 @@ export default function ResourcesLibrary({ user }) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="relative flex-1 overflow-y-auto overflow-x-hidden bg-[var(--dash-bg)] p-8">
+      <div className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[rgba(245,158,11,0.22)] blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[rgba(15,118,110,0.18)] blur-3xl" />
+      <div className="relative max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
-          <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-blue-100/60 blur-2xl" />
-          <div className="absolute -left-14 -bottom-14 h-40 w-40 rounded-full bg-cyan-100/50 blur-2xl" />
+        <div className="relative overflow-hidden rounded-[28px] border border-[var(--dash-border)] bg-[var(--dash-surface)] p-6 md:p-8 shadow-[0_18px_36px_rgba(31,41,51,0.08)]">
+          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[rgba(15,118,110,0.18)] blur-3xl" />
+          <div className="absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-[rgba(245,158,11,0.2)] blur-3xl" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold tracking-wide text-blue-700 mb-3">
+              <div className="inline-flex items-center rounded-full border border-[var(--dash-border)] bg-[var(--dash-surface-2)] px-3 py-1 text-xs font-bold tracking-wide text-[var(--dash-accent)] mb-3">
                 <BookOpen className="w-3.5 h-3.5 mr-1.5" />
                 RESOURCE HUB
               </div>
-              <h1 className="text-3xl font-extrabold text-[#0f172a] tracking-tight mb-2">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--dash-ink)] tracking-tight mb-2 font-head">
                 Resources Library
               </h1>
-              <p className="text-slate-600">
+              <p className="text-[var(--dash-muted)]">
                 Access study materials, notes, readings, and curated resources
                 in one place.
               </p>
             </div>
             <button
               onClick={() => setShowUploadModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center transition-colors shadow-sm"
+              className="bg-[linear-gradient(135deg,#0f766e,#14b8a6)] hover:brightness-110 text-white font-semibold px-4 py-2.5 rounded-xl text-sm flex items-center transition-colors shadow-[0_12px_26px_rgba(15,118,110,0.35)]"
             >
               <Plus className="w-4 h-4 mr-2" />
               Upload Resource
@@ -431,13 +433,13 @@ export default function ResourcesLibrary({ user }) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search resources..."
-              className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full bg-[var(--dash-surface)] border border-[var(--dash-border)] rounded-xl py-2.5 pl-10 pr-4 text-sm text-[var(--dash-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--dash-accent-soft)]"
             />
           </div>
           <div className="flex gap-2">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors"
+              className="bg-[var(--dash-accent)] hover:bg-[var(--dash-accent-strong)] text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors"
             >
               Search
             </button>
@@ -448,7 +450,7 @@ export default function ResourcesLibrary({ user }) {
                   setSelectedCategory(null);
                   fetchInitialData();
                 }}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors"
+                className="bg-[var(--dash-surface-2)] hover:bg-[rgba(15,118,110,0.1)] text-[var(--dash-ink)] font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors"
               >
                 Clear Filter
               </button>
@@ -459,30 +461,30 @@ export default function ResourcesLibrary({ user }) {
         {/* Featured Resources */}
         {featuredResources.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
+            <h2 className="text-lg font-bold text-[var(--dash-ink)] mb-4 font-head">
               Featured Resources
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {featuredResources.slice(0, 3).map((resource) => (
                 <div
                   key={resource._id}
-                  className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                  className="bg-[var(--dash-surface)] rounded-2xl p-6 border border-[var(--dash-border)] shadow-[0_18px_32px_rgba(31,41,51,0.08)] hover:-translate-y-0.5 transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-2xl">
                       {getTypeIcon(resource.type)}
                     </span>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-100">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[var(--dash-surface-2)] text-[var(--dash-accent)] border border-[var(--dash-border)]">
                       FEATURED
                     </span>
                   </div>
-                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">
+                  <h3 className="font-bold text-[var(--dash-ink)] mb-2 line-clamp-2">
                     {resource.title}
                   </h3>
-                  <p className="text-xs text-slate-500 mb-4 line-clamp-2">
+                  <p className="text-xs text-[var(--dash-muted)] mb-4 line-clamp-2">
                     {resource.description || "No description added yet."}
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-2 text-xs text-[var(--dash-muted)]">
                     <span
                       className={`px-2 py-0.5 rounded-full border ${getCategoryStyle(resource.category)}`}
                     >
@@ -498,7 +500,7 @@ export default function ResourcesLibrary({ user }) {
                   {resource.filePath && (
                     <button
                       onClick={() => handleDownload(resource)}
-                      className="mt-4 w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold py-2 rounded-lg transition-colors"
+                      className="mt-4 w-full bg-[var(--dash-accent-soft)] hover:bg-[rgba(15,118,110,0.2)] text-[var(--dash-accent)] text-xs font-semibold py-2 rounded-lg transition-colors"
                     >
                       <Download className="w-3 h-3 inline mr-1" /> Download
                     </button>
@@ -512,7 +514,7 @@ export default function ResourcesLibrary({ user }) {
         {/* Categories */}
         {Object.keys(categories).length > 0 && (
           <section>
-            <h3 className="text-sm uppercase tracking-[0.2em] text-gray-400 font-bold mb-3">
+            <h3 className="text-sm uppercase tracking-[0.2em] text-[var(--dash-muted)] font-bold mb-3">
               Categories
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -520,21 +522,22 @@ export default function ResourcesLibrary({ user }) {
                 <button
                   key={catId}
                   onClick={() => handleCategorySelect(catId)}
-                  className={`rounded-2xl p-5 text-left border transition-all duration-200 ${
+                  className={`group relative overflow-hidden rounded-2xl p-5 text-left border transition-all duration-200 ${
                     selectedCategory === catId
-                      ? "bg-blue-50 border-blue-300 shadow-sm"
-                      : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
+                      ? "bg-[var(--dash-accent-soft)] border-[rgba(15,118,110,0.3)] shadow-[0_16px_28px_rgba(15,118,110,0.18)]"
+                      : "bg-[var(--dash-surface)] border-[var(--dash-border)] hover:border-[rgba(15,118,110,0.25)] hover:shadow-[0_16px_28px_rgba(31,41,51,0.08)]"
                   }`}
                 >
+                  <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[rgba(245,158,11,0.12)] blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   <div
-                    className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${getCategoryFolderStyle(catId)}`}
+                    className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${getCategoryFolderStyle(catId)} transition-transform duration-300 group-hover:-translate-y-1`}
                   >
                     <Folder className="w-6 h-6" />
                   </div>
-                  <p className="font-bold text-[28px] sm:text-[30px] text-slate-900 leading-tight">
+                  <p className="font-bold text-[26px] sm:text-[28px] text-[var(--dash-ink)] leading-tight font-head">
                     {catInfo.label}
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="text-sm text-[var(--dash-muted)] mt-1">
                     {catInfo.count} files
                   </p>
                 </button>
@@ -545,51 +548,55 @@ export default function ResourcesLibrary({ user }) {
 
         {/* View Toggle */}
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm text-slate-500 font-medium">
+          <p className="text-sm text-[var(--dash-muted)] font-medium">
             {selectedCategory
               ? `Showing: ${getCategoryLabel(selectedCategory)}`
               : "Showing: All resources"}
           </p>
+          <div className="flex items-center gap-2">
           <button
             onClick={() => setViewMode("grid")}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`h-9 w-9 rounded-full transition-colors ${
               viewMode === "grid"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+                ? "bg-[var(--dash-accent)] text-white shadow-[0_10px_20px_rgba(15,118,110,0.25)]"
+                : "bg-[var(--dash-surface-2)] text-[var(--dash-muted)] hover:bg-[rgba(15,118,110,0.12)]"
+              }`}
+              aria-label="Grid view"
           >
-            <Grid className="w-4 h-4" />
+            <Grid className="w-4 h-4 mx-auto" />
           </button>
           <button
             onClick={() => setViewMode("list")}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`h-9 w-9 rounded-full transition-colors ${
               viewMode === "list"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+                ? "bg-[var(--dash-accent)] text-white shadow-[0_10px_20px_rgba(15,118,110,0.25)]"
+                : "bg-[var(--dash-surface-2)] text-[var(--dash-muted)] hover:bg-[rgba(15,118,110,0.12)]"
+              }`}
+              aria-label="List view"
           >
-            <List className="w-4 h-4" />
+            <List className="w-4 h-4 mx-auto" />
           </button>
+          </div>
         </div>
 
         {/* Resources Grid/List */}
         {isLoading ? (
           <div className="space-y-3 animate-pulse">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-gray-100 rounded-xl"></div>
+              <div key={i} className="h-20 bg-[var(--dash-surface-2)] rounded-xl"></div>
             ))}
           </div>
         ) : resources.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 border border-gray-100 text-center">
-            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-500">No resources found</p>
+          <div className="bg-[var(--dash-surface)] rounded-2xl p-12 border border-[var(--dash-border)] text-center">
+            <AlertCircle className="w-12 h-12 text-[var(--dash-muted)] mx-auto mb-3" />
+            <p className="text-[var(--dash-muted)]">No resources found</p>
           </div>
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {resources.map((resource) => (
               <div
                 key={resource._id}
-                className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                className="bg-[var(--dash-surface)] rounded-2xl p-5 border border-[var(--dash-border)] shadow-[0_16px_28px_rgba(31,41,51,0.08)] hover:-translate-y-0.5 transition-all duration-200"
               >
                 <div className="flex items-end justify-between mb-2">
                   <span className="text-2xl">{getTypeIcon(resource.type)}</span>
@@ -599,13 +606,13 @@ export default function ResourcesLibrary({ user }) {
                     {getCategoryLabel(resource.category)}
                   </span>
                 </div>
-                <h3 className="font-bold text-slate-900 text-base mb-1 line-clamp-2">
+                <h3 className="font-bold text-[var(--dash-ink)] text-base mb-1 line-clamp-2">
                   {resource.title}
                 </h3>
-                <p className="text-xs text-slate-500 mb-3 line-clamp-2 min-h-[2rem]">
+                <p className="text-xs text-[var(--dash-muted)] mb-3 line-clamp-2 min-h-[2rem]">
                   {resource.description || "No description added yet."}
                 </p>
-                <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                <div className="flex items-center gap-3 text-xs text-[var(--dash-muted)] mb-3">
                   <span className="flex items-center gap-1">
                     <Eye className="w-3 h-3" /> {resource.views || 0}
                   </span>
@@ -616,14 +623,14 @@ export default function ResourcesLibrary({ user }) {
                 <button
                   type="button"
                   onClick={() => openDetailsModal(resource)}
-                  className="w-full mb-2 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="w-full mb-2 inline-flex items-center justify-center rounded-lg border border-[var(--dash-border)] bg-[var(--dash-surface)] px-3 py-2 text-xs font-semibold text-[var(--dash-ink)] hover:bg-[var(--dash-surface-2)]"
                 >
                   <Eye className="w-3.5 h-3.5 mr-1" /> Read Details
                 </button>
                 {resource.filePath && (
                   <button
                     onClick={() => handleDownload(resource)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                    className="w-full bg-[var(--dash-accent)] hover:bg-[var(--dash-accent-strong)] text-white text-xs font-semibold py-2 rounded-lg transition-colors"
                   >
                     Download
                   </button>
@@ -633,7 +640,7 @@ export default function ResourcesLibrary({ user }) {
                     <button
                       type="button"
                       onClick={() => openEditModal(resource)}
-                      className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      className="inline-flex items-center justify-center rounded-lg border border-[var(--dash-border)] bg-[var(--dash-surface)] px-2 py-2 text-xs font-semibold text-[var(--dash-ink)] hover:bg-[var(--dash-surface-2)]"
                     >
                       <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
                     </button>
@@ -653,23 +660,23 @@ export default function ResourcesLibrary({ user }) {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="bg-[var(--dash-surface)] rounded-2xl border border-[var(--dash-border)] overflow-hidden shadow-[0_16px_28px_rgba(31,41,51,0.08)]">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                <tr className="border-b border-[var(--dash-border)] bg-[var(--dash-surface-2)]">
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-[var(--dash-ink)]">
                     Name
                   </th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-[var(--dash-ink)]">
                     Type
                   </th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-[var(--dash-ink)]">
                     Size
                   </th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-[var(--dash-ink)]">
                     Modified
                   </th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-[var(--dash-ink)]">
                     Action
                   </th>
                 </tr>
@@ -678,22 +685,22 @@ export default function ResourcesLibrary({ user }) {
                 {resources.map((resource, idx) => (
                   <tr
                     key={resource._id}
-                    className={`border-b border-slate-100 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"} hover:bg-slate-50`}
+                    className={`border-b border-[var(--dash-border)] transition-colors ${idx % 2 === 0 ? "bg-[var(--dash-surface)]" : "bg-[var(--dash-surface-2)]"} hover:bg-[rgba(15,118,110,0.06)]`}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-gray-900 truncate">
+                        <span className="text-sm font-semibold text-[var(--dash-ink)] truncate">
                           {resource.title}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-[var(--dash-muted)]">
                       {resource.type}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-[var(--dash-muted)]">
                       {formatFileSize(resource.fileSize || 0)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-[var(--dash-muted)]">
                       {formatDate(resource.createdAt)}
                     </td>
                     <td className="px-6 py-4">
@@ -701,7 +708,7 @@ export default function ResourcesLibrary({ user }) {
                         <button
                           type="button"
                           onClick={() => openDetailsModal(resource)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-ink)] hover:bg-[var(--dash-surface-2)]"
                           title="Read details"
                           aria-label="Read details"
                         >
@@ -711,7 +718,7 @@ export default function ResourcesLibrary({ user }) {
                           <button
                             type="button"
                             onClick={() => handleDownload(resource)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(15,118,110,0.25)] bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] hover:bg-[rgba(15,118,110,0.2)]"
                             title="Download"
                             aria-label="Download"
                           >
@@ -723,7 +730,7 @@ export default function ResourcesLibrary({ user }) {
                             <button
                               type="button"
                               onClick={() => openEditModal(resource)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-ink)] hover:bg-[var(--dash-surface-2)]"
                               title="Edit"
                               aria-label="Edit"
                             >
