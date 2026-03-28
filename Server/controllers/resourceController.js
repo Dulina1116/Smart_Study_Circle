@@ -206,8 +206,37 @@ export const createResource = async (req, res) => {
       return res.status(400).json({ message: "Title and type are required." });
     }
 
+    const trimmedTitle = String(title).trim();
+    if (trimmedTitle.length < 3) {
+      return res.status(400).json({ message: "Title must be at least 3 characters." });
+    }
+    if (trimmedTitle.length > 100) {
+      return res.status(400).json({ message: "Title must be 100 characters or fewer." });
+    }
+
+    if (type === "link") {
+      const link = externalLink ? String(externalLink).trim() : "";
+      if (!link) {
+        return res.status(400).json({ message: "An external link URL is required for link-type resources." });
+      }
+      if (!/^https?:\/\/.+/.test(link)) {
+        return res.status(400).json({ message: "External link must start with http:// or https://." });
+      }
+    } else if (!req.file) {
+      return res.status(400).json({ message: "A file is required for this resource type." });
+    }
+
+    // Check for duplicate title (case-insensitive)
+    const duplicate = await Resource.findOne({
+      title: { $regex: `^${trimmedTitle}$`, $options: "i" },
+      isActive: true,
+    });
+    if (duplicate) {
+      return res.status(409).json({ message: `A resource named "${trimmedTitle}" already exists. Please use a different title.` });
+    }
+
     const resource = await Resource.create({
-      title: String(title).trim(),
+      title: trimmedTitle,
       description: description ? String(description).trim() : "",
       category: category || "other",
       type,
@@ -264,7 +293,30 @@ export const updateResource = async (req, res) => {
         .json({ message: "Only the uploader can update this resource." });
     }
 
-    if (title) resource.title = String(title).trim();
+    if (title) {
+      const trimmedTitle = String(title).trim();
+      if (trimmedTitle.length < 3) {
+        return res.status(400).json({ message: "Title must be at least 3 characters." });
+      }
+      if (trimmedTitle.length > 100) {
+        return res.status(400).json({ message: "Title must be 100 characters or fewer." });
+      }
+      resource.title = trimmedTitle;
+    }
+
+    const resolvedType = type || resource.type;
+    if (resolvedType === "link") {
+      const link = externalLink !== undefined
+        ? String(externalLink).trim()
+        : (resource.externalLink || "");
+      if (!link) {
+        return res.status(400).json({ message: "An external link URL is required for link-type resources." });
+      }
+      if (!/^https?:\/\/.+/.test(link)) {
+        return res.status(400).json({ message: "External link must start with http:// or https://." });
+      }
+    }
+
     if (description !== undefined)
       resource.description = description ? String(description).trim() : "";
     if (category) resource.category = category;

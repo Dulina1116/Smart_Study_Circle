@@ -39,6 +39,12 @@ export default function LecturerMyCircles({ user }) {
     circleType: "lecturer",
   });
 
+  // Invite members
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteEmails, setInviteEmails] = useState([]);
+  const [inviteStatus, setInviteStatus] = useState(""); // '' | 'sending' | 'done' | 'error'
+  const [circleError, setCircleError] = useState(""); // inline error for create modal
+
   const token = localStorage.getItem("token");
   const baseUrl = "http://localhost:5000";
 
@@ -137,20 +143,53 @@ export default function LecturerMyCircles({ user }) {
       });
 
       if (res.ok) {
-        fetchCircles(); // Refetch the updated list
+        const created = await res.json();
+        // Fire invitations after circle is created
+        if (inviteEmails.length > 0 && created._id) {
+          await sendInvitations(created._id, inviteEmails);
+        }
+        fetchCircles();
         setShowModal(false);
-        setFormData({
-          circleName: "",
-          module: "",
-          description: "",
-          circleType: "lecturer",
-        });
+        setCircleError("");
+        setFormData({ circleName: "", module: "", description: "", circleType: "lecturer" });
+        setInviteEmails([]);
+        setInviteEmail("");
         setEditingId(null);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setCircleError(errData.message || "Failed to create circle. Please try again.");
       }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  } catch (err) { console.error(err); setCircleError("Network error. Please try again."); }
+};
+
+const addInviteEmail = () => {
+  const email = inviteEmail.trim().toLowerCase();
+  if (!email || inviteEmails.includes(email)) {
+    setInviteEmail("");
+    return;
+  }
+  setInviteEmails((prev) => [...prev, email]);
+  setInviteEmail("");
+};
+
+const removeInviteEmail = (email) => {
+  setInviteEmails((prev) => prev.filter((e) => e !== email));
+};
+
+const sendInvitations = async (circleId, emails) => {
+  setInviteStatus("sending");
+  try {
+    await fetch(`${baseUrl}/api/lecturer-circles/${circleId}/invite`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ emails }),
+    });
+    setInviteStatus("done");
+  } catch (err) {
+    console.error("Invite error:", err);
+    setInviteStatus("error");
+  }
+};
 
   const getActivityColor = (type) => {
     switch (type) {
@@ -272,31 +311,8 @@ export default function LecturerMyCircles({ user }) {
             </button>
           </div>
 
-          {/* Filters & Sorting */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div className="flex items-center bg-white p-1 rounded-full shadow-sm border border-slate-100 overflow-x-auto">
-              <button className="bg-teal-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-sm whitespace-nowrap">
-                All Modules
-              </button>
-              <button className="text-slate-500 hover:text-slate-800 hover:bg-slate-50 px-5 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap">
-                CS402
-              </button>
-              <button className="text-slate-500 hover:text-slate-800 hover:bg-slate-50 px-5 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap">
-                AI301
-              </button>
-              <button className="text-slate-500 hover:text-slate-800 hover:bg-slate-50 px-5 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap">
-                ETHICS101
-              </button>
-            </div>
 
-            <div className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 shadow-sm cursor-pointer">
-              Sort by: Activity Level
-              <ChevronDown
-                className="w-4 h-4 text-slate-400 ml-1"
-                strokeWidth={2.5}
-              />
-            </div>
-          </div>
+
 
           {/* Grid */}
           {isLoading ? (
@@ -605,26 +621,16 @@ export default function LecturerMyCircles({ user }) {
                   <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-2.5">
                     Module / Subject
                   </label>
-                  <div className="relative">
-                    <select
+                  <input
+                      type="text"
                       name="module"
                       value={formData.module}
                       onChange={handleInputChange}
-                      className="w-full bg-slate-200/50 border-none rounded-xl px-5 py-3.5 text-[14px] font-semibold text-slate-700 focus:ring-2 focus:ring-teal-500/30 outline-none appearance-none cursor-pointer transition-all"
-                    >
-                      <option value="" disabled selected>
-                        Select Module
-                      </option>
-                      <option>CS402 - Advanced Algorithms</option>
-                      <option>AI301 - Machine Learning</option>
-                      <option>ETHICS101 - Tech Ethics</option>
-                    </select>
-                    <ChevronDown
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
-                      strokeWidth={3}
+                      placeholder="e.g. IT3010 NDM"
+                      className="w-full bg-slate-200/50 border-none rounded-xl px-5 py-3.5 text-[14px] font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                     />
-                  </div>
                 </div>
+
                 <div>
                   <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-2.5">
                     Circle Role
@@ -739,30 +745,34 @@ export default function LecturerMyCircles({ user }) {
                   <div className="flex items-center gap-2 mb-4">
                     <input
                       type="email"
-                      placeholder="Student email..."
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addInviteEmail())}
+                      placeholder="Student or lecturer email..."
                       className="w-full bg-slate-100 border-none rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                     />
-                    <button className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-[10px] text-[13px] font-bold transition-colors shadow-sm shrink-0">
+                    <button
+                      type="button"
+                      onClick={addInviteEmail}
+                      className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2.5 rounded-[10px] text-[13px] font-bold transition-colors shadow-sm shrink-0"
+                    >
                       Add
                     </button>
                   </div>
-                  <div className="flex items-center">
-                    <img
-                      src="https://ui-avatars.com/api/?name=Alice&background=14b8a6&color=fff"
-                      className="w-8 h-8 rounded-full border-2 border-white -ml-0 z-30 shadow-sm"
-                      alt="Alice"
-                    />
-                    <img
-                      src="https://ui-avatars.com/api/?name=Bob&background=f59e0b&color=fff"
-                      className="w-8 h-8 rounded-full border-2 border-white -ml-3 z-20 shadow-sm"
-                      alt="Bob"
-                    />
-                    <div className="w-8 h-8 rounded-full bg-[#E0E7FF] border-2 border-white -ml-3 z-10 flex items-center justify-center shadow-sm">
-                      <span className="text-[10px] font-bold text-blue-600">
-                        +4
-                      </span>
+                  {inviteEmails.length === 0 ? (
+                    <p className="text-[11px] text-slate-400 italic">No members added yet. An invitation email will be sent to each address when you create the circle.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {inviteEmails.map((email) => (
+                        <span key={email} className="inline-flex items-center gap-1.5 bg-teal-50 text-teal-700 text-[12px] font-semibold px-3 py-1.5 rounded-full border border-teal-100">
+                          {email}
+                          <button type="button" onClick={() => removeInviteEmail(email)} className="text-teal-400 hover:text-teal-700">
+                            <X className="w-3 h-3" strokeWidth={3} />
+                          </button>
+                        </span>
+                      ))}
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* First Session */}
@@ -779,24 +789,15 @@ export default function LecturerMyCircles({ user }) {
                   <div className="flex flex-col gap-3">
                     <div className="relative">
                       <input
-                        type="text"
-                        placeholder="mm/dd/yyyy"
-                        className="w-full bg-slate-100 border-none rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                      />
-                      <Calendar
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-                        strokeWidth={2.5}
+                        type="date"
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full bg-slate-100 border-none rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                       />
                     </div>
                     <div className="relative">
                       <input
-                        type="text"
-                        placeholder="--:-- --"
-                        className="w-full bg-slate-100 border-none rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                      />
-                      <Clock
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-                        strokeWidth={2.5}
+                        type="time"
+                        className="w-full bg-slate-100 border-none rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                       />
                     </div>
                   </div>

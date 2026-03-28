@@ -34,33 +34,52 @@ const fileStorage = multer.diskStorage({
   },
 });
 
+// Allowed MIME types per resource type
+const TYPE_MIMES = {
+  pdf:          ["application/pdf"],
+  document:     [
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+    "application/vnd.oasis.opendocument.text",
+  ],
+  presentation: [
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.oasis.opendocument.presentation",
+  ],
+  video:        ["video/mp4", "video/quicktime", "video/x-msvideo", "video/x-matroska", "video/webm"],
+  other:        [], // any file accepted for "other"
+};
+
+const TYPE_LABELS = {
+  pdf:          ".pdf",
+  document:     ".doc, .docx, .txt, .odt",
+  presentation: ".ppt, .pptx, .odp",
+  video:        ".mp4, .mov, .avi, .mkv, .webm",
+};
+
 const upload = multer({
   storage: fileStorage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
   fileFilter(req, file, cb) {
-    const allowedMimes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "video/mp4",
-      "video/quicktime",
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "text/plain",
-    ];
+    const resourceType = (req.body.type || "other").toLowerCase();
+    const allowed = TYPE_MIMES[resourceType];
 
-    if (allowedMimes.includes(file.mimetype)) {
+    // "other" or unknown type — accept anything
+    if (!allowed || allowed.length === 0) {
+      return cb(null, true);
+    }
+
+    if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`File type ${file.mimetype} not allowed`));
+      const label = TYPE_LABELS[resourceType] || resourceType;
+      cb(new Error(`Only ${label} files are accepted for ${resourceType} type.`));
     }
   },
 });
+
 
 // Public routes
 router.get("/", getAllResources);

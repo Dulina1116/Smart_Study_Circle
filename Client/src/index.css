@@ -18,6 +18,19 @@ body {
   color: #1a1a2e;
 }
 
+:root {
+  --dash-bg: #f5f3ef;
+  --dash-surface: #ffffff;
+  --dash-surface-2: #faf7f2;
+  --dash-ink: #1f2933;
+  --dash-muted: #6b7280;
+  --dash-accent: #0f766e;
+  --dash-accent-strong: #0b5f57;
+  --dash-accent-soft: #d8f2ee;
+  --dash-warm: #f59e0b;
+  --dash-border: #e8e1d8;
+}
+
 input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 1000px #f0fffe inset !important;
   -webkit-text-fill-color: #1a1a2e !important;
