@@ -19,6 +19,7 @@ import {
   X,
   Mail,
 } from "lucide-react";
+import NotificationDropdown from "../components/NotificationDropdown.jsx";
 import { clearAuth, getUser } from "../utils/authUtils";
 import StudentProgress from "../components/StudentProgress";
 import StudentCirclesManager from "../components/StudentCirclesManager";
@@ -156,6 +157,7 @@ const TopBar = ({ user, currentView, setCurrentView }) => {
           <Bell className="w-5 h-5" />
           <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
+        <NotificationDropdown />
 
         <button
           onClick={() => setCurrentView("profile")}

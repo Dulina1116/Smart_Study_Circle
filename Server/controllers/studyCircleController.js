@@ -1,4 +1,5 @@
 import StudyCircle from "../models/StudyCircle.js";
+import Circle from "../models/Circle.js";
 import CircleMessage from "../models/CircleMessage.js";
 import Resource from "../models/Resource.js";
 import User from "../models/User.js";
@@ -133,6 +134,26 @@ export const createStudyCircle = async (req, res) => {
 
     if (!Number.isInteger(parsedYear) || parsedYear < 1 || parsedYear > 4) {
       return res.status(400).json({ message: "Year must be between 1 and 4." });
+    }
+
+    // Duplicate check — prevent same subject+moduleCode across both circle collections
+    const subjectNorm = String(subject).trim().toLowerCase();
+    const codeNorm    = String(moduleCode).trim().toUpperCase();
+
+    const existsInStudyCircle = await StudyCircle.findOne({
+      subject:    { $regex: `^${subjectNorm}$`, $options: 'i' },
+      moduleCode: codeNorm,
+    }).lean();
+
+    const existsInCircle = await Circle.findOne({
+      circleName: { $regex: `^${subjectNorm}$`, $options: 'i' },
+      courseCode: { $regex: `^${codeNorm}$`,  $options: 'i' },
+    }).lean();
+
+    if (existsInStudyCircle || existsInCircle) {
+      return res.status(409).json({
+        message: `A circle named "${subject}" for module "${moduleCode}" already exists. Please choose a different name or module code.`,
+      });
     }
 
     const inviteCode = await generateInviteCode();
