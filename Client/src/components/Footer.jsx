@@ -78,7 +78,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">
-            © 2024 Smart Study Circle. All rights reserved.
+            © 2026 Smart Study Circle. All rights reserved.
           </p>
           <div className="flex items-center gap-1 text-xs text-gray-600">
             <span>Built with</span>
