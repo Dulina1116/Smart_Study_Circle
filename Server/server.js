@@ -1,3 +1,8 @@
+import dns from "dns";
+
+// Fix for DNS resolution issues: use public DNS servers for MongoDB
+dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1"]);
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
