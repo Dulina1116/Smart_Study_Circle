@@ -28,6 +28,7 @@ import { clearAuth, getUser } from "../utils/authUtils";
 import LecturerProfileSettings from "../components/LecturerProfileSettings";
 import LecturerMyCircles from "../components/LecturerMyCircles";
 import LecturerResourceLibrary from "../components/LecturerResourceLibrary";
+import LecturerStudentAnalytics from "../components/LecturerStudentAnalytics";
 
 const API_ORIGIN =
   import.meta.env.VITE_API_ORIGIN ||
@@ -226,7 +227,8 @@ export default function LecturerDashboard() {
             </a>
             <a
               href="#"
-              className="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-lg font-medium text-sm transition-colors"
+              onClick={() => setActiveTab("analytics")}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "analytics" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
             >
               <Activity className="w-[18px] h-[18px]" strokeWidth={2} />
               Student Analytics
@@ -290,6 +292,7 @@ export default function LecturerDashboard() {
             {activeTab === "circles" && "My Study Circles"}
             {activeTab === "library" && "Resource Library"}
             {activeTab === "profile" && "Profile Settings"}
+            {activeTab === "analytics" && "Student Analytics Dashboard"}
           </h1>
 
           <div className="flex items-center gap-6">
@@ -741,6 +744,8 @@ export default function LecturerDashboard() {
             <LecturerMyCircles user={user} />
           ) : activeTab === "library" ? (
             <LecturerResourceLibrary />
+          ) : activeTab === "analytics" ? (
+            <LecturerStudentAnalytics user={user} />
           ) : null}
         </div>
       </main>
