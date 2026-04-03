@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   Plus,
   Download,
@@ -191,6 +193,28 @@ const sendInvitations = async (circleId, emails) => {
   }
 };
 
+  const getTimeAgo = (date) => {
+    if (!date) return "Newly Created";
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    
+    let interval = Math.floor(seconds / 31536000);
+    if (interval >= 1) return `Created ${interval} year${interval === 1 ? '' : 's'} ago`;
+    
+    interval = Math.floor(seconds / 2592000);
+    if (interval >= 1) return `Created ${interval} month${interval === 1 ? '' : 's'} ago`;
+    
+    interval = Math.floor(seconds / 86400);
+    if (interval >= 1) return `Created ${interval} day${interval === 1 ? '' : 's'} ago`;
+    
+    interval = Math.floor(seconds / 3600);
+    if (interval >= 1) return `Created ${interval} hour${interval === 1 ? '' : 's'} ago`;
+    
+    interval = Math.floor(seconds / 60);
+    if (interval >= 1) return `Created ${interval} minute${interval === 1 ? '' : 's'} ago`;
+    
+    return "Created just now";
+  };
+
   const getActivityColor = (type) => {
     switch (type) {
       case "high":
@@ -233,37 +257,62 @@ const sendInvitations = async (circleId, emails) => {
   const resourcesShared = activeCirclesCount * 12; // Standin value proportional to active tracking
 
   const exportReport = () => {
-    const rows = displayedCircles.map((c) => ({
-      courseCode: c.courseCode || "",
-      courseName: c.courseName || "",
-      circleName: c.circleName || "",
-      description: c.description || "",
-      members: c.students || (c.members ? c.members.length : 0),
-      activity: c.activity || "",
-      visibility: c.isPrivate ? "Private" : "Public",
-      createdAt: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
-    }));
-
-    if (rows.length === 0) {
+    if (displayedCircles.length === 0) {
       alert("No circles to export.");
       return;
     }
 
-    const keys = Object.keys(rows[0]);
-    const csvLines = [keys.join(',')].concat(
-      rows.map((r) => keys.map((k) => `"${String(r[k] || "").replace(/"/g, '""')}"`).join(',')),
-    );
-    const csv = csvLines.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lecturer-circles-${new Date().toISOString().slice(0,10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.setTextColor(15, 118, 110); // Teal 600
+    doc.text("Lecturer Circles Report", 14, 22);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+    
+    // Add summary info
+    doc.text(`Role: ${activeTab === "lecturer" ? "Supervising" : "Enrolled"}`, 14, 38);
+    doc.text(`Total Circles: ${activeCirclesCount}`, 14, 44);
+    doc.text(`Total Students: ${totalStudents}`, 100, 38);
+    doc.text(`High Activity Circles: ${highActivityCount}`, 100, 44);
+
+    const tableColumn = ["Module", "Circle Name", "Members", "Activity", "Visibility", "Created Date"];
+    const tableRows = [];
+
+    displayedCircles.forEach(circle => {
+      const circleData = [
+        `${circle.courseCode || ""} - ${circle.courseName || ""}`,
+        circle.circleName || "",
+        circle.students || (circle.members ? circle.members.length : 0),
+        circle.activity || getTimeAgo(circle.createdAt),
+        circle.isPrivate ? "Private" : "Public",
+        circle.createdAt ? new Date(circle.createdAt).toLocaleDateString() : ""
+      ];
+      tableRows.push(circleData);
+    });
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 55,
+      theme: 'grid',
+      headStyles: { fillColor: [15, 118, 110] }, // Teal 600
+      styles: { fontSize: 9, cellPadding: 3 },
+      columnStyles: { 
+        0: { cellWidth: 35 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 35 }
+      }
+    });
+
+    doc.save(`lecturer-circles-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
 
   return (
     <div className="w-full max-w-[1400px] mx-auto text-slate-800 pb-10">
@@ -433,7 +482,7 @@ const sendInvitations = async (circleId, emails) => {
                           <span
                             className={`text-[13px] font-bold ${getActivityColor(circle.activityType)}`}
                           >
-                            {circle.activity}
+                            {getTimeAgo(circle.createdAt)}
                           </span>
                         </div>
                       </div>
@@ -569,7 +618,7 @@ const sendInvitations = async (circleId, emails) => {
                   <div
                     className={`w-3 h-3 rounded-full ${getActivityIndicator(activeCircle.activityType)} shadow-sm`}
                   />
-                  {activeCircle.activity}
+                  <span className="text-[17px] font-bold">{getTimeAgo(activeCircle.createdAt)}</span>
                 </p>
               </div>
               <div className="bg-slate-50 rounded-2xl p-4 flex flex-col justify-center border border-slate-100">
