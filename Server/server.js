@@ -27,6 +27,7 @@ import circleRoutes from "./routes/circleRoutes.js";
 import lecturerResourceRoute from "./routes/lecturerResourceRoute.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import assistantRoutes from "./routes/assistantRoutes.js";
 
 // Models
 import User from "./models/User.js";
@@ -67,6 +68,7 @@ app.use("/api/lecturer-circles", circleRoutes);
 app.use("/api/lecturer-resources", lecturerResourceRoute);
 app.use("/api/events", eventRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/assistant", assistantRoutes);
 
 // Serve uploads folder from workspace root (matches multer destinations)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

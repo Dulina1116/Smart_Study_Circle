@@ -8,7 +8,7 @@ const promises = [
 
 export default function CTASection() {
   return (
-    <section className="relative overflow-hidden py-20 lg:py-24">
+    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
       <div className="absolute inset-0 gradient-teal-animated" />
       <div className="absolute -top-12 -right-10 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
       <div className="absolute -bottom-16 -left-16 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
@@ -18,10 +18,10 @@ export default function CTASection() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
             Recreated Landing. Same Theme.
           </p>
-          <h2 className="mt-3 max-w-3xl text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 max-w-3xl text-2xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">
             Launch Your First Circle in Minutes and Keep It Growing Weekly
           </h2>
-          <p className="mt-4 max-w-2xl text-lg text-white/85">
+          <p className="mt-4 max-w-2xl text-base text-white/85 sm:text-lg">
             The new page flow is optimized for clarity and conversion while
             staying true to your original color direction.
           </p>

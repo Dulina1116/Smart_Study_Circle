@@ -14,7 +14,7 @@ const timeline = [
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-white pb-20 pt-20 lg:pb-24 lg:pt-28">
+    <section className="relative overflow-hidden bg-white pb-16 pt-16 sm:pb-20 sm:pt-20 lg:pb-24 lg:pt-28">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-28 right-0 h-72 w-72 rounded-full bg-cyan-100/80 blur-3xl" />
         <div className="absolute top-24 -left-24 h-80 w-80 rounded-full bg-teal-100/70 blur-3xl" />
@@ -27,12 +27,12 @@ export default function HeroSection() {
             Rebuilt for high-focus collaborative learning
           </div>
 
-          <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+          <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
             The New Home for
             <span className="gradient-teal-text"> Serious Study Teams</span>
           </h1>
 
-          <p className="max-w-xl text-lg leading-relaxed text-gray-500">
+          <p className="max-w-xl text-base leading-relaxed text-gray-500 sm:text-lg">
             Plan sessions, track momentum, and keep every member accountable with
             a landing experience built around clarity, speed, and real-time study
             energy.
@@ -71,7 +71,7 @@ export default function HeroSection() {
               <img
                 src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&q=80&auto=format&fit=crop"
                 alt="Students collaborating around a laptop in a bright study environment"
-                className="h-48 w-full object-cover transition-transform duration-300 hover:scale-110 sm:h-56"
+                className="h-44 w-full object-cover transition-transform duration-300 hover:scale-110 sm:h-56"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
               <div className="absolute bottom-3 left-3 rounded-lg bg-white/90 px-3 py-1 text-xs font-semibold text-teal-700 backdrop-blur-sm">

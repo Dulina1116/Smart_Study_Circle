@@ -22,6 +22,7 @@ import {
   User,
   BarChart2,
   X,
+  Menu,
 } from "lucide-react";
 import NotificationDropdown from "../components/NotificationDropdown.jsx";
 import { clearAuth, getUser } from "../utils/authUtils";
@@ -179,123 +180,168 @@ export default function LecturerDashboard() {
 
   if (!user) return null;
 
-  return (
-    <div className="flex h-screen bg-[#F4F7FB] font-sans text-slate-800 overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex-none flex flex-col z-20 overflow-y-auto">
-        {/* Logo Area */}
-        <div className="h-16 flex items-center px-6 shrink-0 mt-2 mb-2">
-          <div className="flex items-center gap-3">
-            <div className="bg-teal-500 p-2 rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-lg text-slate-900 tracking-tight">
-              SmartStudy
-            </span>
+  const handleSelectTab = (tab) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false);
+  };
+
+  const LecturerSidebar = ({ showClose = false }) => (
+    <div className="flex flex-col h-full">
+      {/* Logo Area */}
+      <div className="h-16 flex items-center px-6 shrink-0 mt-2 mb-2">
+        <div className="flex items-center gap-3 w-full">
+          <div className="bg-teal-500 p-2 rounded-lg flex items-center justify-center">
+            <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
+          <span className="font-bold text-lg text-slate-900 tracking-tight">
+            SmartStudy
+          </span>
+          {showClose ? (
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="ml-auto w-9 h-9 rounded-full hover:bg-slate-100 text-slate-500 inline-flex items-center justify-center"
+              aria-label="Close menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : null}
         </div>
+      </div>
 
-        {/* Main Nav */}
-        <div className="flex-1 py-4 flex flex-col">
-          <nav className="space-y-1 px-3">
-            <a
-              href="#"
-              onClick={() => setActiveTab("dashboard")}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "dashboard" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
-            >
-              <LayoutDashboard
-                className="w-[18px] h-[18px]"
-                strokeWidth={2.5}
-              />
-              Dashboard
-            </a>
-            <a
-              href="#"
-              onClick={() => setActiveTab("circles")}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "circles" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
-            >
-              <Users className="w-[18px] h-[18px]" strokeWidth={2} />
-              My Circles
-            </a>
-            <a
-              href="#"
-              onClick={() => setActiveTab("library")}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "library" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
-            >
-              <BookOpen className="w-[18px] h-[18px]" strokeWidth={2} />
-              Resource Library
-            </a>
-            <a
-              href="#"
-              onClick={() => setActiveTab("analytics")}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "analytics" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
-            >
-              <Activity className="w-[18px] h-[18px]" strokeWidth={2} />
-              Student Analytics
-            </a>
-          </nav>
-
-          <div className="mt-8 px-3">
-            <p className="px-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-2">
-              MODERATION
-            </p>
-            <nav className="space-y-1">
-              <a
-                href="#"
-                className="flex items-center justify-between px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-lg font-medium text-sm transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Flag className="w-[18px] h-[18px]" strokeWidth={2} />
-                  Reports
-                </div>
-                <span className="bg-red-50 text-red-500 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold">
-                  {pendingReports.length}
-                </span>
-              </a>
-              <a
-                href="#"
-                className="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-lg font-medium text-sm transition-colors"
-              >
-                <Gavel className="w-[18px] h-[18px]" strokeWidth={2} />
-                Disputes
-              </a>
-            </nav>
-          </div>
-        </div>
-
-        {/* Bottom Settings */}
-        <div className="p-4 mb-2 shrink-0 border-t border-slate-200 mt-2">
-          <a
-            href="#"
-            onClick={() => setActiveTab("profile")}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "profile" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"} mb-1`}
-          >
-            <Settings className="w-[18px] h-[18px]" strokeWidth={2} />
-            Settings
-          </a>
+      {/* Main Nav */}
+      <div className="flex-1 py-4 flex flex-col">
+        <nav className="space-y-1 px-3">
           <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg font-medium text-sm transition-colors"
+            type="button"
+            onClick={() => handleSelectTab("dashboard")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "dashboard" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
           >
-            <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
-            Logout
+            <LayoutDashboard
+              className="w-[18px] h-[18px]"
+              strokeWidth={2.5}
+            />
+            Dashboard
           </button>
+          <button
+            type="button"
+            onClick={() => handleSelectTab("circles")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "circles" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
+          >
+            <Users className="w-[18px] h-[18px]" strokeWidth={2} />
+            My Circles
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSelectTab("library")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "library" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
+          >
+            <BookOpen className="w-[18px] h-[18px]" strokeWidth={2} />
+            Resource Library
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSelectTab("analytics")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "analytics" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
+          >
+            <Activity className="w-[18px] h-[18px]" strokeWidth={2} />
+            Student Analytics
+          </button>
+        </nav>
+
+        <div className="mt-8 px-3">
+          <p className="px-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+            MODERATION
+          </p>
+          <nav className="space-y-1">
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-lg font-medium text-sm transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Flag className="w-[18px] h-[18px]" strokeWidth={2} />
+                Reports
+              </div>
+              <span className="bg-red-50 text-red-500 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold">
+                {pendingReports.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-lg font-medium text-sm transition-colors"
+            >
+              <Gavel className="w-[18px] h-[18px]" strokeWidth={2} />
+              Disputes
+            </button>
+          </nav>
         </div>
+      </div>
+
+      {/* Bottom Settings */}
+      <div className="p-4 mb-2 shrink-0 border-t border-slate-200 mt-2">
+        <button
+          type="button"
+          onClick={() => handleSelectTab("profile")}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "profile" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"} mb-1`}
+        >
+          <Settings className="w-[18px] h-[18px]" strokeWidth={2} />
+          Settings
+        </button>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg font-medium text-sm transition-colors"
+        >
+          <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
+          Logout
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex min-h-screen lg:h-screen bg-[#F4F7FB] font-sans text-slate-800 overflow-hidden">
+      {/* Sidebar */}
+      <aside className="hidden lg:flex w-64 bg-white border-r border-slate-200 flex-none z-20">
+        <LecturerSidebar />
       </aside>
+
+      {isSidebarOpen ? (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        >
+          <div
+            className="absolute left-0 top-0 h-full w-72 bg-white border-r border-slate-200"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <LecturerSidebar showClose />
+          </div>
+        </div>
+      ) : null}
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA] md:bg-[#FAFAFA]">
         {/* Header */}
-        <header className="h-20 bg-white md:bg-transparent border-b border-transparent md:border-slate-200 flex items-center justify-between px-8 shrink-0">
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight">
+        <header className="h-16 md:h-20 bg-white md:bg-transparent border-b border-transparent md:border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors lg:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight truncate">
             {activeTab === "dashboard" && "Dashboard Overview"}
             {activeTab === "circles" && "My Study Circles"}
             {activeTab === "library" && "Resource Library"}
             {activeTab === "profile" && "Profile Settings"}
             {activeTab === "analytics" && "Student Analytics Dashboard"}
-          </h1>
+            </h1>
+          </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <div className="relative hidden lg:block w-72">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Search className="w-4 h-4 text-slate-400" />
@@ -307,12 +353,12 @@ export default function LecturerDashboard() {
               />
             </div>
 
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-3">
               <NotificationDropdown />
 
               <div
                 className="flex items-center gap-3 cursor-pointer group"
-                onClick={() => setActiveTab("profile")}
+                onClick={() => handleSelectTab("profile")}
                 title="Profile Settings"
               >
                 <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
@@ -343,7 +389,7 @@ export default function LecturerDashboard() {
         </header>
 
         {/* Content Body (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {activeTab === "dashboard" ? (
             <div className="max-w-[1400px] mx-auto">
               {/* Welcome Title */}
@@ -364,7 +410,7 @@ export default function LecturerDashboard() {
               ) : (
                 <>
                   {/* 4 Stats Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
                     {/* Active Circles */}
                     <div className="bg-white rounded-[20px] p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col space-y-4">
                       <div className="flex justify-between items-start">
@@ -483,8 +529,8 @@ export default function LecturerDashboard() {
                             View All
                           </a>
                         </div>
-                        <div className="px-6 pb-6">
-                          <table className="w-full text-left">
+                        <div className="px-6 pb-6 overflow-x-auto">
+                          <table className="w-full text-left min-w-[680px]">
                             <thead>
                               <tr className="border-b border-slate-100">
                                 <th className="pb-3 text-[13px] font-semibold text-slate-500 whitespace-nowrap">
@@ -555,13 +601,13 @@ export default function LecturerDashboard() {
                       </div>
 
                       {/* Top Resources */}
-                      <div className="bg-white rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-6">
+                      <div className="bg-white rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-4 sm:p-6">
                         <div className="flex items-center justify-between mb-6">
                           <h3 className="text-[15px] font-bold text-slate-800">
                             Top Resources
                           </h3>
                           <button
-                            onClick={() => setActiveTab("library")}
+                            onClick={() => handleSelectTab("library")}
                             className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-colors"
                           >
                             Upload Resource
@@ -611,7 +657,7 @@ export default function LecturerDashboard() {
                     {/* Sidebar Content (Right 1 col) */}
                     <div className="space-y-6">
                       {/* Pending Reports */}
-                      <div className="bg-white rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-6">
+                      <div className="bg-white rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-4 sm:p-6">
                         <div className="flex items-center justify-between mb-5">
                           <h3 className="text-[15px] font-bold text-slate-800">
                             Pending Reports
@@ -691,7 +737,7 @@ export default function LecturerDashboard() {
                       </div>
 
                       {/* Upcoming Office Hours */}
-                      <div className="bg-white rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-6">
+                      <div className="bg-white rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-4 sm:p-6">
                         <h3 className="text-[15px] font-bold text-slate-800 mb-5">
                           Upcoming Office Hours
                         </h3>

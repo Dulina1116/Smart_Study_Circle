@@ -29,7 +29,7 @@ const circles = [
 
 export default function LiveCircles() {
   return (
-    <section id="circles" className="bg-white py-20 lg:py-24">
+    <section id="circles" className="bg-white py-16 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="animate-fade-up mb-12 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -37,17 +37,17 @@ export default function LiveCircles() {
               <Signal className="h-4 w-4" />
               Happening Right Now
             </p>
-            <h2 className="mt-4 text-3xl font-extrabold text-gray-900 sm:text-4xl lg:text-5xl">
+            <h2 className="mt-4 text-2xl font-extrabold text-gray-900 sm:text-4xl lg:text-5xl">
               Recreated Live Circles,
               <span className="gradient-teal-text"> Cleaner and Faster</span>
             </h2>
-            <p className="mt-4 max-w-2xl text-lg text-gray-500">
+            <p className="mt-4 max-w-2xl text-base text-gray-500 sm:text-lg">
               Instantly see what is active, who is online, and where to jump in
               next with fewer clicks.
             </p>
           </div>
 
-          <button className="inline-flex items-center gap-2 self-start rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 transition-colors hover:bg-teal-100 lg:self-auto">
+          <button className="inline-flex w-full items-center justify-center gap-2 self-start rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 transition-colors hover:bg-teal-100 sm:w-auto lg:self-auto">
             View full schedule
             <ArrowUpRight className="h-4 w-4" />
           </button>
