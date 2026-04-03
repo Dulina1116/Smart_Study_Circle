@@ -33,13 +33,14 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 min-w-0 hover:opacity-90 transition-opacity"
           >
             <div className="w-8 h-8 gradient-teal rounded-lg flex items-center justify-center shadow-sm">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900 tracking-tight">
-              Smart Study Circle
+            <span className="text-base sm:text-lg font-bold text-gray-900 tracking-tight truncate">
+              <span className="sm:hidden">SmartStudy</span>
+              <span className="hidden sm:inline">Smart Study Circle</span>
             </span>
           </Link>
 

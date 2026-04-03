@@ -1,19 +1,18 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Download,
   FileText,
   MoreVertical,
   Paperclip,
-  Phone,
   Search,
   Send,
-  Smile,
-  Video,
   Users,
+  X,
 } from "lucide-react";
 import { io } from "socket.io-client";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import EmojiPickerButton from "../components/EmojiPickerButton.jsx";
 
 const API_ORIGIN =
   import.meta.env.VITE_API_ORIGIN ||
@@ -159,11 +158,19 @@ export default function StudyCircleChatPage() {
   const [failedAvatars, setFailedAvatars] = useState(new Set());
   const [onlineUserIds, setOnlineUserIds] = useState(new Set());
   const [typingUsers, setTypingUsers] = useState(new Map());
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMutedNotifications, setIsMutedNotifications] = useState(false);
+  const [isMembersOpen, setIsMembersOpen] = useState(false);
 
   const socketRef = useRef(null);
   const fileInputRef = useRef(null);
   const scrollRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const menuRef = useRef(null);
+  const menuButtonRef = useRef(null);
 
   const currentUser = useMemo(() => {
     try {
@@ -181,6 +188,7 @@ export default function StudyCircleChatPage() {
     (m) => !onlineUserIds.has(String(m.id)),
   );
   const onlineCount = onlineMembers.length;
+  const membersMeta = `${onlineMembers.length} online • ${offlineMembers.length} offline`;
 
   const memberRoleMap = useMemo(() => {
     const map = new Map();
@@ -188,10 +196,9 @@ export default function StudyCircleChatPage() {
 
     // Creator
     if (circle.creator?.id) map.set(String(circle.creator.id), "Moderator");
-    else if (circle.creator)
-      map.set(String(circle.creator), "Moderator");
+    else if (circle.creator) map.set(String(circle.creator), "Moderator");
 
-      // Co-mods
+    // Co-mods
     (circle.coModerators || []).forEach((m) => {
       map.set(String(m.id || m), "Co-Moderator");
     });
@@ -205,6 +212,88 @@ export default function StudyCircleChatPage() {
 
   const handleAvatarError = (memberId) => {
     setFailedAvatars((prev) => new Set([...prev, String(memberId)]));
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    if (!emoji) return;
+    setDraft((prev) => {
+      const next = `${prev}${emoji}`;
+      emitTyping(next);
+      return next;
+    });
+  };
+
+  const exportPayload = useMemo(
+    () =>
+      messages.map((message) => ({
+        id: message.id,
+        circleId: message.circleId,
+        senderName:
+          message.sender?.displayName ||
+          message.sender?.fullName ||
+          message.sender?.email ||
+          "",
+        senderId: message.sender?.id || message.senderId || "",
+        text: message.text || "",
+        fileName: message.fileName || "",
+        fileUrl: message.fileUrl || "",
+        messageType: message.messageType || "text",
+        createdAt: message.createdAt || "",
+      })),
+    [messages],
+  );
+
+  const downloadBlob = (content, mimeType, filename) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportChatAsCsv = () => {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const escapeValue = (value) => {
+      const text = String(value ?? "");
+      if (/[",\n]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`;
+      }
+      return text;
+    };
+
+    const header = [
+      "id",
+      "circleId",
+      "senderName",
+      "senderId",
+      "text",
+      "fileName",
+      "fileUrl",
+      "messageType",
+      "createdAt",
+    ];
+
+    const rows = exportPayload.map((message) =>
+      header.map((key) => escapeValue(message[key])).join(","),
+    );
+
+    const csv = [header.join(","), ...rows].join("\n");
+    downloadBlob(
+      csv,
+      "text/csv",
+      `circle-${circleId}-chat-${stamp}.csv`,
+    );
+  };
+
+  const copyInviteCode = async () => {
+    if (!circle?.inviteCode) return;
+    try {
+      await navigator.clipboard.writeText(circle.inviteCode);
+    } catch {
+      alert("Failed to copy invite code.");
+    }
   };
 
   const appendMessage = (message) => {
@@ -221,9 +310,103 @@ export default function StudyCircleChatPage() {
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   };
 
+  const highlightText = useCallback(
+    (value) => {
+      const text = String(value || "");
+      const query = searchQuery.trim();
+      if (!query) return text;
+
+      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "gi");
+      const matches = text.match(regex);
+      if (!matches) return text;
+
+      const parts = text.split(regex);
+      return parts.flatMap((part, index) => {
+        if (index >= matches.length) return [part];
+        return [
+          part,
+          <mark
+            key={`${part}-${index}`}
+            className="rounded-sm bg-emerald-500/30 px-0.5 text-emerald-100"
+          >
+            {matches[index]}
+          </mark>,
+        ];
+      });
+    },
+    [searchQuery],
+  );
+
+  const visibleMessages = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return messages;
+
+    return messages.filter((message) => {
+      const text = String(message.text || "").toLowerCase();
+      const fileName = String(message.fileName || "").toLowerCase();
+      const senderName = String(
+        message.sender?.displayName ||
+          message.sender?.fullName ||
+          message.sender?.email ||
+          "",
+      ).toLowerCase();
+
+      return (
+        text.includes(query) ||
+        fileName.includes(query) ||
+        senderName.includes(query)
+      );
+    });
+  }, [messages, searchQuery]);
+
+  const openSearch = () => {
+    setIsSearchOpen(true);
+    setIsMenuOpen(false);
+  };
+
+  const closeSearch = () => {
+    setIsSearchOpen(false);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  const toggleMuteNotifications = () => {
+    const next = !isMutedNotifications;
+    const muteKey = `circleMute:${circleId}`;
+    setIsMutedNotifications(next);
+    localStorage.setItem(muteKey, String(next));
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const muteKey = `circleMute:${circleId}`;
+    setIsMutedNotifications(localStorage.getItem(muteKey) === "true");
+  }, [circleId]);
+
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    searchInputRef.current?.focus();
+  }, [isSearchOpen]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return undefined;
+
+    const handleClickOutside = (event) => {
+      const target = event.target;
+      if (menuRef.current?.contains(target)) return;
+      if (menuButtonRef.current?.contains(target)) return;
+      setIsMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen]);
 
   useEffect(() => {
     const load = async () => {
@@ -422,8 +605,147 @@ export default function StudyCircleChatPage() {
     }
   };
 
+  const membersHeader = (
+    <div className="h-[92px] px-4 border-b border-[#20252e] flex flex-col justify-center">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-slate-100">Group Members</h2>
+        <span className="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs font-bold inline-flex items-center justify-center">
+          {members.length}
+        </span>
+      </div>
+      <p className="text-sm text-slate-400 mt-1">{membersMeta}</p>
+    </div>
+  );
+
+  const renderMembersContent = () => (
+    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div>
+        <p className="text-sm font-bold text-emerald-400 mb-2">
+          ONLINE — {onlineMembers.length}
+        </p>
+        <div className="space-y-2">
+          {onlineMembers.map((member) => {
+            const role = getMemberRole(member.id);
+            const mine = String(member.id) === myId;
+
+            return (
+              <div
+                key={member.id}
+                className="rounded-xl bg-[#1b2431] border border-[#2a3445] px-3 py-2.5 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-emerald-500 flex-shrink-0 flex items-center justify-center text-base font-bold text-white">
+                  {isValidAvatarUrl(member.avatar) &&
+                  !failedAvatars.has(String(member.id)) ? (
+                    <img
+                      src={getAvatarUrl(member.avatar)}
+                      alt={
+                        member.displayName || member.fullName || "Member"
+                      }
+                      className="w-full h-full object-cover"
+                      onError={() => handleAvatarError(member.id)}
+                    />
+                  ) : isValidAvatarUrl(member.profilePicture) &&
+                    !failedAvatars.has(String(member.id)) ? (
+                    <img
+                      src={getAvatarUrl(member.profilePicture)}
+                      alt={
+                        member.displayName || member.fullName || "Member"
+                      }
+                      className="w-full h-full object-cover"
+                      onError={() => handleAvatarError(member.id)}
+                    />
+                  ) : (
+                    <span>
+                      {(member.displayName || member.fullName || "S")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </span>
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-100 truncate">
+                    {member.displayName || member.fullName || member.email}
+                    {mine ? " (You)" : ""}
+                  </p>
+                  <p className="text-xs text-slate-400 truncate">{role}</p>
+                </div>
+
+                {role === "Moderator" || role === "Co-Moderator" ? (
+                  <span className="text-[10px] font-bold px-2 py-1 rounded-md bg-[#1f8f4d] text-white">
+                    MOD
+                  </span>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-bold text-slate-400 mb-2">
+          OFFLINE — {offlineMembers.length}
+        </p>
+        <div className="space-y-2">
+          {offlineMembers.length === 0 ? (
+            <p className="text-xs text-slate-500">No offline members.</p>
+          ) : (
+            offlineMembers.map((member) => {
+              const role = getMemberRole(member.id);
+              const mine = String(member.id) === myId;
+
+              return (
+                <div
+                  key={member.id}
+                  className="rounded-xl bg-[#161d28] border border-[#242e3d] px-3 py-2.5 flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-500 flex-shrink-0 flex items-center justify-center text-base font-bold text-white">
+                    {isValidAvatarUrl(member.avatar) &&
+                    !failedAvatars.has(String(member.id)) ? (
+                      <img
+                        src={getAvatarUrl(member.avatar)}
+                        alt={
+                          member.displayName || member.fullName || "Member"
+                        }
+                        className="w-full h-full object-cover"
+                        onError={() => handleAvatarError(member.id)}
+                      />
+                    ) : isValidAvatarUrl(member.profilePicture) &&
+                      !failedAvatars.has(String(member.id)) ? (
+                      <img
+                        src={getAvatarUrl(member.profilePicture)}
+                        alt={
+                          member.displayName || member.fullName || "Member"
+                        }
+                        className="w-full h-full object-cover"
+                        onError={() => handleAvatarError(member.id)}
+                      />
+                    ) : (
+                      <span>
+                        {(member.displayName || member.fullName || "S")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-200 truncate">
+                      {member.displayName || member.fullName || member.email}
+                      {mine ? " (You)" : ""}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">{role}</p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="h-screen bg-[#0f1115] text-slate-100 flex">
+    <div className="min-h-screen lg:h-screen bg-[#0f1115] text-slate-100 flex">
       <div className="flex-1 min-w-0 flex">
         <div className="flex-1 min-w-0 flex flex-col">
           <header className="h-16 bg-[#141922] border-b border-[#222a36] px-3 md:px-5 flex items-center justify-between">
@@ -445,7 +767,7 @@ export default function StudyCircleChatPage() {
                 <h1 className="text-base md:text-lg font-bold text-slate-100 truncate">
                   {circle?.subject || "Study Circle Chat"}
                 </h1>
-                <p className="text-xs text-slate-400 truncate">
+                <p className="text-xs text-slate-400 truncate hidden sm:block">
                   {circle?.moduleCode
                     ? `${circle.moduleCode} • ${circle.semester} • Year ${circle.year} • ${onlineCount} online`
                     : "Realtime group chat"}
@@ -455,31 +777,138 @@ export default function StudyCircleChatPage() {
 
             <div className="flex items-center gap-1.5">
               <button
-                className="w-9 h-9 rounded-full hover:bg-[#1e2633] text-slate-300 inline-flex items-center justify-center"
-                aria-label="Call"
-              >
-                <Phone className="w-4 h-4" />
-              </button>
-              <button
-                className="w-9 h-9 rounded-full hover:bg-[#1e2633] text-slate-300 inline-flex items-center justify-center"
-                aria-label="Video call"
-              >
-                <Video className="w-4 h-4" />
-              </button>
-              <button
+                type="button"
+                onClick={() =>
+                  setIsSearchOpen((prev) => {
+                    const next = !prev;
+                    if (next) setIsMenuOpen(false);
+                    return next;
+                  })
+                }
                 className="w-9 h-9 rounded-full hover:bg-[#1e2633] text-slate-300 inline-flex items-center justify-center"
                 aria-label="Search"
               >
                 <Search className="w-4 h-4" />
               </button>
               <button
-                className="w-9 h-9 rounded-full hover:bg-[#1e2633] text-slate-300 inline-flex items-center justify-center"
-                aria-label="Menu"
+                type="button"
+                onClick={() => setIsMembersOpen(true)}
+                className="w-9 h-9 rounded-full hover:bg-[#1e2633] text-slate-300 inline-flex items-center justify-center lg:hidden"
+                aria-label="Members"
               >
-                <MoreVertical className="w-4 h-4" />
+                <Users className="w-4 h-4" />
               </button>
+              <div className="relative" ref={menuRef}>
+                <button
+                  ref={menuButtonRef}
+                  type="button"
+                  onClick={() => setIsMenuOpen((prev) => !prev)}
+                  className="w-9 h-9 rounded-full hover:bg-[#1e2633] text-slate-300 inline-flex items-center justify-center"
+                  aria-label="Menu"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+
+                {isMenuOpen ? (
+                  <div className="absolute right-0 mt-2 w-48 rounded-xl border border-[#2a3140] bg-[#121821] p-2 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+                    <button
+                      type="button"
+                      onClick={openSearch}
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-[#1b2431]"
+                    >
+                      Search messages
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleMuteNotifications();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-[#1b2431]"
+                    >
+                      {isMutedNotifications
+                        ? "Unmute notifications"
+                        : "Mute notifications"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearSearch();
+                        closeSearch();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-[#1b2431]"
+                    >
+                      Clear search
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportChatAsCsv();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-[#1b2431]"
+                    >
+                      Export chat (CSV)
+                    </button>
+                    {circle?.inviteCode ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          copyInviteCode();
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full text-left rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-[#1b2431]"
+                      >
+                        Copy invite code
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        scrollToBottom();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-[#1b2431]"
+                    >
+                      Jump to latest
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </header>
+
+          {isSearchOpen ? (
+            <div className="border-b border-[#222a36] bg-[#111720] px-3 md:px-5 py-2">
+              <div className="flex items-center gap-2 rounded-full border border-[#2a3140] bg-[#0f141d] px-3 py-2">
+                <Search className="w-4 h-4 text-slate-400" />
+                <input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search messages, files, or people"
+                  className="flex-1 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                />
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="w-7 h-7 rounded-full hover:bg-[#1e2633] text-slate-400 inline-flex items-center justify-center"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                ) : null}
+              </div>
+              {searchQuery ? (
+                <p className="mt-1 text-[11px] text-slate-500">
+                  {visibleMessages.length} result
+                  {visibleMessages.length === 1 ? "" : "s"}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {error ? (
             <div className="mx-4 mt-3 rounded-lg bg-red-900/40 border border-red-500/30 p-3 text-sm text-red-200">
@@ -499,9 +928,11 @@ export default function StudyCircleChatPage() {
           >
             {isLoading ? (
               <div className="text-sm text-slate-400">Loading chat...</div>
-            ) : messages.length === 0 ? (
+            ) : visibleMessages.length === 0 ? (
               <div className="max-w-md mx-auto mt-8 rounded-xl bg-[#1a202b] border border-[#2a3140] px-4 py-3 text-sm text-slate-400 text-center">
-                No messages yet. Start chatting.
+                {searchQuery
+                  ? "No messages match your search."
+                  : "No messages yet. Start chatting."}
               </div>
             ) : (
               <div className="space-y-3">
@@ -511,7 +942,7 @@ export default function StudyCircleChatPage() {
                   </span>
                 </div>
 
-                {messages.map((message) => {
+                {visibleMessages.map((message) => {
                   const mine = String(message.sender?.id) === myId;
                   const hasFile =
                     message.messageType === "file" && message.fileUrl;
@@ -530,7 +961,7 @@ export default function StudyCircleChatPage() {
                       >
                         {!mine ? (
                           <p className="text-xs font-semibold text-emerald-400 ml-1 mb-1">
-                            {senderName}
+                            {highlightText(senderName)}
                           </p>
                         ) : null}
 
@@ -561,7 +992,9 @@ export default function StudyCircleChatPage() {
                                     </div>
                                     <div className="min-w-0">
                                       <p className="text-sm font-semibold truncate">
-                                        {message.fileName || "Attachment"}
+                                        {highlightText(
+                                          message.fileName || "Attachment",
+                                        )}
                                       </p>
                                       <p className="text-[11px] opacity-80">
                                         {fileTypeLabel(
@@ -586,13 +1019,13 @@ export default function StudyCircleChatPage() {
 
                               {message.text ? (
                                 <p className="text-sm whitespace-pre-wrap break-words">
-                                  {message.text}
+                                  {highlightText(message.text)}
                                 </p>
                               ) : null}
                             </div>
                           ) : (
                             <p className="text-sm whitespace-pre-wrap break-words">
-                              {message.text}
+                              {highlightText(message.text)}
                             </p>
                           )}
 
@@ -623,22 +1056,16 @@ export default function StudyCircleChatPage() {
 
           <footer className="bg-[#141922] border-t border-[#222a36] px-2 md:px-3 py-2.5">
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="w-10 h-10 rounded-full hover:bg-[#1e2633] text-slate-400 inline-flex items-center justify-center"
-                aria-label="Emoji"
-              >
-                <Smile className="w-5 h-5" />
-              </button>
+              <EmojiPickerButton onSelect={handleEmojiSelect} />
 
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="w-10 h-10 rounded-full hover:bg-[#1e2633] text-slate-400 inline-flex items-center justify-center"
+                className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-[#1e2633] text-slate-400 inline-flex items-center justify-center"
                 aria-label="Attachment"
               >
-                <Paperclip className="w-5 h-5" />
+                <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
               </button>
 
               <input
@@ -664,17 +1091,17 @@ export default function StudyCircleChatPage() {
                 placeholder={
                   isUploading ? "Uploading file..." : "Type a message"
                 }
-                className="flex-1 h-11 rounded-full border border-[#2a3140] bg-[#1c232e] text-slate-100 px-4 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+                className="flex-1 h-10 md:h-11 rounded-full border border-[#2a3140] bg-[#1c232e] text-slate-100 px-4 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
               />
 
               <button
                 type="button"
                 onClick={sendMessage}
                 disabled={isSending}
-                className="w-11 h-11 rounded-full bg-[#1f8f4d] hover:bg-[#1a7a41] text-white inline-flex items-center justify-center shadow-md disabled:opacity-60"
+                className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-[#1f8f4d] hover:bg-[#1a7a41] text-white inline-flex items-center justify-center shadow-md disabled:opacity-60"
                 aria-label="Send message"
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </div>
             {typingUsers.size > 0 ? (
@@ -687,158 +1114,43 @@ export default function StudyCircleChatPage() {
         </div>
 
         <aside className="hidden lg:flex lg:w-[350px] border-l border-[#20252e] bg-[#121821] flex-col">
-          <div className="h-[92px] px-4 border-b border-[#20252e] flex flex-col justify-center">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-100">
-                Group Members
-              </h2>
-              <span className="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs font-bold inline-flex items-center justify-center">
-                {members.length}
-              </span>
-            </div>
-            <p className="text-sm text-slate-400 mt-1">
-              {onlineMembers.length} online • {offlineMembers.length} offline
-            </p>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div>
-              <p className="text-sm font-bold text-emerald-400 mb-2">
-                ONLINE — {onlineMembers.length}
-              </p>
-              <div className="space-y-2">
-                {onlineMembers.map((member) => {
-                  const role = getMemberRole(member.id);
-                  const mine = String(member.id) === myId;
-
-                  return (
-                    <div
-                      key={member.id}
-                      className="rounded-xl bg-[#1b2431] border border-[#2a3445] px-3 py-2.5 flex items-center gap-3"
-                    >
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-emerald-500 flex-shrink-0 flex items-center justify-center text-base font-bold text-white">
-                        {isValidAvatarUrl(member.avatar) &&
-                        !failedAvatars.has(String(member.id)) ? (
-                          <img
-                            src={getAvatarUrl(member.avatar)}
-                            alt={
-                              member.displayName || member.fullName || "Member"
-                            }
-                            className="w-full h-full object-cover"
-                            onError={() => handleAvatarError(member.id)}
-                          />
-                        ) : isValidAvatarUrl(member.profilePicture) &&
-                          !failedAvatars.has(String(member.id)) ? (
-                          <img
-                            src={getAvatarUrl(member.profilePicture)}
-                            alt={
-                              member.displayName || member.fullName || "Member"
-                            }
-                            className="w-full h-full object-cover"
-                            onError={() => handleAvatarError(member.id)}
-                          />
-                        ) : (
-                          <span>
-                            {(member.displayName || member.fullName || "S")
-                              .charAt(0)
-                              .toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-100 truncate">
-                          {member.displayName ||
-                            member.fullName ||
-                            member.email}
-                          {mine ? " (You)" : ""}
-                        </p>
-                        <p className="text-xs text-slate-400 truncate">
-                          {role}
-                        </p>
-                      </div>
-
-                      {role === "Moderator" || role === "Co-Moderator" ? (
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-md bg-[#1f8f4d] text-white">
-                          MOD
-                        </span>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-bold text-slate-400 mb-2">
-                OFFLINE — {offlineMembers.length}
-              </p>
-              <div className="space-y-2">
-                {offlineMembers.length === 0 ? (
-                  <p className="text-xs text-slate-500">No offline members.</p>
-                ) : (
-                  offlineMembers.map((member) => {
-                    const role = getMemberRole(member.id);
-                    const mine = String(member.id) === myId;
-
-                    return (
-                      <div
-                        key={member.id}
-                        className="rounded-xl bg-[#161d28] border border-[#242e3d] px-3 py-2.5 flex items-center gap-3"
-                      >
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-500 flex-shrink-0 flex items-center justify-center text-base font-bold text-white">
-                          {isValidAvatarUrl(member.avatar) &&
-                          !failedAvatars.has(String(member.id)) ? (
-                            <img
-                              src={getAvatarUrl(member.avatar)}
-                              alt={
-                                member.displayName ||
-                                member.fullName ||
-                                "Member"
-                              }
-                              className="w-full h-full object-cover"
-                              onError={() => handleAvatarError(member.id)}
-                            />
-                          ) : isValidAvatarUrl(member.profilePicture) &&
-                            !failedAvatars.has(String(member.id)) ? (
-                            <img
-                              src={getAvatarUrl(member.profilePicture)}
-                              alt={
-                                member.displayName ||
-                                member.fullName ||
-                                "Member"
-                              }
-                              className="w-full h-full object-cover"
-                              onError={() => handleAvatarError(member.id)}
-                            />
-                          ) : (
-                            <span>
-                              {(member.displayName || member.fullName || "S")
-                                .charAt(0)
-                                .toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-slate-200 truncate">
-                            {member.displayName ||
-                              member.fullName ||
-                              member.email}
-                            {mine ? " (You)" : ""}
-                          </p>
-                          <p className="text-xs text-slate-500 truncate">
-                            {role}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
+          {membersHeader}
+          {renderMembersContent()}
         </aside>
       </div>
+
+      {isMembersOpen ? (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          onClick={() => setIsMembersOpen(false)}
+        >
+          <div
+            className="absolute right-0 top-0 h-full w-[85%] max-w-sm bg-[#121821] border-l border-[#20252e] flex flex-col"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="h-16 px-4 border-b border-[#20252e] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-emerald-400" />
+                <div>
+                  <p className="text-sm font-semibold text-slate-100">
+                    Group Members
+                  </p>
+                  <p className="text-xs text-slate-400">{membersMeta}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMembersOpen(false)}
+                className="w-9 h-9 rounded-full hover:bg-[#1e2633] text-slate-300 inline-flex items-center justify-center"
+                aria-label="Close members"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {renderMembersContent()}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
