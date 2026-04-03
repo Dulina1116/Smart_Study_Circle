@@ -41,6 +41,7 @@ export default function NotificationDropdown() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(false)
+  const [actionLoading, setActionLoading] = useState(null)
   const ref = useRef(null)
 
   const unread = notifications.filter((n) => !n.read).length
@@ -79,6 +80,37 @@ export default function NotificationDropdown() {
     try {
       await fetch(`${API}/read-all`, { method: 'PATCH', headers: authHeaders() })
     } catch { /* silent */ }
+  }
+
+  // ----- perform an action on a notification (join / deny / remind) -----
+  const performNotificationAction = async (id, action) => {
+    setActionLoading(`${id}:${action}`)
+    try {
+      const res = await fetch(`${API}/${id}/action`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ action }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || 'Notification action failed')
+
+      // update local state
+      setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, read: true } : n)))
+
+      // If user joined, notify other parts of the app to refresh circles
+      if (data.joined && data.circleId) {
+        try {
+          window.dispatchEvent(new CustomEvent('circle:joined', { detail: { circleId: data.circleId, circleType: data.circleType } }))
+        } catch (e) {
+          // ignore
+        }
+      }
+    } catch (err) {
+      console.error('Notification action error:', err)
+      alert(err.message || 'Failed to perform action')
+    } finally {
+      setActionLoading(null)
+    }
   }
 
   // fetch on open
@@ -166,7 +198,35 @@ export default function NotificationDropdown() {
                       {n.message}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">{timeAgo(n.createdAt)}</p>
+
+                    {/* Invite actions */}
+                    {n.type === 'invite' && !n.read && (
+                      <div className="flex items-center gap-2 mt-3">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); performNotificationAction(n._id, 'join') }}
+                          disabled={actionLoading === `${n._id}:join`}
+                          className="text-xs px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 font-semibold"
+                        >
+                          {actionLoading === `${n._id}:join` ? 'Joining...' : 'Join'}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); performNotificationAction(n._id, 'deny') }}
+                          disabled={actionLoading === `${n._id}:deny`}
+                          className="text-xs px-2 py-1 rounded-md bg-red-100 text-red-700 font-semibold"
+                        >
+                          {actionLoading === `${n._id}:deny` ? 'Processing...' : 'Deny'}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); performNotificationAction(n._id, 'remind') }}
+                          disabled={actionLoading === `${n._id}:remind`}
+                          className="text-xs px-2 py-1 rounded-md bg-slate-100 text-slate-700 font-semibold"
+                        >
+                          {actionLoading === `${n._id}:remind` ? 'Snoozing...' : 'Remind me later'}
+                        </button>
+                      </div>
+                    )}
                   </div>
+
                   {!n.read && (
                     <button
                       onClick={(e) => { e.stopPropagation(); markRead(n._id) }}

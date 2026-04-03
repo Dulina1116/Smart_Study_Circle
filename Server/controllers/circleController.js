@@ -179,15 +179,21 @@ export const inviteMembers = async (req, res) => {
     for (const email of emails) {
       try {
         const user = await User.findOne({ email: email.toLowerCase().trim() });
-        if (user && !circle.members.map(String).includes(String(user._id))) {
-          circle.members.push(user._id);
-          // In-app notification
-          await Notification.create({
-            recipient: user._id,
-            type: 'invite',
-            message: `You've been invited to join the circle "${circle.circleName}".`,
-            metadata: { circleId: circle._id },
-          }).catch(() => {});
+        if (user) {
+          // If user is already a member, skip inviting
+          const alreadyMember = circle.members.map(String).includes(String(user._id));
+          if (!alreadyMember) {
+            // Do NOT auto-add the user here. Instead create an in-app invite notification
+            await Notification.create({
+              recipient: user._id,
+              type: 'invite',
+              message: `You've been invited to join the circle "${circle.circleName}".`,
+              metadata: { circleId: circle._id },
+            }).catch(() => {});
+            results.push({ email, status: 'notified' });
+          } else {
+            results.push({ email, status: 'already_member' });
+          }
         }
 
         await transporter.sendMail({
@@ -208,7 +214,10 @@ export const inviteMembers = async (req, res) => {
             </div>
           `,
         });
-        results.push({ email, status: 'invited' });
+        // If the email address does not match a user account, mark as invited (email sent)
+        if (!user) {
+          results.push({ email, status: 'invited' });
+        }
       } catch (err) {
         results.push({ email, status: 'failed', reason: err.message });
       }

@@ -3,6 +3,7 @@ import Circle from "../models/Circle.js";
 import CircleMessage from "../models/CircleMessage.js";
 import Resource from "../models/Resource.js";
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 import fs from "fs";
 import path from "path";
 
@@ -223,8 +224,50 @@ export const getMyStudyCircles = async (req, res) => {
         "fullName displayName email avatar profilePicture",
       );
 
-    const circles = circlesRaw.map((c) => mapCircle(c, req.user._id));
-    return res.json({ circles });
+    const studyCircles = circlesRaw.map((c) => mapCircle(c, req.user._id));
+
+    // Fetch lecturer circles where the student is a member
+    const lecturerCirclesRaw = await Circle.find({
+      members: req.user._id,
+    })
+      .sort({ updatedAt: -1 })
+      .lean()
+      .populate("creator", "fullName displayName email avatar profilePicture");
+
+    const lecturerCircles = lecturerCirclesRaw.map((lc) => ({
+      id: lc._id,
+      subject: lc.circleName,
+      moduleCode: lc.courseCode,
+      semester: lc.courseName || "Lecturer Session",
+      year: 0,
+      visibility: lc.isPrivate ? "private" : "public",
+      inviteCode: lc.inviteCode,
+      creator: lc.creator?._id
+        ? sanitizeUser(lc.creator)
+        : { id: lc.creator },
+      coModerators: [],
+      members: (lc.members || []).map((m) =>
+        m?._id ? sanitizeUser(m) : { id: m },
+      ),
+      memberCount: lc.members ? lc.members.length : 0,
+      pendingJoinRequests: [],
+      myMembership: {
+        isCreator: String(lc.creator?._id || lc.creator) === String(req.user._id),
+        isCoModerator: false,
+        isMember: (lc.members || []).some((m) => String(m._id || m) === String(req.user._id)),
+      },
+      createdAt: lc.createdAt,
+      updatedAt: lc.updatedAt,
+      isLecturerCircle: true,
+      circleType: lc.circleType || 'lecturer',
+    }));
+
+    // Merge and sort both sets of circles
+    const mergedCircles = [...studyCircles, ...lecturerCircles].sort(
+      (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+    );
+
+    return res.json({ circles: mergedCircles });
   } catch (err) {
     console.error("Get My Study Circles Error:", err.message);
     return res.status(500).json({ message: "Server error loading circles." });
@@ -569,6 +612,18 @@ export const assignCoModerator = async (req, res) => {
 
     circle.coModerators.push(targetUser._id);
     await circle.save();
+
+    // Notify the student that they've been added and assigned as co-moderator
+    try {
+      await Notification.create({
+        recipient: targetUser._id,
+        type: 'invite',
+        message: `You were added to the circle "${circle.subject || circle._id}" and assigned as a co-moderator.`,
+        metadata: { circleId: circle._id },
+      });
+    } catch (e) {
+      // fail silently
+    }
 
     return res.json({
       message:

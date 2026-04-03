@@ -235,8 +235,10 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT || 5000);
+const HOST = process.env.HOST || "127.0.0.1";
 
+// Improve error visibility for EADDRINUSE and prefer IPv4 loopback by default.
 const startServer = async () => {
   try {
     await connectDB();
@@ -244,8 +246,32 @@ const startServer = async () => {
     await Resource.createCollection().catch(() => null);
     await Resource.syncIndexes().catch(() => null);
 
-    httpServer.listen(PORT, () =>
-      console.log(`Server running on port ${PORT}`),
+    let attemptedAlt = false;
+
+    httpServer.on("error", (err) => {
+      if (err && err.code === "EADDRINUSE") {
+        if (!attemptedAlt && HOST !== "127.0.0.1") {
+          attemptedAlt = true;
+          console.warn(
+            `Port ${PORT} appears in use on host ${HOST}. Retrying bind to 127.0.0.1...`,
+          );
+          // Try binding to IPv4 loopback explicitly
+          httpServer.listen(PORT, "127.0.0.1");
+          return;
+        }
+
+        console.error(
+          `Port ${PORT} is already in use. Stop the process using the port or set a different PORT environment variable, then restart.`,
+        );
+        process.exit(1);
+      }
+
+      console.error("Server error:", err);
+      process.exit(1);
+    });
+
+    httpServer.listen(PORT, HOST, () =>
+      console.log(`Server running on ${HOST}:${PORT}`),
     );
   } catch (err) {
     console.error(err);

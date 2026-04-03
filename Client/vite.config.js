@@ -6,8 +6,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        // Use 127.0.0.1 to avoid dual-stack (IPv6/IPv4) connect issues
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
+        secure: false,
+        ws: true,
       },
     },
   },
