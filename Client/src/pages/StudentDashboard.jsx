@@ -367,7 +367,7 @@ const DashboardOverview = ({
                           {circle.subject}
                         </h3>
                         <p className="text-sm text-[var(--dash-muted)] mb-6 line-clamp-2">
-                          {circle.semester} • Year {circle.year}
+                          {circle.semester}{circle.year ? ` • Year ${circle.year}` : ''}
                         </p>
                         <div className="flex justify-between items-center">
                           <div className="text-xs text-[var(--dash-muted)] font-semibold">
@@ -1150,6 +1150,16 @@ export default function StudentDashboard() {
     if (!user) return;
     refreshCircles(false, { includeDiscover: false });
   }, [user]);
+
+  // Listen for join actions from notifications to refresh circles
+  useEffect(() => {
+    if (!user) return;
+    const handler = () => {
+      refreshCircles(false, { includeDiscover: true });
+    }
+    window.addEventListener('circle:joined', handler)
+    return () => window.removeEventListener('circle:joined', handler)
+  }, [user])
 
   const refreshOverviewResources = async () => {
     setIsResourcesLoading(true);

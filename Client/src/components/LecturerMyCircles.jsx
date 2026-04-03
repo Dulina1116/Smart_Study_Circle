@@ -232,6 +232,39 @@ const sendInvitations = async (circleId, emails) => {
       : 0;
   const resourcesShared = activeCirclesCount * 12; // Standin value proportional to active tracking
 
+  const exportReport = () => {
+    const rows = displayedCircles.map((c) => ({
+      courseCode: c.courseCode || "",
+      courseName: c.courseName || "",
+      circleName: c.circleName || "",
+      description: c.description || "",
+      members: c.students || (c.members ? c.members.length : 0),
+      activity: c.activity || "",
+      visibility: c.isPrivate ? "Private" : "Public",
+      createdAt: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
+    }));
+
+    if (rows.length === 0) {
+      alert("No circles to export.");
+      return;
+    }
+
+    const keys = Object.keys(rows[0]);
+    const csvLines = [keys.join(',')].concat(
+      rows.map((r) => keys.map((k) => `"${String(r[k] || "").replace(/"/g, '""')}"`).join(',')),
+    );
+    const csv = csvLines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lecturer-circles-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="w-full max-w-[1400px] mx-auto text-slate-800 pb-10">
       {/* Breadcrumbs */}
@@ -264,7 +297,7 @@ const sendInvitations = async (circleId, emails) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm">
+          <button onClick={exportReport} className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm">
             <Download className="w-[18px] h-[18px]" strokeWidth={2.5} />
             Export Report
           </button>
@@ -439,7 +472,14 @@ const sendInvitations = async (circleId, emails) => {
                     Need more circles to supervise? Submit a request to the
                     department coordinator.
                   </p>
-                  <button className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-[12px] text-[13px] font-bold transition-all shadow-sm shadow-teal-500/20">
+                  <button
+                    onClick={() => {
+                      setEditingId(null);
+                      setFormData({ circleName: "", module: "", description: "", circleType: "lecturer" });
+                      setShowModal(true);
+                    }}
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-[12px] text-[13px] font-bold transition-all shadow-sm shadow-teal-500/20"
+                  >
                     Submit Request
                   </button>
                 </div>

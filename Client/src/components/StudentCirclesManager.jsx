@@ -518,7 +518,7 @@ export default function StudentCirclesManager({
                       {circle.subject}
                     </h3>
                     <p className="text-xs text-[var(--dash-muted)]">
-                      {circle.semester} • {circle.year}
+                      {circle.semester}{circle.year ? ` • Year ${circle.year}` : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
