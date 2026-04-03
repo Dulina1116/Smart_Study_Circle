@@ -275,7 +275,7 @@ export default function LecturerDashboard() {
           </a>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg font-medium text-sm transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-teal-600 hover:bg-teal-50 hover:text-teal-700 rounded-lg font-medium text-sm transition-colors"
           >
             <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
             Logout
