@@ -243,6 +243,8 @@ export default function LecturerDashboard() {
             type="button"
             onClick={() => handleSelectTab("analytics")}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "analytics" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-teal-600 hover:bg-teal-50 hover:text-teal-700 rounded-lg font-medium text-sm transition-colors"
           >
             <Activity className="w-[18px] h-[18px]" strokeWidth={2} />
             Student Analytics
