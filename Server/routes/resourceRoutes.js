@@ -14,6 +14,7 @@ import {
   deleteResource,
   trackDownload,
   getRecentResources,
+  verifyResource,
 } from "../controllers/resourceController.js";
 
 const router = express.Router();
@@ -93,6 +94,7 @@ router.use(protect);
 router.get("/:resourceId", getResourceById);
 router.post("/", upload.single("file"), createResource);
 router.put("/:resourceId", upload.single("file"), updateResource);
+router.put("/:resourceId/verify", verifyResource);
 router.delete("/:resourceId", deleteResource);
 router.post("/:resourceId/download", trackDownload);
 

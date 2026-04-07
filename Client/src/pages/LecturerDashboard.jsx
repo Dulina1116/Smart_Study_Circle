@@ -188,7 +188,7 @@ export default function LecturerDashboard() {
   const LecturerSidebar = ({ showClose = false }) => (
     <div className="flex flex-col h-full">
       {/* Logo Area */}
-      <div className="h-16 flex items-center px-6 shrink-0 mt-2 mb-2">
+      <div className="h-16 flex items-center px-7 shrink-0 mt-2 mb-2">
         <div className="flex items-center gap-3 w-full">
           <div className="bg-teal-500 p-2 rounded-lg flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.5} />
@@ -211,7 +211,7 @@ export default function LecturerDashboard() {
 
       {/* Main Nav */}
       <div className="flex-1 py-4 flex flex-col">
-        <nav className="space-y-1 px-3">
+        <nav className="space-y-1 px-4">
           <button
             type="button"
             onClick={() => handleSelectTab("dashboard")}
@@ -249,40 +249,29 @@ export default function LecturerDashboard() {
           </button>
         </nav>
 
-        <div className="mt-8 px-3">
-          <p className="px-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-2">
-            MODERATION
+        <div className="mt-8 w-full">
+          <p className="px-7 text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+            REPORTS
           </p>
-          <nav className="space-y-1">
+          <nav className="space-y-1 px-4">
             <button
               type="button"
-              className="w-full flex items-center justify-between px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-lg font-medium text-sm transition-colors"
+              onClick={() => handleSelectTab("circles")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "circles" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
             >
-              <div className="flex items-center gap-3">
-                <Flag className="w-[18px] h-[18px]" strokeWidth={2} />
-                Reports
-              </div>
-              <span className="bg-red-50 text-red-500 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold">
-                {pendingReports.length}
-              </span>
-            </button>
-            <button
-              type="button"
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-lg font-medium text-sm transition-colors"
-            >
-              <Gavel className="w-[18px] h-[18px]" strokeWidth={2} />
-              Disputes
+              <Flag className="w-[18px] h-[18px]" strokeWidth={2} />
+              Report Generation
             </button>
           </nav>
         </div>
       </div>
 
       {/* Bottom Settings */}
-      <div className="p-4 mb-2 shrink-0 border-t border-slate-200 mt-2">
+      <div className="px-4 py-6 shrink-0 border-t border-slate-200 mt-2 space-y-1">
         <button
           type="button"
           onClick={() => handleSelectTab("profile")}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "profile" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"} mb-1`}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${activeTab === "profile" ? "bg-teal-50 text-teal-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
         >
           <Settings className="w-[18px] h-[18px]" strokeWidth={2} />
           Settings

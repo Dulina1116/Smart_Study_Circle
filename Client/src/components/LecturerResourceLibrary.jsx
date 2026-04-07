@@ -32,18 +32,43 @@ export default function LecturerResourceLibrary() {
 
   const fetchResources = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:5000/api/lecturer-resources', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setResources(Array.isArray(data) ? data : [])
+      const token = localStorage.getItem('token');
+      
+      const [lecturerRes, studentRes] = await Promise.all([
+        fetch('http://localhost:5000/api/lecturer-resources', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('http://localhost:5000/api/resources?limit=100', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      let combined = [];
+      if (lecturerRes.ok) {
+        const data = await lecturerRes.json();
+        combined = [...combined, ...(Array.isArray(data) ? data : []).map(r => ({ ...r, origin: 'lecturer' }))];
       }
+      if (studentRes.ok) {
+        const data = await studentRes.json();
+        const resourcesArray = data.resources || (Array.isArray(data) ? data : []);
+        combined = [...combined, ...resourcesArray.map(r => ({ ...r, origin: 'student', fileName: r.title, size: r.fileSize }))];
+      }
+
+      combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setResources(combined);
     } catch (err) {
-      console.error(err)
+      console.error("Error fetching resources:", err);
     }
   }
+
+  const handleVerify = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/resources/${id}/verify`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) fetchResources();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   React.useEffect(() => {
     fetchResources()
@@ -64,13 +89,16 @@ export default function LecturerResourceLibrary() {
 
   const handleResourceClick = (resource) => {
     setSelectedFile({
+      _id: resource._id,
       name: resource.title || resource.fileName,
       size: resource.size || 0,
       type: resource.type || 'PDF',
       module: resource.module || 'General',
       description: resource.description || 'No description provided.',
       createdAt: resource.createdAt,
-      downloads: resource.downloads || 0
+      downloads: resource.downloads || 0,
+      origin: resource.origin,
+      isLecturerRecommended: resource.isLecturerRecommended
     })
     setViewState('uploaded')
   }
@@ -364,9 +392,20 @@ export default function LecturerResourceLibrary() {
                               <FileText className="w-5 h-5" strokeWidth={2.5}/>
                             </div>
                             <div>
-                              <p onClick={() => handleResourceClick(item)} className="text-[13px] font-bold text-slate-900 group-hover:text-teal-700 transition-colors cursor-pointer mb-0.5 leading-tight">
-                                {item.title || item.fileName}
-                              </p>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <p onClick={() => handleResourceClick(item)} className="text-[13px] font-bold text-slate-900 group-hover:text-teal-700 transition-colors cursor-pointer leading-tight">
+                                  {item.title || item.fileName}
+                                </p>
+                                {item.origin === 'lecturer' ? (
+                                  <span className="bg-emerald-50 text-emerald-600 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-100"><CheckCircle className="w-2.5 h-2.5"/> Lecturer verified</span>
+                                ) : (
+                                  item.isLecturerRecommended ? (
+                                    <span className="bg-blue-50 text-blue-600 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-100"><CheckCircle className="w-2.5 h-2.5"/> Student verified</span>
+                                  ) : (
+                                    <span className="bg-amber-50 text-amber-600 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-amber-100"><Clock className="w-2.5 h-2.5"/> Student pending</span>
+                                  )
+                                )}
+                              </div>
                               <p className="text-[11px] font-medium text-slate-500">
                                 {getFileSize(item.size)} • {item.type}
                               </p>
@@ -399,15 +438,24 @@ export default function LecturerResourceLibrary() {
                           </p>
                         </td>
                         <td className="px-6 py-5 border-b border-slate-50 text-center">
+                          {item.origin === 'student' && !item.isLecturerRecommended && (
+                            <button onClick={() => handleVerify(item._id)} className="text-emerald-500 hover:text-emerald-700 p-1 rounded-full hover:bg-emerald-50 transition-colors inline-flex mx-1" title="Verify Resource">
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
                           <a href={`http://localhost:5000${item.filePath}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors inline-flex mx-1" title="Download">
                             <Download className="w-4 h-4" />
                           </a>
-                          <button onClick={() => handleEditClick(item)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-slate-100 transition-colors inline-flex mx-1" title="Edit">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleDelete(item._id)} className="text-slate-400 hover:text-red-500 p-1 rounded-full hover:bg-slate-100 transition-colors inline-flex mx-1" title="Delete">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {item.origin !== 'student' && (
+                            <button onClick={() => handleEditClick(item)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-slate-100 transition-colors inline-flex mx-1" title="Edit">
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
+                          {item.origin !== 'student' && (
+                            <button onClick={() => handleDelete(item._id)} className="text-slate-400 hover:text-red-500 p-1 rounded-full hover:bg-slate-100 transition-colors inline-flex mx-1" title="Delete">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
@@ -537,10 +585,31 @@ export default function LecturerResourceLibrary() {
                  <span className="bg-slate-50 border border-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5"><File className="w-3 h-3 text-teal-500"/> {selectedFile ? getFileType(selectedFile.name) : "PDF"} ({selectedFile ? getFileSize(selectedFile.size) : "4.2 MB"})</span>
                  <span className="bg-slate-50 border border-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5"><Clock className="w-3 h-3 text-teal-500"/> {selectedFile && selectedFile.createdAt ? new Date(selectedFile.createdAt).toLocaleDateString() : "Uploaded Today"}</span>
                  <span className="bg-teal-50 text-teal-700 text-[10px] font-bold px-3 py-1.5 rounded-full">Visible to Students</span>
-                 <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Verified</span>
+                 {selectedFile?.origin === 'lecturer' ? (
+                   <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-emerald-100"><CheckCircle className="w-3 h-3"/> Lecturer Verified</span>
+                 ) : (
+                   selectedFile?.isLecturerRecommended ? (
+                      <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-blue-100"><CheckCircle className="w-3 h-3"/> Student Verified</span>
+                   ) : (
+                      <span className="bg-amber-50 text-amber-600 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-amber-100"><Clock className="w-3 h-3"/> Student Pending</span>
+                   )
+                 )}
                </div>
                <div className="flex items-center justify-between border-t border-slate-100 pt-5 mt-auto">
                  <div className="flex gap-2">
+                   {selectedFile?.origin === 'student' && !selectedFile?.isLecturerRecommended && (
+                     <button 
+                       onClick={async () => {
+                         if(selectedFile._id) {
+                           await handleVerify(selectedFile._id);
+                           setSelectedFile({...selectedFile, isLecturerRecommended: true});
+                         }
+                       }} 
+                       className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+                     >
+                       <CheckCircle className="w-4 h-4"/> Verify Resource
+                     </button>
+                   )}
                    <button className="text-slate-500 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors">View</button>
                    <button className="text-slate-500 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors">Edit</button>
                    <button className="text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-bold transition-colors">Delete</button>
