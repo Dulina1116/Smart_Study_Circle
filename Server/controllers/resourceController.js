@@ -433,3 +433,23 @@ export const getRecentResources = async (req, res) => {
       .json({ message: "Server error fetching recent resources." });
   }
 };
+
+// PUT /api/resources/:resourceId/verify - Verify student resource
+export const verifyResource = async (req, res) => {
+  try {
+    const { resourceId } = req.params;
+    const resource = await Resource.findById(resourceId);
+
+    if (!resource || !resource.isActive) {
+      return res.status(404).json({ message: "Resource not found." });
+    }
+
+    resource.isLecturerRecommended = true;
+    await resource.save();
+
+    return res.json({ message: "Resource verified successfully.", resource });
+  } catch (err) {
+    console.error("Verify Resource Error:", err.message);
+    return res.status(500).json({ message: "Server error verifying resource." });
+  }
+};
