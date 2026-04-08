@@ -346,53 +346,88 @@ export const getAdminOverview = async (req, res) => {
 export const getLecturerStudentAnalytics = async (req, res) => {
   try {
     const { moduleCode } = req.query;
-    let query = {};
-    if (moduleCode) {
-      query.moduleCode = moduleCode;
-    }
-
-    const circles = await StudyCircle.find(query);
     
-    const allCircles = await StudyCircle.find({});
+    // 1. Get Available Modules for the filter
+    const allCircles = await StudyCircle.find({ isActive: true });
     const availableModules = [...new Set(allCircles.map(c => c.moduleCode).filter(Boolean))];
 
+    // 2. Identify Target Circles and Students
     const targetModuleCode = moduleCode || (availableModules.length > 0 ? availableModules[0] : null);
-    const targetCircles = targetModuleCode ? allCircles.filter(c => c.moduleCode === targetModuleCode) : allCircles;
     
-    const memberIds = new Set();
-    targetCircles.forEach(c => {
-      if (c.members) c.members.forEach(m => memberIds.add(m.toString()));
-    });
-    
-    const students = await User.find({ _id: { $in: Array.from(memberIds) }, role: "student" }).select("fullName email _id");
-    
+    if (!targetModuleCode) {
+      return res.json({
+        success: true,
+        data: {
+          availableModules: [],
+          currentModule: "None",
+          kpis: { averageGrade: "0%", completionRate: "0%", engagement: "0 pts", atRisk: 0 },
+          charts: { interactionData: [], resourceActivity: [] },
+          topContributors: [],
+          criticalAlerts: []
+        }
+      });
+    }
+
+    const targetCircles = await StudyCircle.find({ moduleCode: targetModuleCode, isActive: true });
     const circleIds = targetCircles.map(c => c._id);
     
-    const [messages, uploads, views] = await Promise.all([
+    const memberIdsSet = new Set();
+    targetCircles.forEach(c => {
+      if (c.members) c.members.forEach(m => memberIdsSet.add(m.toString()));
+    });
+    const memberIds = Array.from(memberIdsSet);
+
+    // 3. Fetch Real Data
+    const [students, messages, uploads, recommendedResources] = await Promise.all([
+      User.find({ _id: { $in: memberIds }, role: "student" }).select("fullName email _id"),
       CircleMessage.find({ circle: { $in: circleIds } }),
-      Resource.find({ uploadedBy: { $in: students.map(s => s._id) } }),
-      Resource.find({ viewedBy: { $in: students.map(s => s._id) } })
+      // Fetch resources uploaded BY students in these circles OR assigned to these circles
+      Resource.find({
+        isActive: true,
+        $or: [
+          { circleId: { $in: circleIds } },
+          { uploadedBy: { $in: memberIds } }
+        ]
+      }),
+      Resource.find({
+        isActive: true,
+        isLecturerRecommended: true,
+        $or: [
+          { circleId: { $in: circleIds } },
+          { uploadedBy: { $in: memberIds } }
+        ]
+      })
     ]);
 
-    const getDerivedGrade = (studentId) => {
-      const charAvg = studentId.toString().split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-      return Math.floor(65 + (charAvg % 30)); 
-    };
+    const finalRecommended = recommendedResources;
 
-    const getDerivedAttendance = (studentId) => {
-      const charAvg = studentId.toString().split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-      return Math.floor(70 + (charAvg % 25));
-    };
+    const totalRecommendedCount = finalRecommended.length || 1; // Avoid division by zero
 
+    // 4. Calculate Individual Student Metrics
     const studentStats = students.map(st => {
       const idStr = st._id.toString();
+      
       const stMessages = messages.filter(m => m.sender?.toString() === idStr);
       const stUploads = uploads.filter(u => u.uploadedBy?.toString() === idStr);
-      const stViews = views.filter(v => v.viewedBy?.includes(st._id));
       
-      const engagementScore = stMessages.length * 10 + stUploads.length * 20 + stViews.length * 5;
-      const avgScore = getDerivedGrade(idStr);
-      const attendance = getDerivedAttendance(idStr);
+      // Calculate views: how many resources has this student viewed?
+      // We check the viewedBy array in all resources relevant to this module
+      const stViews = uploads.filter(u => u.viewedBy?.some(vid => vid.toString() === idStr));
+      const recViews = finalRecommended.filter(r => r.viewedBy?.some(vid => vid.toString() === idStr));
+
+      const msgWeight = 5;
+      const uploadWeight = 15;
+      const viewWeight = 2;
+
+      const engagementScore = (stMessages.length * msgWeight) + (stUploads.length * uploadWeight) + (stViews.length * viewWeight);
+      
+      // Completion rate based on recommended resources viewed
+      const completionRate = (recViews.length / totalRecommendedCount) * 100;
+      
+      // Performance score: Use a mix of engagement and completion
+      // We'll normalize engagement against a "target" of 150 points for a perfect score
+      const targetEngagement = 150;
+      const performanceScore = Math.min(((engagementScore / targetEngagement) * 0.6 + (completionRate / 100) * 0.4) * 100, 100);
 
       return {
         id: idStr,
@@ -400,97 +435,126 @@ export const getLecturerStudentAnalytics = async (req, res) => {
         studentId: `ID: ${idStr.substring(idStr.length - 7)}`.toUpperCase(),
         initials: st.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
         posts: stMessages.length,
-        score: avgScore,
-        attendance: attendance,
-        engagementScore: engagementScore,
+        score: Math.round(performanceScore),
+        engagementScore: Math.round(engagementScore),
+        completionRate: Math.round(completionRate),
+        messages: stMessages,
+        uploads: stUploads
       };
     });
 
-    const averageGrade = studentStats.length > 0 
+    // 5. Aggregate Class KPIs
+    const avgPerformance = studentStats.length > 0 
       ? studentStats.reduce((sum, s) => sum + s.score, 0) / studentStats.length 
-      : 74.2;
+      : 0;
       
-    const averageAttendance = studentStats.length > 0
-      ? studentStats.reduce((sum, s) => sum + s.attendance, 0) / studentStats.length
-      : 88.5;
+    const avgCompletion = studentStats.length > 0
+      ? studentStats.reduce((sum, s) => sum + s.completionRate, 0) / studentStats.length
+      : 0;
       
-    const averageEngagement = studentStats.length > 0
+    const avgEngagement = studentStats.length > 0
       ? studentStats.reduce((sum, s) => sum + s.engagementScore, 0) / studentStats.length
       : 0;
 
-    const atRiskStudents = studentStats.filter(s => s.score < 50 || s.attendance < 60 || s.engagementScore < 20);
+    const atRiskStudents = studentStats.filter(s => s.score < 40 || s.completionRate < 30);
 
-    const sortedContributors = [...studentStats].sort((a, b) => b.engagementScore - a.engagementScore);
-    const topContributors = sortedContributors.slice(0, 5).map(s => ({
-      id: s.id,
-      initials: s.initials,
-      name: s.name,
-      studentId: s.studentId,
-      posts: s.posts,
-      score: `${s.score}%`,
-      engagement: `${s.engagementScore} pts`
-    }));
-
-    const criticalAlerts = atRiskStudents.slice(0, 3).map(s => {
-      if (s.attendance < 60) {
-        return {
-          id: s.id,
-          type: "Low Attendance",
-          studentName: s.name,
-          initials: s.initials,
-          message: `Missed multiple sessions. Engagement score is only ${s.engagementScore} pts.`,
-          actionText: "Email Student",
-          timeAgo: "1d ago"
-        };
-      }
-      return {
-        id: s.id,
-        type: "Performance Dip",
-        studentName: s.name,
-        initials: s.initials,
-        message: `Current average score is ${s.score}%. Previously averging better.`,
-        actionText: "Schedule Meeting",
-        timeAgo: "3h ago"
-      };
-    });
-
-    const interactionData = [
-      { name: "WEEK 01", messages: Math.floor(averageEngagement * 0.4) + 50, activity: Math.floor(averageEngagement * 0.6) + 100, engagement: Math.floor(averageEngagement * 0.7) + 80 },
-      { name: "WEEK 04", messages: Math.floor(averageEngagement * 0.6) + 60, activity: Math.floor(averageEngagement * 0.9) + 150, engagement: Math.floor(averageEngagement * 0.8) + 90 },
-      { name: "WEEK 08", messages: Math.floor(averageEngagement * 0.8) + 70, activity: Math.floor(averageEngagement * 1.0) + 160, engagement: Math.floor(averageEngagement * 1.0) + 100 },
-      { name: "WEEK 12", messages: Math.floor(averageEngagement * 1.1) + 80, activity: Math.floor(averageEngagement * 1.3) + 200, engagement: Math.floor(averageEngagement * 1.1) + 110 },
-      { name: "WEEK 14", messages: Math.floor(averageEngagement * 1.3) + 100, activity: Math.floor(averageEngagement * 1.4) + 220, engagement: Math.floor(averageEngagement * 1.2) + 120 }
+    // 6. Performance Distribution
+    const distribution = [
+      { name: "0-20%", count: 0, color: "#f43f5e" },
+      { name: "21-40%", count: 0, color: "#fb7185" },
+      { name: "41-60%", count: 0, color: "#fbbf24" },
+      { name: "61-80%", count: 0, color: "#0d9488" },
+      { name: "81-100%", count: 0, color: "#0f766e" }
     ];
 
-    const categories = ["lecture-notes", "past-papers", "summaries", "seminar", "other"];
-    const resourceActivity = categories.map(cat => {
-      const catUploads = uploads.filter(u => u.category === cat).length;
-      const catResources = views.filter(v => v.category === cat);
-      const totalViews = catResources.reduce((sum, r) => sum + (r.views || 0), 0);
-      
+    studentStats.forEach(s => {
+      const score = s.score;
+      if (score <= 20) distribution[0].count++;
+      else if (score <= 40) distribution[1].count++;
+      else if (score <= 60) distribution[2].count++;
+      else if (score <= 80) distribution[3].count++;
+      else distribution[4].count++;
+    });
+
+    // 7. Top Contributors
+    const topContributors = [...studentStats]
+      .sort((a, b) => b.engagementScore - a.engagementScore)
+      .slice(0, 5)
+      .map(s => ({
+        id: s.id,
+        initials: s.initials,
+        name: s.name,
+        studentId: s.studentId,
+        posts: s.posts,
+        score: `${s.score}%`,
+        engagement: `${s.engagementScore} pts`
+      }));
+
+    // 8. Top Resources specifically for this module
+    const topResources = [...uploads]
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 5)
+      .map(r => ({
+        id: r._id,
+        title: r.title,
+        type: r.type,
+        views: r.views || 0,
+        downloads: r.downloads || 0
+      }));
+
+    // 9. Critical Alerts (excluding attendance)
+    const criticalAlerts = atRiskStudents.slice(0, 3).map(s => {
+      const isLowPerformance = s.score < 40;
       return {
-        name: cat.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-        uploads: catUploads,
-        views: totalViews
+        id: s.id,
+        type: isLowPerformance ? "Performance Dip" : "Low Engagement",
+        studentName: s.name,
+        initials: s.initials,
+        message: isLowPerformance 
+          ? `Performance score dropped to ${s.score}%. Recommended resources viewed: ${s.completionRate}%.`
+          : `Only ${s.completionRate}% of recommended materials viewed. Engagement is low at ${s.engagementScore} pts.`,
+        actionText: isLowPerformance ? "Schedule Meeting" : "Email Student",
+        timeAgo: "Recently"
       };
     });
+
+    // 10. Interaction Chart Data (Last 14 Weeks)
+    const now = new Date();
+    const interactionData = [];
+    for (let i = 13; i >= 0; i--) {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - (i * 7 + now.getDay())); 
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7);
+
+      const weekMessages = messages.filter(m => m.createdAt >= weekStart && m.createdAt < weekEnd).length;
+      const weekUploads = uploads.filter(u => u.createdAt >= weekStart && u.createdAt < weekEnd).length;
+      
+      interactionData.push({
+        name: `WEEK ${(14 - i).toString().padStart(2, '0')}`,
+        messages: weekMessages,
+        activity: weekMessages + weekUploads,
+        engagement: Math.round((weekMessages * 2) + (weekUploads * 5))
+      });
+    }
 
     res.json({
       success: true,
       data: {
         availableModules,
-        currentModule: targetModuleCode || "Overall",
+        currentModule: targetModuleCode,
         kpis: {
-          averageGrade: `${averageGrade.toFixed(1)}%`,
-          completionRate: `${averageAttendance.toFixed(1)}%`,
-          engagement: `${Math.floor(averageEngagement)} pts`,
+          averageGrade: `${avgPerformance.toFixed(1)}%`,
+          completionRate: `${avgCompletion.toFixed(1)}%`,
+          engagement: `${Math.floor(avgEngagement)} pts`,
           atRisk: atRiskStudents.length
         },
         charts: {
           interactionData,
-          resourceActivity
+          performanceDistribution: distribution
         },
         topContributors,
+        topResources,
         criticalAlerts
       }
     });
