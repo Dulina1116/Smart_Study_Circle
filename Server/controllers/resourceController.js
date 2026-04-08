@@ -412,6 +412,40 @@ export const trackDownload = async (req, res) => {
   }
 };
 
+// POST /api/resources/:resourceId/view - Track views (once per user)
+export const trackView = async (req, res) => {
+  try {
+    const { resourceId } = req.params;
+
+    const resource = await Resource.findById(resourceId);
+
+    if (!resource || !resource.isActive) {
+      return res.status(404).json({ message: "Resource not found." });
+    }
+
+    const meId = String(req.user._id);
+    const alreadyViewed = Array.isArray(resource.viewedBy)
+      ? resource.viewedBy.some((id) => String(id) === meId)
+      : false;
+
+    if (!alreadyViewed) {
+      resource.views = (resource.views || 0) + 1;
+      resource.viewedBy = Array.isArray(resource.viewedBy) ? resource.viewedBy : [];
+      resource.viewedBy.push(req.user._id);
+      await resource.save();
+    }
+
+    return res.json({
+      message: "View tracked.",
+      views: resource.views,
+      alreadyViewed,
+    });
+  } catch (err) {
+    console.error("Track View Error:", err.message);
+    return res.status(500).json({ message: "Server error tracking view." });
+  }
+};
+
 // GET /api/resources/recent - Get recent uploads
 export const getRecentResources = async (req, res) => {
   try {
