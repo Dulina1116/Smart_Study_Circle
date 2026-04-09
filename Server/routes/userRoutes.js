@@ -2,8 +2,19 @@ import express from 'express'
 import multer from 'multer'
 import fs from 'fs'
 import path from 'path'
-import { protect } from '../middleware/authMiddleware.js'
-import { updateProfile, uploadProfilePhoto, removeProfilePhoto } from '../controllers/userController.js'
+import { protect, authorizeRoles } from '../middleware/authMiddleware.js'
+import {
+  updateProfile,
+  uploadProfilePhoto,
+  removeProfilePhoto,
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+  bulkSuspendUsers,
+  bulkResetPassword
+} from '../controllers/userController.js'
 
 const router = express.Router()
 
@@ -46,5 +57,21 @@ const upload = multer({
 router.route('/profile').put(protect, updateProfile)
 router.route('/profile/photo').post(protect, upload.single('image'), uploadProfilePhoto)
 router.route('/profile/photo').delete(protect, removeProfilePhoto)
+
+// Admin user management routes
+router.route('/')
+  .get(protect, authorizeRoles('admin'), getAllUsers)
+  .post(protect, authorizeRoles('admin'), createUser)
+
+router.route('/bulk-suspend')
+  .patch(protect, authorizeRoles('admin'), bulkSuspendUsers)
+
+router.route('/bulk-reset-password')
+  .post(protect, authorizeRoles('admin'), bulkResetPassword)
+
+router.route('/:id')
+  .get(protect, authorizeRoles('admin'), getUserById)
+  .put(protect, authorizeRoles('admin'), updateUser)
+  .delete(protect, authorizeRoles('admin'), deleteUser)
 
 export default router

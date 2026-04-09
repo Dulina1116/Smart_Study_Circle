@@ -25,7 +25,36 @@ export const getUser = () => {
   }
 }
 
-/** Return true if a valid token + user is stored */
+/** Return true if a valid token + user is stored and not expired */
 export const isAuthenticated = () => {
-  return Boolean(localStorage.getItem('token') && getUser())
+  const token = localStorage.getItem('token')
+  const user = getUser()
+  return Boolean(token && user && !isTokenExpired(token))
+}
+
+/** 
+ * Checks if a JWT token is expired.
+ * Does not verify signature, just reads the 'exp' claim.
+ */
+export const isTokenExpired = (token) => {
+  if (!token) return true
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(
+      window.atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+
+    const { exp } = JSON.parse(jsonPayload)
+    if (!exp) return false // No exp claim, technically not expired
+
+    const now = Math.floor(Date.now() / 1000)
+    return exp < now
+  } catch (error) {
+    console.error('Error decoding token:', error)
+    return true
+  }
 }

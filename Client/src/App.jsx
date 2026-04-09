@@ -17,11 +17,16 @@ import HelpCenter from "./pages/HelpCenter";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
-import { getUser } from "./utils/authUtils";
+import { getUser, isAuthenticated, clearAuth } from "./utils/authUtils";
 
 /** Redirects unauthenticated users away from protected admin routes */
 function ProtectedAdminRoute({ children }) {
-  if (sessionStorage.getItem("adminAuth") !== "true") {
+  const user = getUser();
+  const isAuth = isAuthenticated();
+
+  if (!isAuth || user?.role !== "admin") {
+    console.warn("Unauthorized admin access attempt. Clearing stale auth.");
+    clearAuth();
     return <Navigate to="/admin" replace />;
   }
   return children;

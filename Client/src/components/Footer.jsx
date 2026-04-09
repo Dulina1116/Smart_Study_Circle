@@ -13,6 +13,9 @@ const footerLinks = {
     { label: "Terms of Service", path: "/terms" },
     { label: "Cookie Policy", path: "/cookies" },
   ],
+  Admin: [
+    { label: "Admin Portal", path: "/admin" },
+  ],
 };
 
 export default function Footer() {
