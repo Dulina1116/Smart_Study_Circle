@@ -12,6 +12,8 @@ import {
   Pencil,
   Trash2,
   BookOpen,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -539,8 +541,8 @@ export default function ResourcesLibrary({ user }) {
                     <span className="text-2xl">
                       {getTypeIcon(resource.type)}
                     </span>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[var(--dash-surface-2)] text-[var(--dash-accent)] border border-[var(--dash-border)]">
-                      FEATURED
+                    <span className="flex items-center gap-1 text-[10px] uppercase font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-widest">
+                      <CheckCircle className="w-3 h-3" /> VERIFIED
                     </span>
                   </div>
                   <h3 className="font-bold text-[var(--dash-ink)] mb-2 line-clamp-2">
@@ -663,13 +665,24 @@ export default function ResourcesLibrary({ user }) {
                 key={resource._id}
                 className="bg-[var(--dash-surface)] rounded-2xl p-5 border border-[var(--dash-border)] shadow-[0_16px_28px_rgba(31,41,51,0.08)] hover:-translate-y-0.5 transition-all duration-200"
               >
-                <div className="flex items-end justify-between mb-2">
+                <div className="flex items-start justify-between mb-2">
                   <span className="text-2xl">{getTypeIcon(resource.type)}</span>
-                  <span
-                    className={`text-xs font-bold px-2 py-1 rounded-full border ${getCategoryStyle(resource.category)}`}
-                  >
-                    {getCategoryLabel(resource.category)}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5">
+                    {resource.isLecturerRecommended ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-bold">
+                        <CheckCircle className="w-3 h-3" /> Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold">
+                        <Clock className="w-3 h-3" /> Pending
+                      </span>
+                    )}
+                    <span
+                      className={`text-xs font-bold px-2 py-1 rounded-full border ${getCategoryStyle(resource.category)}`}
+                    >
+                      {getCategoryLabel(resource.category)}
+                    </span>
+                  </div>
                 </div>
                 <h3 className="font-bold text-[var(--dash-ink)] text-base mb-1 line-clamp-2">
                   {resource.title}
@@ -753,10 +766,19 @@ export default function ResourcesLibrary({ user }) {
                     className={`border-b border-[var(--dash-border)] transition-colors ${idx % 2 === 0 ? "bg-[var(--dash-surface)]" : "bg-[var(--dash-surface-2)]"} hover:bg-[rgba(15,118,110,0.06)]`}
                   >
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[var(--dash-ink)] truncate">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-sm font-semibold text-[var(--dash-ink)] truncate leading-tight">
                           {resource.title}
                         </span>
+                        {resource.isLecturerRecommended ? (
+                          <span className="w-max inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-bold">
+                            <CheckCircle className="w-2.5 h-2.5" /> Verified
+                          </span>
+                        ) : (
+                          <span className="w-max inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 text-[9px] font-bold">
+                            <Clock className="w-2.5 h-2.5" /> Pending
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-[var(--dash-muted)]">

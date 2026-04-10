@@ -884,10 +884,23 @@ const sendInvitations = async (circleId, emails) => {
                       />
                     </div>
                     <div className="relative">
-                      <input
-                        type="time"
-                        className="w-full bg-slate-100 border-none rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                      />
+                      <select
+                        className="w-full bg-slate-100 border-none rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="">Select time...</option>
+                        {Array.from({ length: 27 }, (_, i) => {
+                          const hour24 = Math.floor(i / 2) + 7; // start at 7:00 AM
+                          const minute = i % 2 === 0 ? "00" : "30";
+                          const ampm = hour24 >= 12 ? "PM" : "AM";
+                          const hour12 = hour24 > 12 ? hour24 - 12 : hour24 === 0 ? 12 : hour24;
+                          return (
+                            <option key={i} value={`${hour24.toString().padStart(2, '0')}:${minute}`}>
+                              {hour12}:{minute} {ampm}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <Clock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-600 pointer-events-none stroke-[2.5]" />
                     </div>
                   </div>
                 </div>
