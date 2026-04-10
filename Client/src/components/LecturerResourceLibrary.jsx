@@ -16,18 +16,49 @@ export default function LecturerResourceLibrary() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [resources, setResources] = useState([])
-  
+  const [searchQuery, setSearchQuery] = useState('')
+  const [moduleFilter, setModuleFilter] = useState('All Modules')
+  const [typeFilter, setTypeFilter] = useState('File Type')
+
+  const uniqueModules = ['All Modules', ...new Set(resources.map(r => r.module || 'General'))].filter(Boolean);
+  const uniqueTypes = ['File Type', ...new Set(resources.map(r => {
+    if (r.type) return r.type.toUpperCase();
+    if (!r.fileName) return "PDF";
+    const parts = r.fileName.split('.');
+    return parts.length > 1 ? parts.pop().toUpperCase() : "FILE";
+  }))].filter(Boolean);
+
+  const filteredResources = resources.filter(item => {
+    const titleMatch = (item.title || item.fileName || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const tagsMatch = (item.tags || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const searchMatch = titleMatch || tagsMatch;
+    
+    const itemModule = item.module || 'General';
+    const moduleMatch = moduleFilter === 'All Modules' || itemModule === moduleFilter;
+    
+    let itemType = item.type ? item.type.toUpperCase() : "PDF";
+    if (!item.type && item.fileName) {
+      const parts = item.fileName.split('.');
+      itemType = parts.length > 1 ? parts.pop().toUpperCase() : "FILE";
+    }
+    const typeMatch = typeFilter === 'File Type' || itemType === typeFilter;
+    
+    return searchMatch && moduleMatch && typeMatch;
+  });
+
+  const totalFiltered = filteredResources.length;
+  // Stats based on all resources:
   const totalResources = resources.length;
   const totalDownloads = resources.reduce((sum, res) => sum + (res.downloads || 0), 0);
   const formatDownloads = (num) => num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num;
   const avgImpactScore = Math.min(99, 85 + (totalDownloads * 1.5)).toFixed(0);
 
   const [formData, setFormData] = useState({
-    title: 'Week 5 Lecture Notes',
-    module: 'Physics 101',
+    title: '',
+    module: '',
     type: 'PDF',
-    tags: 'lecture, notes, physics',
-    description: 'Core concepts for week 5'
+    tags: '',
+    description: ''
   })
 
   const fetchResources = async () => {
@@ -77,11 +108,11 @@ export default function LecturerResourceLibrary() {
   const handleUploadClick = () => {
     setEditingId(null)
     setFormData({
-      title: 'Week 5 Lecture Notes',
-      module: 'Physics 101',
+      title: '',
+      module: '',
       type: 'PDF',
-      tags: 'lecture, notes, physics',
-      description: 'Core concepts for week 5'
+      tags: '',
+      description: ''
     })
     setSelectedFile(null)
     setShowModal(true)
@@ -315,22 +346,28 @@ export default function LecturerResourceLibrary() {
                   </div>
                   <input
                     type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Filter by name or keywords..."
                     className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 w-full transition-all text-slate-700"
                   />
                 </div>
 
                 {/* Selects */}
-                <select className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 cursor-pointer w-full sm:w-auto outline-none appearance-none pr-8 relative">
-                  <option>All Modules</option>
-                  <option>CS204</option>
-                  <option>CS101</option>
+                <select 
+                  value={moduleFilter}
+                  onChange={(e) => setModuleFilter(e.target.value)}
+                  className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 cursor-pointer w-full sm:w-auto outline-none appearance-none pr-8 relative"
+                >
+                  {uniqueModules.map((mod, idx) => <option key={idx} value={mod}>{mod}</option>)}
                 </select>
                 
-                <select className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 cursor-pointer w-full sm:w-auto outline-none appearance-none pr-8">
-                  <option>File Type</option>
-                  <option>PDF</option>
-                  <option>Video</option>
+                <select 
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 cursor-pointer w-full sm:w-auto outline-none appearance-none pr-8"
+                >
+                  {uniqueTypes.map((type, idx) => <option key={idx} value={type}>{type}</option>)}
                 </select>
               </div>
 
@@ -376,7 +413,7 @@ export default function LecturerResourceLibrary() {
                   </tr>
                 </thead>
                 <tbody>
-                  {resources.length > 0 ? resources.map((item, idx) => {
+                  {filteredResources.length > 0 ? filteredResources.map((item, idx) => {
                     return (
                       <tr key={item._id} className="group hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-5 border-b border-slate-50 text-center">
@@ -471,7 +508,7 @@ export default function LecturerResourceLibrary() {
             {/* Pagination Footer */}
             <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-white rounded-b-[20px]">
               <span className="text-[12px] font-medium text-slate-500">
-                Showing <strong className="text-slate-800">{totalResources > 0 ? 1 : 0}-{totalResources}</strong> of <strong className="text-slate-800">{totalResources}</strong> resources
+                Showing <strong className="text-slate-800">{totalFiltered > 0 ? 1 : 0}-{totalFiltered}</strong> of <strong className="text-slate-800">{totalFiltered}</strong> resources
               </span>
               <div className="flex items-center gap-1.5">
                 <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors">
@@ -686,11 +723,11 @@ export default function LecturerResourceLibrary() {
               <div className="grid grid-cols-2 gap-x-5 gap-y-6 mb-6">
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2">Title</label>
-                  <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none" />
+                  <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="e.g. Week 5 Lecture Notes" className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2">Module</label>
-                  <input type="text" value={formData.module} onChange={(e) => setFormData({...formData, module: e.target.value})} className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none" />
+                  <input type="text" value={formData.module} onChange={(e) => setFormData({...formData, module: e.target.value})} placeholder="e.g. Physics 101" className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2">Type</label>
@@ -703,13 +740,13 @@ export default function LecturerResourceLibrary() {
                 </div>
                 <div>
                   <label className="block text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2">Tags</label>
-                  <input type="text" value={formData.tags} onChange={(e) => setFormData({...formData, tags: e.target.value})} className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none" />
+                  <input type="text" value={formData.tags} onChange={(e) => setFormData({...formData, tags: e.target.value})} placeholder="e.g. lecture, notes, physics" className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 outline-none" />
                 </div>
               </div>
 
               <div className="mb-6">
                 <label className="block text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2">Description</label>
-                <textarea rows="2" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-medium text-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none resize-none"></textarea>
+                <textarea rows="2" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="e.g. Core concepts for week 5" className="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-[13px] font-medium text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 outline-none resize-none"></textarea>
               </div>
 
               <div>
