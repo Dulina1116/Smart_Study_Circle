@@ -29,22 +29,7 @@ import {
   LabelList
 } from "recharts";
 
-// --- Mock Data ---
 
-const interactionData = [
-  { name: "WEEK 01", messages: 120, activity: 200, engagement: 220 },
-  { name: "WEEK 04", messages: 180, activity: 380, engagement: 210 },
-  { name: "WEEK 08", messages: 250, activity: 280, engagement: 230 },
-  { name: "WEEK 12", messages: 300, activity: 550, engagement: 240 },
-  { name: "WEEK 14", messages: 450, activity: 450, engagement: 250 },
-];
-
-
-const topContributors = [
-  { id: 1, initials: "AS", name: "Alex Sterling", studentId: "ID: 2190334", posts: 42, score: "89%", engagement: "982 pts" },
-  { id: 2, initials: "MK", name: "Maya Kova", studentId: "ID: 2190112", posts: 38, score: "92%", engagement: "945 pts" },
-  { id: 3, initials: "JT", name: "James Thorne", studentId: "ID: 2190556", posts: 24, score: "76%", engagement: "812 pts" },
-];
 
 
 // --- Utility Components ---
@@ -138,6 +123,18 @@ export default function LecturerStudentAnalytics({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedModule, setSelectedModule] = useState("");
+  const [isModuleDropdownOpen, setIsModuleDropdownOpen] = useState(false);
+  const moduleDropdownRef = React.useRef(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moduleDropdownRef.current && !moduleDropdownRef.current.contains(event.target)) {
+        setIsModuleDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   // Meeting Modal States
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
@@ -145,6 +142,7 @@ export default function LecturerStudentAnalytics({ user }) {
   const [meetingForm, setMeetingForm] = useState({ date: "", hour: "09", minute: "00", period: "AM", note: "" });
   const [formErrors, setFormErrors] = useState({});
   const [scheduledStudentIds, setScheduledStudentIds] = useState([]);
+  const [cancelMeetingTarget, setCancelMeetingTarget] = useState(null);
   const [activeToast, setActiveToast] = useState(null);
 
   useEffect(() => {
@@ -178,9 +176,8 @@ export default function LecturerStudentAnalytics({ user }) {
     fetchData();
   }, [selectedModule, user]);
 
-  const resolvedInteractionData = data?.charts?.interactionData || interactionData;
-
-  const resolvedTopContributors = data?.topContributors || topContributors;
+  const resolvedInteractionData = data?.charts?.interactionData || [];
+  const resolvedTopContributors = data?.topContributors || [];
 
 
 
@@ -327,7 +324,6 @@ export default function LecturerStudentAnalytics({ user }) {
     
     // Required fields check
     if (!meetingForm.date) errors.date = "Date is required";
-    if (!meetingForm.note || !meetingForm.note.trim()) errors.note = "Meeting note is required";
 
     // Reconstruct time for validation
     let hour24 = parseInt(meetingForm.hour);
@@ -387,17 +383,36 @@ export default function LecturerStudentAnalytics({ user }) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-slate-700">Module:</span>
-            <div className="relative">
-              <select 
-                value={selectedModule}
-                onChange={(e) => setSelectedModule(e.target.value)}
-                className="appearance-none bg-white border border-slate-200 text-slate-700 py-2.5 pl-4 pr-10 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm cursor-pointer"
+            <div className="relative" ref={moduleDropdownRef}>
+              <button 
+                onClick={() => setIsModuleDropdownOpen(!isModuleDropdownOpen)}
+                className="appearance-none bg-white border border-slate-200 text-slate-700 py-2.5 pl-4 pr-10 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm cursor-pointer w-full flex items-center justify-between gap-4 min-w-[140px]"
               >
-                {data?.availableModules?.map(m => (
-                   <option key={m} value={m}>{m}</option>
-                )) || <option>Loading...</option>}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <span className="truncate">{selectedModule || "Loading..."}</span>
+                <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none transition-transform duration-200 ${isModuleDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {isModuleDropdownOpen && (
+                <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg shadow-slate-200/50 z-50 overflow-hidden ring-1 ring-black/5">
+                  <div className="max-h-[220px] overflow-y-auto overscroll-contain py-1.5 custom-scrollbar">
+                    {data?.availableModules?.map(m => (
+                      <button
+                        key={m}
+                        onClick={() => {
+                          setSelectedModule(m);
+                          setIsModuleDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-bold transition-colors duration-150 flex items-center justify-between ${selectedModule === m ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+                      >
+                        <span className="truncate pr-2">{m}</span>
+                      </button>
+                    ))}
+                    {!data?.availableModules && (
+                      <div className="px-4 py-3 text-sm font-medium text-slate-400 text-center">Loading...</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <button 
@@ -445,21 +460,12 @@ export default function LecturerStudentAnalytics({ user }) {
               <TrendingUp className="w-3 h-3" /> +2.5%
             </span>
           </div>
-          <div className="mb-8">
+          <div className="mb-2">
             <div className="flex items-end gap-2 mb-1">
               <span className="text-2xl font-extrabold text-slate-800 tracking-tight">{data?.kpis?.averageGrade || "0%"}</span>
               <span className="text-sm font-medium text-slate-500 mb-0.5">class avg</span>
             </div>
             <p className="text-xs font-medium text-slate-400">Target: 70.0%</p>
-          </div>
-          <div className="absolute bottom-5 left-6 right-6">
-            <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
-              <span>Goal Progress</span>
-              <span className="text-slate-500">74%</span>
-            </div>
-            <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-teal-600 rounded-full" style={{ width: "74.2%" }}></div>
-            </div>
           </div>
         </div>
 
@@ -473,21 +479,12 @@ export default function LecturerStudentAnalytics({ user }) {
               <TrendingUp className="w-3 h-3" /> +4.2%
             </span>
           </div>
-          <div className="mb-8">
+          <div className="mb-2">
             <div className="flex items-end gap-2 mb-1">
               <span className="text-2xl font-extrabold text-slate-800 tracking-tight">{data?.kpis?.completionRate || "92.4%"}</span>
               <span className="text-sm font-medium text-slate-500 mb-0.5">submission rate</span>
             </div>
             <p className="text-xs font-medium text-slate-400">vs last period (88.2%)</p>
-          </div>
-          <div className="absolute bottom-5 left-6 right-6">
-            <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
-              <span>Overall Progress</span>
-              <span className="text-slate-500">92%</span>
-            </div>
-            <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-cyan-500 rounded-full" style={{ width: "92.4%" }}></div>
-            </div>
           </div>
         </div>
 
@@ -501,21 +498,12 @@ export default function LecturerStudentAnalytics({ user }) {
               <TrendingUp className="w-3 h-3" /> +15.4%
             </span>
           </div>
-          <div className="mb-8">
+          <div className="mb-2">
             <div className="flex items-end gap-2 mb-1">
               <span className="text-2xl font-extrabold text-slate-800 tracking-tight">{Math.floor(parseInt(data?.kpis?.engagement || "0"))}</span>
               <span className="text-sm font-medium text-slate-500 mb-0.5">points avg</span>
             </div>
             <p className="text-xs font-medium text-slate-400">High engagement tier</p>
-          </div>
-          <div className="absolute bottom-5 left-6 right-6">
-            <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
-              <span>Tier Progress</span>
-              <span className="text-slate-500">62%</span>
-            </div>
-            <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-teal-500 rounded-full" style={{ width: "62%" }}></div>
-            </div>
           </div>
         </div>
 
@@ -526,7 +514,7 @@ export default function LecturerStudentAnalytics({ user }) {
               <AlertTriangle className="w-3.5 h-3.5" /> At-Risk Students
             </h3>
           </div>
-          <div className="flex flex-col relative z-10 mb-8">
+          <div className="flex flex-col relative z-10 mb-2">
             <div className="flex items-end gap-2 mb-1 mt-2">
               <span className="text-2xl font-extrabold tracking-tight">{data?.kpis?.atRisk || 0}</span>
               <span className="text-[13px] font-medium text-white/80 mb-0.5">students</span>
@@ -534,15 +522,6 @@ export default function LecturerStudentAnalytics({ user }) {
             <span className="text-[13px] font-medium text-white/90 bg-white/20 inline-block px-3 py-1 rounded-lg w-max mt-1 border border-white/10">
               Critical focus needed for {data?.criticalAlerts?.length || 0}
             </span>
-          </div>
-          <div className="absolute bottom-5 left-6 right-6 z-10">
-            <div className="flex justify-between text-[10px] font-bold text-white/70 mb-1.5 uppercase tracking-wider">
-              <span>Risk Ratio</span>
-              <span className="text-white/90">8%</span>
-            </div>
-            <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: "8%" }}></div>
-            </div>
           </div>
           {/* Decorative background circle */}
           <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full pointer-events-none"></div>
@@ -559,13 +538,6 @@ export default function LecturerStudentAnalytics({ user }) {
               <span className="flex items-center gap-1 bg-teal-100 text-teal-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
                 <TrendingUp className="w-3 h-3" /> +12%
               </span>
-            </div>
-            <div className="relative">
-              <select className="appearance-none bg-slate-50 border border-slate-100 text-slate-600 py-1.5 pl-3 pr-8 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
-                <option>Last 30 Days</option>
-                <option>Last 3 Months</option>
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
             </div>
           </div>
           <div className="h-[250px] w-full">
@@ -617,13 +589,8 @@ export default function LecturerStudentAnalytics({ user }) {
 
         {/* Class Performance Distribution */}
         <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <h3 className="text-[16px] font-bold text-slate-900">Class Performance Distribution</h3>
-              <span className="bg-teal-100 text-teal-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">
-                Overview
-              </span>
-            </div>
+          <div className="flex items-center mb-6">
+            <h3 className="text-[16px] font-bold text-slate-900">Class Performance Distribution</h3>
           </div>
           <div className="h-[250px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -661,11 +628,8 @@ export default function LecturerStudentAnalytics({ user }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top Contributors */}
         <div className="lg:col-span-2 bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-300">
-          <div className="p-6 flex items-center justify-between border-b border-slate-100">
+          <div className="p-6 flex items-center border-b border-slate-100">
             <h3 className="text-[16px] font-bold text-slate-900">Top Contributors</h3>
-            <button className="text-[13px] font-bold text-teal-600 hover:text-teal-700 transition-colors">
-              View Leaderboard
-            </button>
           </div>
           <div className="p-0 overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -762,7 +726,7 @@ export default function LecturerStudentAnalytics({ user }) {
                         MEETING SCHEDULED
                      </div>
                      <button 
-                       onClick={() => setScheduledStudentIds(prev => prev.filter(id => id !== alert.id))}
+                       onClick={() => setCancelMeetingTarget(alert)}
                        className="text-[11px] font-bold text-slate-400 hover:text-rose-500 transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5 py-1"
                      >
                         <X className="w-3 h-3" /> Cancel Schedule
@@ -801,96 +765,112 @@ export default function LecturerStudentAnalytics({ user }) {
           />
           
           {/* Modal Card */}
-          <div className="relative bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+          <div className="relative bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 border border-slate-100">
             {/* Header */}
-            <div className="bg-gradient-to-br from-teal-600 to-cyan-600 p-8 text-white relative">
+            <div className="bg-gradient-to-br from-teal-600 via-teal-500 to-cyan-600 p-8 text-white relative overflow-hidden">
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mt-10 -mr-10"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-teal-900/20 rounded-full blur-xl -mb-10 -ml-10"></div>
+              
               <button 
                 onClick={() => setIsMeetingModalOpen(false)}
-                className="absolute top-6 right-6 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                className="absolute top-6 right-6 p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md transition-all duration-300 hover:rotate-90"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-white" />
               </button>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-xl font-bold">
+              
+              <div className="flex items-center gap-5 relative z-10">
+                <div className="w-16 h-16 rounded-[20px] bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl font-extrabold shadow-inner relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                   {meetingTarget?.initials}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold tracking-tight">Schedule Meeting</h3>
-                  <p className="text-teal-50/80 text-sm font-medium">with {meetingTarget?.name}</p>
+                  <h3 className="text-2xl font-extrabold tracking-tight drop-shadow-sm mb-1">Schedule Meeting</h3>
+                  <p className="text-teal-50 text-[15px] font-medium opacity-90 flex items-center gap-1.5">
+                     with {meetingTarget?.name}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Form */}
-            <div className="p-8 space-y-6">
-              {/* Date & Time */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Calendar className="w-3 h-3" /> Date
-                  </label>
+            <div className="p-8 space-y-7">
+              {/* Date */}
+              <div className="space-y-2.5">
+                <label className="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-1">
+                  <Calendar className="w-3.5 h-3.5 text-teal-500" /> Select Date
+                </label>
+                <div className="relative group">
                   <input 
                     type="date" 
                     min={new Date().toISOString().split('T')[0]}
                     value={meetingForm.date}
                     onChange={(e) => setMeetingForm({ ...meetingForm, date: e.target.value })}
-                    className={`w-full bg-slate-50 border ${formErrors.date ? 'border-rose-400 ring-4 ring-rose-500/5' : 'border-slate-100'} rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all`}
+                    className={`w-full bg-slate-50/50 border ${formErrors.date ? 'border-rose-400 ring-4 ring-rose-500/10' : 'border-slate-200'} rounded-2xl px-5 py-3.5 text-[15px] font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all duration-300 shadow-sm hover:border-teal-300 cursor-pointer appearance-none`}
                   />
-                  {formErrors.date && <p className="text-[10px] font-bold text-rose-500">{formErrors.date}</p>}
+                  {formErrors.date && <p className="text-[11px] font-bold text-rose-500 mt-2 absolute -bottom-6 left-1">{formErrors.date}</p>}
                 </div>
-                <div className="space-y-2 col-span-2">
-                  <div className="flex gap-3 items-end">
-                    <ScrollPicker 
-                      label="Hour" 
-                      options={[...Array(12)].map((_, i) => (i + 1).toString().padStart(2, '0'))} 
-                      value={meetingForm.hour}
-                      onChange={(val) => setMeetingForm({ ...meetingForm, hour: val })}
-                    />
-                    <ScrollPicker 
-                      label="Min" 
-                      options={[...Array(60)].map((_, i) => i.toString().padStart(2, '0'))} 
-                      value={meetingForm.minute}
-                      onChange={(val) => setMeetingForm({ ...meetingForm, minute: val })}
-                    />
-                    <ScrollPicker 
-                      label="Period" 
-                      options={["AM", "PM"]} 
-                      value={meetingForm.period}
-                      onChange={(val) => setMeetingForm({ ...meetingForm, period: val })}
-                    />
-                  </div>
-                  {formErrors.time && <p className="text-[10px] font-bold text-rose-500 mt-2">{formErrors.time}</p>}
+              </div>
+
+              {/* Time Context */}
+              <div className="space-y-2.5 pt-1">
+                <label className="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-1">
+                  <Clock className="w-3.5 h-3.5 text-teal-500" /> Set Time
+                </label>
+                <div className="flex gap-4 items-end bg-slate-50/30 p-2 rounded-3xl border border-slate-100 shadow-sm">
+                  <ScrollPicker 
+                    label="Hour" 
+                    options={[...Array(12)].map((_, i) => (i + 1).toString().padStart(2, '0'))} 
+                    value={meetingForm.hour}
+                    onChange={(val) => setMeetingForm({ ...meetingForm, hour: val })}
+                  />
+                  <ScrollPicker 
+                    label="Min" 
+                    options={[...Array(60)].map((_, i) => i.toString().padStart(2, '0'))} 
+                    value={meetingForm.minute}
+                    onChange={(val) => setMeetingForm({ ...meetingForm, minute: val })}
+                  />
+                  <ScrollPicker 
+                    label="Period" 
+                    options={["AM", "PM"]} 
+                    value={meetingForm.period}
+                    onChange={(val) => setMeetingForm({ ...meetingForm, period: val })}
+                  />
                 </div>
+                {formErrors.time && <p className="text-[11px] font-bold text-rose-500 mt-2">{formErrors.time}</p>}
               </div>
 
               {/* Note */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <StickyNote className="w-3 h-3" /> Meeting Note
+              <div className="space-y-2.5 pt-1">
+                <label className="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-1">
+                  <StickyNote className="w-3.5 h-3.5 text-teal-500" /> Agenda Note <span className="text-[10px] text-slate-400 font-bold ml-1 normal-case tracking-normal">(Optional)</span>
                 </label>
-                <textarea 
-                  placeholder="What is this meeting about?"
-                  rows="3"
-                  value={meetingForm.note}
-                  onChange={(e) => setMeetingForm({ ...meetingForm, note: e.target.value })}
-                  className={`w-full bg-slate-50 border ${formErrors.note ? 'border-rose-400 ring-4 ring-rose-500/5' : 'border-slate-100'} rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all resize-none`}
-                />
-                {formErrors.note && <p className="text-[10px] font-bold text-rose-500">{formErrors.note}</p>}
+                <div className="relative">
+                  <textarea 
+                    placeholder="Briefly describe what you want to discuss..."
+                    rows="3"
+                    value={meetingForm.note}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, note: e.target.value })}
+                    className={`w-full bg-slate-50/50 border ${formErrors.note ? 'border-rose-400 ring-4 ring-rose-500/10' : 'border-slate-200'} rounded-2xl px-5 py-4 text-[14px] font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all duration-300 resize-none shadow-sm hover:border-teal-300 leading-relaxed`}
+                  />
+                  {formErrors.note && <p className="text-[11px] font-bold text-rose-500 mt-2 absolute -bottom-6 left-1">{formErrors.note}</p>}
+                </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-4 pt-4">
                 <button 
                   onClick={() => setIsMeetingModalOpen(false)}
-                  className="flex-1 px-6 py-3.5 border border-slate-200 text-slate-600 rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-[0.98]"
+                  className="flex-[0.8] px-6 py-4 border-2 border-slate-200 text-slate-500 rounded-2xl text-[14px] font-bold hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all duration-300 active:scale-[0.98]"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleConfirmMeeting}
-                  className="flex-1 px-6 py-3.5 bg-teal-600 text-white rounded-2xl text-sm font-bold hover:bg-teal-700 shadow-lg shadow-teal-600/20 transition-all active:scale-[0.98]"
+                  className="flex-[1.2] px-6 py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-2xl text-[14px] font-bold hover:from-teal-600 hover:to-cyan-600 shadow-lg shadow-teal-500/25 transition-all duration-300 hover:shadow-teal-500/40 active:scale-[0.98] transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                 >
-                  Confirm Meeting
+                  <Calendar className="w-4 h-4" />
+                  Confirm 
                 </button>
               </div>
             </div>
@@ -898,6 +878,44 @@ export default function LecturerStudentAnalytics({ user }) {
         </div>
       )}
         </>
+      )}
+
+      {/* --- Cancel Meeting Confirmation Modal --- */}
+      {cancelMeetingTarget && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300"
+            onClick={() => setCancelMeetingTarget(null)}
+          />
+          <div className="relative bg-white w-full max-w-sm rounded-[32px] shadow-2xl p-8 animate-in zoom-in-95 duration-300 text-center border border-slate-100 flex flex-col items-center overflow-hidden">
+            <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mb-5 text-rose-500 shadow-inner border border-rose-100">
+              <AlertTriangle className="w-8 h-8" strokeWidth={2} />
+            </div>
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight mb-2">Cancel Meeting?</h3>
+            <p className="text-[15px] font-medium text-slate-500 mb-8 leading-relaxed">
+              Are you sure you want to cancel this scheduled meeting with <span className="font-bold text-slate-700">{cancelMeetingTarget.studentName}</span>?
+            </p>
+            <div className="flex gap-3 w-full">
+              <button 
+                onClick={() => setCancelMeetingTarget(null)}
+                className="flex-[1] px-4 py-3 border-2 border-slate-200 text-slate-500 rounded-2xl text-[14px] font-bold hover:bg-slate-50 hover:text-slate-700 transition-all duration-300 active:scale-[0.98]"
+              >
+                Keep Meeting
+              </button>
+              <button 
+                onClick={() => {
+                  setScheduledStudentIds(prev => prev.filter(id => id !== cancelMeetingTarget.id));
+                  setCancelMeetingTarget(null);
+                  setActiveToast(`Meeting with ${cancelMeetingTarget.studentName} cancelled.`);
+                  setTimeout(() => setActiveToast(null), 4000);
+                }}
+                className="flex-[1] px-4 py-3 bg-rose-500 text-white rounded-2xl text-[14px] font-bold hover:bg-rose-600 shadow-lg shadow-rose-500/25 transition-all duration-300 hover:shadow-rose-500/40 active:scale-[0.98]"
+              >
+                Cancel Meeting
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* --- Toast Notification --- */}
