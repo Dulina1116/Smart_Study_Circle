@@ -183,9 +183,11 @@ export default function StudyCircleChatPage() {
 
   const myId = String(currentUser?.id || currentUser?._id || "");
   const members = circle?.members || [];
-  const onlineMembers = members.filter((m) => onlineUserIds.has(String(m.id)));
+  const onlineMembers = members.filter((m) =>
+    onlineUserIds.has(String(m.id || m._id || "")),
+  );
   const offlineMembers = members.filter(
-    (m) => !onlineUserIds.has(String(m.id)),
+    (m) => !onlineUserIds.has(String(m.id || m._id || "")),
   );
   const onlineCount = onlineMembers.length;
   const membersMeta = `${onlineMembers.length} online • ${offlineMembers.length} offline`;
@@ -460,7 +462,18 @@ export default function StudyCircleChatPage() {
     socketRef.current = socket;
 
     const onConnect = () => {
-      socket.emit("circle:join", { circleId });
+      socket.emit("circle:join", { circleId }, (ack) => {
+        if (!ack?.ok) {
+          setError(ack?.message || "Unable to join realtime chat.");
+          return;
+        }
+        if (Array.isArray(ack?.onlineUserIds)) {
+          const normalized = new Set(
+            ack.onlineUserIds.map((id) => String(id)),
+          );
+          setOnlineUserIds(normalized);
+        }
+      });
     };
 
     const onNewMessage = (message) => {
@@ -471,7 +484,17 @@ export default function StudyCircleChatPage() {
 
     const onPresence = ({ circleId: incomingCircleId, onlineUserIds: ids }) => {
       if (String(incomingCircleId) !== String(circleId)) return;
-      setOnlineUserIds(new Set((ids || []).map((id) => String(id))));
+      const normalized = new Set((ids || []).map((id) => String(id)));
+      setOnlineUserIds(normalized);
+      setTypingUsers((prev) => {
+        const next = new Map(prev);
+        for (const id of next.keys()) {
+          if (!normalized.has(id)) {
+            next.delete(id);
+          }
+        }
+        return next;
+      });
     };
 
     const onTyping = ({
@@ -509,7 +532,9 @@ export default function StudyCircleChatPage() {
     };
 
     const onConnectError = () => {
-      // Avoid noisy uncaught transport errors in development strict mode remounts.
+      setError(
+        "Realtime connection failed. Online status and typing will be unavailable.",
+      );
     };
 
     socket.on("connect", onConnect);
@@ -522,6 +547,9 @@ export default function StudyCircleChatPage() {
     return () => {
       if (socket.connected) {
         socket.emit("circle:leave", { circleId });
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
       }
       socket.off("connect", onConnect);
       socket.off("circle:new-message", onNewMessage);
@@ -541,6 +569,10 @@ export default function StudyCircleChatPage() {
   const sendMessage = () => {
     const text = draft.trim();
     if (!text || isSending) return;
+    if (!socketRef.current?.connected) {
+      setError("Realtime connection lost. Refresh to try again.");
+      return;
+    }
 
     setIsSending(true);
     socketRef.current?.emit("circle:message", { circleId, text }, (ack) => {
@@ -1082,6 +1114,7 @@ export default function StudyCircleChatPage() {
                   setDraft(e.target.value);
                   emitTyping(e.target.value);
                 }}
+                onBlur={() => emitTyping("")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();

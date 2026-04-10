@@ -3,11 +3,11 @@ import {
   getPendingReports,
   updateReportStatus,
 } from "../controllers/reportController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", protect, getPendingReports);
-router.put("/:id/status", protect, updateReportStatus);
+router.get("/", protect, authorizeRoles("admin"), getPendingReports);
+router.put("/:id/status", protect, authorizeRoles("admin"), updateReportStatus);
 
 export default router;

@@ -320,6 +320,19 @@ export const getAdminOverview = async (req, res) => {
     const totalResourcesShared = normalizedCircles.length * 15; // mock
     const totalStudyPlansCreated = normalizedCircles.length * 5; // mock
 
+    const circlesPayload = normalizedCircles.map((circle) => ({
+      id: circle._id,
+      subject: circle.subject || circle.name || "",
+      moduleCode: circle.moduleCode || "",
+      semester: circle.semester || "",
+      year: circle.year || "",
+      visibility: circle.visibility || "public",
+      isActive: Boolean(circle.isActive),
+      memberCount: Array.isArray(circle.members) ? circle.members.length : 0,
+      createdAt: circle.createdAt,
+      updatedAt: circle.updatedAt,
+    }));
+
     res.json({
       success: true,
       summary: {
@@ -334,7 +347,8 @@ export const getAdminOverview = async (req, res) => {
       weeklyEngagement: [],
       monthlyEngagement: [],
       moduleBreakdown,
-      topPerformingGroups
+      topPerformingGroups,
+      circles: circlesPayload,
     });
   } catch (error) {
     console.error('getAdminOverview Error:', error);
