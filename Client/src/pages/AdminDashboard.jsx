@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   GraduationCap,
@@ -8,12 +8,9 @@ import {
   ShieldAlert,
   Settings,
   LogOut,
-  Bell,
-  HelpCircle,
   Search,
-   UserCircle,
-   Menu,
-   X,
+  Menu,
+  X,
 } from "lucide-react";
 
 import AdminOverview from "../components/admin/AdminOverview";
@@ -21,158 +18,218 @@ import AdminUserManagement from "../components/admin/AdminUserManagement";
 import AdminCircleManagement from "../components/admin/AdminCircleManagement";
 import AdminContentModeration from "../components/admin/AdminContentModeration";
 import AdminSystemSettings from "../components/admin/AdminSystemSettings";
+import NotificationDropdown from "../components/NotificationDropdown";
 
 import { clearAuth, getUser } from "../utils/authUtils";
 
+const API_ORIGIN =
+  import.meta.env.VITE_API_ORIGIN ||
+  `${window.location.protocol}//${window.location.hostname}:5000`;
+
+const resolveImageUrl = (value) => {
+  if (!value || typeof value !== "string") return "";
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("data:") ||
+    value.startsWith("blob:")
+  ) {
+    return value;
+  }
+  if (value.startsWith("/")) return `${API_ORIGIN}${value}`;
+  if (value.startsWith("uploads/")) return `${API_ORIGIN}/${value}`;
+  if (value.startsWith("profile-")) return `${API_ORIGIN}/uploads/${value}`;
+  return value;
+};
+
 const navigation = [
-  { name: 'Overview', id: 'overview', icon: LayoutDashboard },
-  { name: 'User Management', id: 'users', icon: Users },
-  { name: 'Circle Management', id: 'circles', icon: UsersRound },
-  { name: 'Content Moderation', id: 'moderation', icon: ShieldAlert },
-  { name: 'System Settings', id: 'settings', icon: Settings },
+  { name: "Overview", id: "overview", icon: LayoutDashboard },
+  { name: "User Management", id: "users", icon: Users },
+  { name: "Circle Management", id: "circles", icon: UsersRound },
+  { name: "Content Moderation", id: "moderation", icon: ShieldAlert },
+  { name: "System Settings", id: "settings", icon: Settings },
 ];
 
 const AdminSidebar = ({
-   currentView,
-   onNavigate,
-   onLogout,
-   showClose = false,
-   onClose,
+  currentView,
+  onNavigate,
+  onLogout,
+  showClose = false,
+  onClose,
 }) => {
-   const user = getUser();
-   return (
-      <div className="flex flex-col h-full">
-         <div className="p-6">
-            <div
-               className="flex items-center gap-3 mb-2 cursor-pointer group"
-               onClick={() => onNavigate("overview")}
-               role="button"
-               tabIndex={0}
-               onKeyDown={(event) => {
-                  if (event.key === "Enter") onNavigate("overview");
-               }}
-            >
-               <div className="w-8 h-8 rounded-xl bg-[linear-gradient(135deg,#0f766e,#14b8a6)] flex items-center justify-center text-white shadow-lg shadow-[rgba(15,118,110,0.35)] group-hover:scale-105 transition-transform">
-                  <GraduationCap className="w-5 h-5" />
-               </div>
-               <div className="flex flex-col">
-                  <span className="text-sm font-extrabold bg-clip-text text-transparent bg-[linear-gradient(135deg,#0f766e,#14b8a6)] tracking-tight">
-                     Smart Study Circle
-                  </span>
-                  <span className="text-[9px] font-bold text-[var(--dash-muted)] uppercase tracking-widest">
-                     Admin Dashboard
-                  </span>
-               </div>
-               {showClose ? (
-                  <button
-                     type="button"
-                     onClick={onClose}
-                     className="ml-auto w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 inline-flex items-center justify-center"
-                     aria-label="Close menu"
-                  >
-                     <X className="w-4 h-4" />
-                  </button>
-               ) : null}
-            </div>
-         </div>
-
-         <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
-            {navigation.map((item) => {
-               const isActive = currentView === item.id;
-               return (
-                  <button
-                     key={item.name}
-                     onClick={() => onNavigate(item.id)}
-                     className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 group ${
-                        isActive
-                           ? "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] shadow-[0_12px_24px_rgba(15,118,110,0.18)] border border-[rgba(15,118,110,0.1)]"
-                           : "text-[var(--dash-muted)] hover:bg-[var(--dash-surface-2)] hover:text-[var(--dash-ink)] border border-transparent"
-                     }`}
-                  >
-                     {isActive ? (
-                        <div className="absolute left-0 w-1 h-6 bg-[var(--dash-accent)] rounded-r-full"></div>
-                     ) : null}
-                     <item.icon
-                        className={`w-5 h-5 ${
-                           isActive
-                              ? "text-[var(--dash-accent)]"
-                              : "text-gray-400 group-hover:text-gray-600"
-                        }`}
-                     />
-                     {item.name}
-                  </button>
-               );
-            })}
-         </nav>
-
-         <div className="p-4 border-t border-gray-50">
+  const user = getUser();
+  return (
+    <div className="flex flex-col h-full">
+      <div className="p-6">
+        <div
+          className="flex items-center gap-3 mb-2 cursor-pointer group"
+          onClick={() => onNavigate("overview")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") onNavigate("overview");
+          }}
+        >
+          <div className="w-8 h-8 rounded-xl bg-[linear-gradient(135deg,#0f766e,#14b8a6)] flex items-center justify-center text-white shadow-lg shadow-[rgba(15,118,110,0.35)] group-hover:scale-105 transition-transform">
+            <GraduationCap className="w-5 h-5" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-extrabold bg-clip-text text-transparent bg-[linear-gradient(135deg,#0f766e,#14b8a6)] tracking-tight">
+              Smart Study Circle
+            </span>
+            <span className="text-[9px] font-bold text-[var(--dash-muted)] uppercase tracking-widest">
+              Admin Dashboard
+            </span>
+          </div>
+          {showClose ? (
             <button
-               onClick={onLogout}
-               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors group"
+              type="button"
+              onClick={onClose}
+              className="ml-auto w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 inline-flex items-center justify-center"
+              aria-label="Close menu"
             >
-               <LogOut className="w-5 h-5 text-gray-400 group-hover:text-rose-500" />
-               Logout
+              <X className="w-4 h-4" />
             </button>
-            <div className="mt-4 px-4 py-3 bg-[var(--dash-ink)] rounded-xl flex items-center gap-3 text-white border border-gray-800 shadow-xl">
-               <img
-                  src={user?.avatar || "https://i.pravatar.cc/150?u=a042581f4e29026024d"}
-                  alt="Admin"
-                  className="w-8 h-8 rounded-lg object-cover border border-gray-700"
-               />
-               <div className="flex flex-col">
-                  <span className="text-xs font-bold text-white">{user?.fullName || 'Admin Panel'}</span>
-                  <span className="text-[9px] text-[var(--dash-muted)] font-medium">
-                     Super Administrator
-                  </span>
-               </div>
-            </div>
-         </div>
+          ) : null}
+        </div>
       </div>
-   );
+
+      <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
+        {navigation.map((item) => {
+          const isActive = currentView === item.id;
+          return (
+            <button
+              key={item.name}
+              onClick={() => onNavigate(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 group ${
+                isActive
+                  ? "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)] shadow-[0_12px_24px_rgba(15,118,110,0.18)] border border-[rgba(15,118,110,0.1)]"
+                  : "text-[var(--dash-muted)] hover:bg-[var(--dash-surface-2)] hover:text-[var(--dash-ink)] border border-transparent"
+              }`}
+            >
+              {isActive ? (
+                <div className="absolute left-0 w-1 h-6 bg-[var(--dash-accent)] rounded-r-full"></div>
+              ) : null}
+              <item.icon
+                className={`w-5 h-5 ${
+                  isActive
+                    ? "text-[var(--dash-accent)]"
+                    : "text-gray-400 group-hover:text-gray-600"
+                }`}
+              />
+              {item.name}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="p-4 border-t border-gray-50">
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors group"
+        >
+          <LogOut className="w-5 h-5 text-gray-400 group-hover:text-rose-500" />
+          Logout
+        </button>
+        <div className="mt-4 px-4 py-3 bg-[var(--dash-ink)] rounded-xl flex items-center gap-3 text-white border border-gray-800 shadow-xl">
+          <img
+            src={
+              resolveImageUrl(user?.avatar || user?.profilePicture || "") ||
+              "https://i.pravatar.cc/150?u=admin@studycircle"
+            }
+            alt="Admin"
+            className="w-8 h-8 rounded-lg object-cover border border-gray-700"
+          />
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-white">
+              {user?.fullName || "Admin Panel"}
+            </span>
+            <span className="text-[9px] text-[var(--dash-muted)] font-medium">
+              Super Administrator
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState("overview");
-   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [user, setUser] = useState(getUser());
+  const profileRef = useRef(null);
 
   useEffect(() => {
-    const user = getUser();
-    if (!user || user.role !== "admin") {
+    const activeUser = getUser();
+    setUser(activeUser);
+    if (!activeUser || activeUser.role !== "admin") {
       navigate("/admin", { replace: true });
     }
   }, [navigate]);
+
+  useEffect(() => {
+    const handler = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setUser(getUser());
+    window.addEventListener("profile:updated", handler);
+    return () => window.removeEventListener("profile:updated", handler);
+  }, []);
 
   const handleLogout = () => {
     clearAuth();
     navigate("/", { replace: true });
   };
 
-   useEffect(() => {
-      if (isMobileNavOpen) {
-         setIsMobileNavOpen(false);
-      }
-   }, [currentView]);
+  useEffect(() => {
+    if (isMobileNavOpen) {
+      setIsMobileNavOpen(false);
+    }
+  }, [currentView]);
 
   const getSearchPlaceholder = () => {
-     switch (currentView) {
-        case 'users': return 'Search students, faculty...';
-        case 'circles': return 'Search circles...';
-        case 'moderation': return 'Search moderation queue...';
-        default: return 'Search system logs...';
-     }
+    switch (currentView) {
+      case "users":
+        return "Search students, faculty...";
+      case "circles":
+        return "Search circles...";
+      case "moderation":
+        return "Search moderation queue...";
+      default:
+        return "Search system logs...";
+    }
   };
 
   const renderContent = () => {
     switch (currentView) {
-      case "overview": return <AdminOverview />;
-      case "users": return <AdminUserManagement />;
-      case "circles": return <AdminCircleManagement />;
-      case "moderation": return <AdminContentModeration />;
-      case "settings": return <AdminSystemSettings />;
-      default: return <AdminOverview />;
+      case "overview":
+        return <AdminOverview />;
+      case "users":
+        return <AdminUserManagement />;
+      case "circles":
+        return <AdminCircleManagement />;
+      case "moderation":
+        return <AdminContentModeration />;
+      case "settings":
+        return <AdminSystemSettings />;
+      default:
+        return <AdminOverview />;
     }
   };
+
+  const resolvedAvatar = resolveImageUrl(
+    user?.profilePicture || user?.avatar || "",
+  );
 
   return (
     <div className="flex min-h-screen lg:h-screen bg-[#F8F9FA] overflow-hidden font-sans">
@@ -206,60 +263,91 @@ export default function AdminDashboard() {
       ) : null}
 
       {/* Main Content Pane */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-         {/* Top Navigation */}
-         <header className="h-16 bg-white border-b border-[var(--dash-border)] flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 sticky top-0 shadow-sm">
-            <div className="flex items-center gap-3 flex-1">
-               <button
-                 type="button"
-                 onClick={() => setIsMobileNavOpen(true)}
-                 className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-colors lg:hidden"
-                 aria-label="Open menu"
-               >
-                 <Menu className="w-5 h-5" />
-               </button>
-               <span className="text-lg font-bold text-[var(--dash-accent)] hidden md:block">Smart Study Circle</span>
-               <div className="relative w-full max-w-md group">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-[var(--dash-accent)] transition-colors" />
-                  <input 
-                     type="text" 
-                     placeholder={getSearchPlaceholder()}
-                     className="w-full bg-[var(--dash-surface-2)] hover:bg-gray-100 focus:bg-white text-sm border border-transparent focus:border-[var(--dash-accent)] focus:ring-4 focus:ring-[var(--dash-accent-soft)] rounded-xl py-2 pl-10 pr-4 outline-none transition-all text-[var(--dash-ink)] font-medium placeholder:text-gray-400"
-                  />
-               </div>
-            </div>
+      <div className="flex-1 flex flex-col h-screen overflow-visible">
+        {/* Top Navigation Header */}
+        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 sticky top-0 shadow-sm">
+          <div className="flex items-center gap-4 flex-1">
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(true)}
+              className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors lg:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
 
-            <div className="flex items-center gap-2 sm:gap-3">
-               <button className="relative w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">
-                  <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                  <Bell className="w-5 h-5" />
-               </button>
-               {currentView === 'settings' ? (
-                  <button className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">
-                     <HelpCircle className="w-5 h-5" />
-                  </button>
-               ) : (
-                  <button className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">
-                     <Settings className="w-5 h-5" />
-                  </button>
-               )}
-               <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block"></div>
-               <button className="flex items-center gap-2 text-gray-700 font-semibold text-sm hover:opacity-80 transition-opacity p-1">
-                  <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="Profile" className="w-8 h-8 rounded-xl object-cover border border-gray-100 shadow-sm" />
-               </button>
-            </div>
-         </header>
+            <span className="text-sm font-bold text-[var(--dash-accent)] hidden sm:block whitespace-nowrap">
+              Smart Study Circle
+            </span>
 
-         {/* Scrollable Main Area */}
-             <main className="flex-1 overflow-y-auto bg-[var(--dash-bg)] p-4 sm:p-6 lg:p-8 pb-20 relative">
-             <div className="w-full max-w-7xl mx-auto z-10 relative">
-               {renderContent()}
-             </div>
-             
-             {/* Decorative Background Elements */}
-                   <div className="fixed top-0 right-0 w-[600px] h-[600px] sm:w-[800px] sm:h-[800px] bg-[rgba(15,118,110,0.02)] rounded-full blur-[120px] pointer-events-none -z-0 translate-x-1/3 -translate-y-1/3"></div>
-                   <div className="fixed bottom-0 left-0 sm:left-64 w-[420px] h-[420px] sm:w-[600px] sm:h-[600px] bg-[rgba(245,158,11,0.02)] rounded-full blur-[100px] pointer-events-none -z-0 -translate-x-1/2 translate-y-1/2"></div>
-         </main>
+            <div className="relative flex-1 max-w-lg hidden sm:block group">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-[var(--dash-accent)] transition-colors" />
+              <input
+                type="text"
+                placeholder={getSearchPlaceholder()}
+                className="w-full bg-gray-50 hover:bg-gray-100 focus:bg-white text-sm border border-gray-200 focus:border-[var(--dash-accent)] focus:ring-2 focus:ring-[var(--dash-accent)]/20 rounded-lg py-2 pl-10 pr-4 outline-none transition-all text-gray-900 font-medium placeholder:text-gray-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4">
+            <NotificationDropdown />
+
+            <button
+              type="button"
+              onClick={() => setCurrentView("settings")}
+              className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              aria-label="Open system settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+
+            <div className="w-px h-6 bg-gray-200"></div>
+
+            <div className="relative" ref={profileRef}>
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen((prev) => !prev)}
+                className="flex items-center gap-2 text-gray-700 font-medium text-sm hover:opacity-80 transition-opacity"
+                aria-label="Open profile menu"
+                aria-expanded={isProfileOpen}
+              >
+                <img
+                  src={
+                    resolvedAvatar ||
+                    "https://i.pravatar.cc/150?u=admin@studycircle"
+                  }
+                  alt="Admin Profile"
+                  className="w-8 h-8 rounded-lg object-cover border border-gray-200"
+                />
+              </button>
+
+              {isProfileOpen ? (
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-100 bg-white shadow-lg z-50 overflow-hidden">
+                  <div className="px-4 py-3">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {user?.fullName || "System Admin"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {user?.email || "admin@smartstudycircle"}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </header>
+
+        {/* Scrollable Main Area */}
+        <main className="flex-1 overflow-y-auto bg-[var(--dash-bg)] p-4 sm:p-6 lg:p-8 pb-20 relative">
+          <div className="w-full max-w-7xl mx-auto z-10 relative">
+            {renderContent()}
+          </div>
+
+          {/* Decorative Background Elements */}
+          <div className="fixed top-0 right-0 w-[600px] h-[600px] sm:w-[800px] sm:h-[800px] bg-[rgba(15,118,110,0.02)] rounded-full blur-[120px] pointer-events-none -z-0 translate-x-1/3 -translate-y-1/3"></div>
+          <div className="fixed bottom-0 left-0 sm:left-64 w-[420px] h-[420px] sm:w-[600px] sm:h-[600px] bg-[rgba(245,158,11,0.02)] rounded-full blur-[100px] pointer-events-none -z-0 -translate-x-1/2 translate-y-1/2"></div>
+        </main>
       </div>
     </div>
   );

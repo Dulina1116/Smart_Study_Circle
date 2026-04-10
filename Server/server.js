@@ -89,29 +89,46 @@ app.set("io", io);
 const circlePresence = new Map();
 const socketCircleMap = new Map();
 
+const getPresenceMap = (circleId) => {
+  if (!circlePresence.has(circleId)) {
+    circlePresence.set(circleId, new Map());
+  }
+  return circlePresence.get(circleId);
+};
+
+const getOnlineUserIds = (circleId) => {
+  const presence = circlePresence.get(circleId);
+  return presence ? Array.from(presence.keys()) : [];
+};
+
 const emitPresence = (circleId) => {
-  const users = Array.from(circlePresence.get(circleId) || []);
   io.to(`circle:${circleId}`).emit("circle:presence", {
     circleId,
-    onlineUserIds: users,
+    onlineUserIds: getOnlineUserIds(circleId),
   });
 };
 
 const addOnlineUser = (circleId, userId) => {
-  if (!circlePresence.has(circleId)) {
-    circlePresence.set(circleId, new Set());
-  }
-  circlePresence.get(circleId).add(String(userId));
+  const presence = getPresenceMap(circleId);
+  const key = String(userId);
+  presence.set(key, (presence.get(key) || 0) + 1);
   emitPresence(circleId);
 };
 
 const removeOnlineUser = (circleId, userId) => {
-  if (!circlePresence.has(circleId)) return;
+  const presence = circlePresence.get(circleId);
+  if (!presence) return;
 
-  const set = circlePresence.get(circleId);
-  set.delete(String(userId));
+  const key = String(userId);
+  const nextCount = (presence.get(key) || 0) - 1;
 
-  if (set.size === 0) {
+  if (nextCount <= 0) {
+    presence.delete(key);
+  } else {
+    presence.set(key, nextCount);
+  }
+
+  if (presence.size === 0) {
     circlePresence.delete(circleId);
   }
 
@@ -166,7 +183,7 @@ io.on("connection", (socket) => {
       socketCircleMap.set(socket.id, String(circleId));
       addOnlineUser(String(circleId), socket.user._id);
 
-      ack?.({ ok: true });
+      ack?.({ ok: true, onlineUserIds: getOnlineUserIds(String(circleId)) });
     } catch {
       ack?.({ ok: false });
     }
@@ -176,9 +193,18 @@ io.on("connection", (socket) => {
     socket.leave(`circle:${circleId}`);
     socketCircleMap.delete(socket.id);
     removeOnlineUser(String(circleId), socket.user._id);
+    socket.to(`circle:${circleId}`).emit("circle:typing", {
+      circleId,
+      userId: String(socket.user._id),
+      fullName: socket.user.fullName,
+      displayName: socket.user.displayName || "",
+      isTyping: false,
+    });
   });
 
   socket.on("circle:typing", ({ circleId, isTyping }) => {
+    const joinedCircleId = socketCircleMap.get(socket.id);
+    if (String(joinedCircleId || "") !== String(circleId)) return;
     socket.to(`circle:${circleId}`).emit("circle:typing", {
       circleId,
       userId: String(socket.user._id),
@@ -188,8 +214,23 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("circle:read", ({ circleId }) => {
+    const joinedCircleId = socketCircleMap.get(socket.id);
+    if (String(joinedCircleId || "") !== String(circleId)) return;
+    socket.to(`circle:${circleId}`).emit("circle:read", {
+      circleId,
+      readerId: String(socket.user._id),
+    });
+  });
+
   socket.on("circle:message", async ({ circleId, text }, ack) => {
     try {
+      const joinedCircleId = socketCircleMap.get(socket.id);
+      if (String(joinedCircleId || "") !== String(circleId)) {
+        ack?.({ ok: false, message: "Join the circle before messaging." });
+        return;
+      }
+
       if (!text?.trim()) {
         ack?.({ ok: false });
         return;
@@ -232,6 +273,13 @@ io.on("connection", (socket) => {
     const circleId = socketCircleMap.get(socket.id);
     if (circleId) {
       removeOnlineUser(circleId, socket.user._id);
+      socket.to(`circle:${circleId}`).emit("circle:typing", {
+        circleId,
+        userId: String(socket.user._id),
+        fullName: socket.user.fullName,
+        displayName: socket.user.displayName || "",
+        isTyping: false,
+      });
       socketCircleMap.delete(socket.id);
     }
   });

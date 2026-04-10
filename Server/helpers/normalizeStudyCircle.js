@@ -3,7 +3,7 @@ export const normalizeStudyCircle = (doc) => {
   
   return {
     _id: data._id,
-    name: data.name || '',
+    name: data.name || data.subject || '',
     description: data.description || '',
     moduleCode: data.moduleCode || '',
     subject: data.subject || '',

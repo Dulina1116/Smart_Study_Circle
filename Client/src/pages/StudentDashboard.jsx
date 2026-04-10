@@ -171,7 +171,7 @@ const Sidebar = ({
   );
 };
 
-const TopBar = ({ user, onOpenMenu }) => {
+const TopBar = ({ user, onOpenMenu, onOpenProfile }) => {
   const resolvedAvatar = resolveImageUrl(
     user?.avatar || user?.profilePicture || "",
   );
@@ -203,7 +203,8 @@ const TopBar = ({ user, onOpenMenu }) => {
         <NotificationDropdown />
 
         <button
-          onClick={() => setCurrentView("profile")}
+          type="button"
+          onClick={onOpenProfile}
           className="flex items-center gap-3 text-left group"
         >
           <div className="hidden md:block text-right">
@@ -215,7 +216,7 @@ const TopBar = ({ user, onOpenMenu }) => {
             </p>
           </div>
           <div
-            className={`w-10 h-10 rounded-full ${user?.avatar ? "bg-white" : "bg-amber-100"} border-2 border-white shadow-sm overflow-hidden flex-shrink-0`}
+            className={`w-10 h-10 rounded-full ${resolvedAvatar ? "bg-white" : "bg-amber-100"} border-2 border-white shadow-sm overflow-hidden flex-shrink-0`}
           >
             <img
               src={
@@ -1621,7 +1622,11 @@ export default function StudentDashboard() {
       ) : null}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <TopBar user={user} onOpenMenu={() => setIsMobileNavOpen(true)} />
+        <TopBar
+          user={user}
+          onOpenMenu={() => setIsMobileNavOpen(true)}
+          onOpenProfile={() => setCurrentView("profile")}
+        />
 
         {currentView === "dashboard" ? (
           <DashboardOverview

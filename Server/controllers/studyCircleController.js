@@ -752,7 +752,7 @@ export const deleteStudyCircle = async (req, res) => {
       return res.status(404).json({ message: "Study circle not found." });
     }
 
-    if (String(circle.creator) !== String(req.user._id)) {
+    if (req.user?.role !== "admin" && String(circle.creator) !== String(req.user._id)) {
       return res
         .status(403)
         .json({
