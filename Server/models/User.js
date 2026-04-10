@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Full name is required"],
       trim: true,
       minlength: [3, "At least 3 characters required"],
+      match: [/^[a-zA-Z\s]+$/, "Full name can only contain letters and spaces"],
     },
     email: {
       type: String,
@@ -24,10 +25,14 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["student", "lecturer"],
+      enum: ["student", "lecturer", "admin"],
       default: "student",
     },
     isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isSuspended: {
       type: Boolean,
       default: false,
     },

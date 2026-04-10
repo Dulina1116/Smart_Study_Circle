@@ -7,7 +7,9 @@ import {
   ArrowRight,
   ShieldCheck,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
+import { saveAuth, isAuthenticated, clearAuth, getUser } from "../utils/authUtils";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -16,11 +18,29 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // If already authenticated, skip straight to dashboard
+  // Cleanup and redirect logic
   useEffect(() => {
-    if (sessionStorage.getItem("adminAuth") === "true") {
-      navigate("/admin/dashboard", { replace: true });
+    const user = getUser();
+    const token = localStorage.getItem("token");
+    const isAuth = isAuthenticated();
+    const legacyAuth = sessionStorage.getItem("adminAuth");
+
+    console.log("[AdminLogin] Checking auth state:", { isAuth, role: user?.role, hasToken: !!token, hasLegacy: !!legacyAuth });
+
+    if (legacyAuth) {
+      console.log("[AdminLogin] Clearing legacy sessionStorage auth");
+      sessionStorage.removeItem("adminAuth");
     }
+
+    if (token && !isAuth) {
+      console.warn("[AdminLogin] Stale or invalid token detected. Clearing auth.");
+      clearAuth();
+    }
+    
+    // We remove the automatic navigation to dashboard here to ensure the 
+    // user can always see the login form if they navigate to /admin manually.
+    // If they are already authenticated, they can still log in or the dashboard 
+    // sidebar will show their status.
   }, [navigate]);
 
   const handleSubmit = async (e) => {
@@ -28,17 +48,33 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
-    // Simulate a short async check so it feels like a real auth call
-    await new Promise((r) => setTimeout(r, 600));
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const validEmail = import.meta.env.VITE_ADMIN_EMAIL;
-    const validPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+      const data = await response.json();
 
-    if (email === validEmail && password === validPassword) {
-      sessionStorage.setItem("adminAuth", "true");
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid credentials.");
+      }
+
+      // Check if user is actually an admin
+      if (data.user.role !== "admin") {
+        throw new Error("Access denied. You do not have administrator privileges.");
+      }
+
+      // Store in localStorage via authUtils
+      saveAuth(data.token, data.user);
+      
+      // Clear legacy sessionStorage flag
+      sessionStorage.removeItem("adminAuth");
+
       navigate("/admin/dashboard", { replace: true });
-    } else {
-      setError("Invalid credentials. Please check your email and password.");
+    } catch (err) {
+      setError(err.message);
       setLoading(false);
     }
   };

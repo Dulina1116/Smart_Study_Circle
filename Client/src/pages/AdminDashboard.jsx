@@ -22,6 +22,8 @@ import AdminCircleManagement from "../components/admin/AdminCircleManagement";
 import AdminContentModeration from "../components/admin/AdminContentModeration";
 import AdminSystemSettings from "../components/admin/AdminSystemSettings";
 
+import { clearAuth, getUser } from "../utils/authUtils";
+
 const navigation = [
   { name: 'Overview', id: 'overview', icon: LayoutDashboard },
   { name: 'User Management', id: 'users', icon: Users },
@@ -37,6 +39,7 @@ const AdminSidebar = ({
    showClose = false,
    onClose,
 }) => {
+   const user = getUser();
    return (
       <div className="flex flex-col h-full">
          <div className="p-6">
@@ -112,12 +115,12 @@ const AdminSidebar = ({
             </button>
             <div className="mt-4 px-4 py-3 bg-[var(--dash-ink)] rounded-xl flex items-center gap-3 text-white border border-gray-800 shadow-xl">
                <img
-                  src="https://i.pravatar.cc/150?u=a042581f4e29026024d"
+                  src={user?.avatar || "https://i.pravatar.cc/150?u=a042581f4e29026024d"}
                   alt="Admin"
                   className="w-8 h-8 rounded-lg object-cover border border-gray-700"
                />
                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-white">Admin Panel</span>
+                  <span className="text-xs font-bold text-white">{user?.fullName || 'Admin Panel'}</span>
                   <span className="text-[9px] text-[var(--dash-muted)] font-medium">
                      Super Administrator
                   </span>
@@ -134,13 +137,14 @@ export default function AdminDashboard() {
    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("adminAuth") !== "true") {
+    const user = getUser();
+    if (!user || user.role !== "admin") {
       navigate("/admin", { replace: true });
     }
   }, [navigate]);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("adminAuth");
+    clearAuth();
     navigate("/", { replace: true });
   };
 

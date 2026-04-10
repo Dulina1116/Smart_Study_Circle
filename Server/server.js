@@ -245,38 +245,45 @@ const startServer = async () => {
   try {
     await connectDB();
 
+    // Ensure collections exist (important for aggregates/analytics)
     await Resource.createCollection().catch(() => null);
     await Resource.syncIndexes().catch(() => null);
 
-    let attemptedAlt = false;
+    let currentPort = PORT;
+    const MAX_PORT_RETRIES = 5;
+    let retryCount = 0;
+
+    const listen = (port) => {
+      httpServer.listen(port, HOST);
+    };
 
     httpServer.on("error", (err) => {
-      if (err && err.code === "EADDRINUSE") {
-        if (!attemptedAlt && HOST !== "127.0.0.1") {
-          attemptedAlt = true;
-          console.warn(
-            `Port ${PORT} appears in use on host ${HOST}. Retrying bind to 127.0.0.1...`,
-          );
-          // Try binding to IPv4 loopback explicitly
-          httpServer.listen(PORT, "127.0.0.1");
-          return;
+      if (err.code === "EADDRINUSE") {
+        if (retryCount < MAX_PORT_RETRIES) {
+          retryCount++;
+          const nextPort = currentPort + 1;
+          console.warn(`Port ${currentPort} is busy. Retrying with port ${nextPort}... (Attempt ${retryCount}/${MAX_PORT_RETRIES})`);
+          currentPort = nextPort;
+          listen(currentPort);
+        } else {
+          console.error(`Port ${currentPort} is already in use after ${MAX_PORT_RETRIES} retries. Stop the process using the port and restart.`);
+          process.exit(1);
         }
-
-        console.error(
-          `Port ${PORT} is already in use. Stop the process using the port or set a different PORT environment variable, then restart.`,
-        );
+      } else {
+        console.error("Server error:", err);
         process.exit(1);
       }
-
-      console.error("Server error:", err);
-      process.exit(1);
     });
 
-    httpServer.listen(PORT, HOST, () =>
-      console.log(`Server running on ${HOST}:${PORT}`),
-    );
+    httpServer.on("listening", () => {
+      const addr = httpServer.address();
+      const bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+      console.log(`Smart Study Circle API Running ✦ Listening on ${HOST}:${addr.port}`);
+    });
+
+    listen(currentPort);
   } catch (err) {
-    console.error(err);
+    console.error("Critical server startup error:", err);
     process.exit(1);
   }
 };
