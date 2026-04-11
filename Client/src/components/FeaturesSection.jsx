@@ -43,7 +43,10 @@ const featureBlocks = [
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="bg-gradient-to-b from-white to-teal-50/40 py-16 sm:py-20 lg:py-24">
+    <section
+      id="resources"
+      className="scroll-mt-24 bg-gradient-to-b from-white to-teal-50/40 py-16 sm:py-20 lg:py-24"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="animate-fade-up text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700">

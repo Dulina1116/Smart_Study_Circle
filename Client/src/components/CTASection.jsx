@@ -8,7 +8,10 @@ const promises = [
 
 export default function CTASection() {
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
+    <section
+      id="analytics"
+      className="scroll-mt-24 relative overflow-hidden py-16 sm:py-20 lg:py-24"
+    >
       <div className="absolute inset-0 gradient-teal-animated" />
       <div className="absolute -top-12 -right-10 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
       <div className="absolute -bottom-16 -left-16 h-72 w-72 rounded-full bg-white/10 blur-3xl" />

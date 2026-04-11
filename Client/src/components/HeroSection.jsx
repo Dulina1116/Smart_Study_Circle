@@ -14,7 +14,10 @@ const timeline = [
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-white pb-16 pt-16 sm:pb-20 sm:pt-20 lg:pb-24 lg:pt-28">
+    <section
+      id="dashboard"
+      className="scroll-mt-24 relative overflow-hidden bg-white pb-16 pt-16 sm:pb-20 sm:pt-20 lg:pb-24 lg:pt-28"
+    >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-28 right-0 h-72 w-72 rounded-full bg-cyan-100/80 blur-3xl" />
         <div className="absolute top-24 -left-24 h-80 w-80 rounded-full bg-teal-100/70 blur-3xl" />
