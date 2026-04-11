@@ -3,11 +3,11 @@ import { Menu, X, GraduationCap, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const navLinks = [
-  "Dashboard",
-  "Study Circles",
-  "Resources",
-  "Calendar",
-  "Analytics",
+  { label: "Dashboard", href: "#dashboard" },
+  { label: "Study Circles", href: "#circles" },
+  { label: "Resources", href: "#resources" },
+  { label: "Calendar", href: "#calendar" },
+  { label: "Analytics", href: "#analytics" },
 ];
 
 export default function Navbar() {
@@ -48,11 +48,11 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <a
-                key={link}
-                href="#"
+                key={link.href}
+                href={link.href}
                 className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-teal-600 rounded-lg hover:bg-teal-50 transition-all duration-200"
               >
-                {link}
+                {link.label}
               </a>
             ))}
             <Link
@@ -100,12 +100,12 @@ export default function Navbar() {
         <div className="px-4 py-4 space-y-1">
           {navLinks.map((link) => (
             <a
-              key={link}
-              href="#"
+              key={link.href}
+              href={link.href}
               className="block px-3 py-2.5 text-sm font-medium text-gray-700 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-200"
               onClick={() => setIsOpen(false)}
             >
-              {link}
+              {link.label}
             </a>
           ))}
           <Link

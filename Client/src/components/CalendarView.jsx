@@ -745,7 +745,7 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
                   onChange={(e) => handleChange("circle", e.target.value)}
                   className="w-full border border-gray-200 bg-white rounded-xl pl-10 pr-4 py-3 text-sm text-gray-900 outline-none transition-all focus:ring-2 focus:ring-blue-100 focus:border-blue-400 appearance-none"
                 >
-                  <option value="">No circle linked (visible to you only)</option>
+                  <option value="">No circle linked (visible to all students)</option>
                   {circles.map((c) => (
                     <option key={c.id || c._id} value={c.id || c._id}>
                       {c.subject} {c.moduleCode ? `(${c.moduleCode})` : ""}
@@ -753,9 +753,13 @@ const EventFormModal = ({ open, onClose, onSave, editEvent, prefilledDate, circl
                   ))}
                 </select>
               </div>
-              {form.circle && (
+              {form.circle ? (
                 <p className="mt-1.5 text-[11px] text-amber-600 flex items-center gap-1 font-medium">
                   <Users className="w-3 h-3" /> Only members of this circle will see this event
+                </p>
+              ) : (
+                <p className="mt-1.5 text-[11px] text-emerald-600 flex items-center gap-1 font-medium">
+                  <Users className="w-3 h-3" /> All students will see this event
                 </p>
               )}
             </div>

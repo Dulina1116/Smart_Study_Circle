@@ -29,7 +29,8 @@ const circles = [
 
 export default function LiveCircles() {
   return (
-    <section id="circles" className="bg-white py-16 sm:py-20 lg:py-24">
+    <section id="circles" className="scroll-mt-24 bg-white py-16 sm:py-20 lg:py-24">
+      <div id="calendar" className="scroll-mt-24" aria-hidden="true" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="animate-fade-up mb-12 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

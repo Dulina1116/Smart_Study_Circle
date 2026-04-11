@@ -57,6 +57,16 @@ export const getEvents = async (req, res) => {
       .populate("circle", "subject moduleCode members")
       .lean();
 
+    // 3. Public study sessions (no circle linked) from other users
+    const otherPublicEvents = await Event.find({
+      user: { $ne: userId },
+      circle: null,
+      type: "study_session",
+      ...dateCondition,
+    })
+      .sort({ date: 1 })
+      .lean();
+
     // Keep only those where the current user is a circle member
     const accessibleOtherEvents = otherCircleEvents.filter((ev) => {
       if (!ev.circle || !Array.isArray(ev.circle.members)) return false;
@@ -74,7 +84,7 @@ export const getEvents = async (req, res) => {
     // Merge + de-duplicate by _id
     const seen = new Set();
     const merged = [];
-    for (const ev of [...filteredOwnEvents, ...accessibleOtherEvents]) {
+    for (const ev of [...filteredOwnEvents, ...accessibleOtherEvents, ...otherPublicEvents]) {
       const id = String(ev._id);
       if (!seen.has(id)) {
         seen.add(id);
@@ -110,15 +120,18 @@ export const getEventById = async (req, res) => {
         return res.status(403).json({ error: "Access denied. Deadlines and exams are private." });
       }
       if (!event.circle) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const isMember =
-        Array.isArray(event.circle.members) &&
-        event.circle.members.some((m) => String(m) === String(userId));
-      if (!isMember) {
-        return res
-          .status(403)
-          .json({ error: "Access denied. You are not a member of this circle." });
+        if (event.type !== "study_session") {
+          return res.status(403).json({ error: "Access denied" });
+        }
+      } else {
+        const isMember =
+          Array.isArray(event.circle.members) &&
+          event.circle.members.some((m) => String(m) === String(userId));
+        if (!isMember) {
+          return res
+            .status(403)
+            .json({ error: "Access denied. You are not a member of this circle." });
+        }
       }
     }
 
