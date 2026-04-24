@@ -1,11 +1,19 @@
 import { test, expect } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Load environment variables from .env file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 test.describe('Extended Component & Page Coverage', () => {
 
   test('Notification Dropdown - Interaction', async ({ page }) => {
     await page.goto('http://localhost:5173/login');
-    await page.fill('#email', 'it23343184@my.sliit.lk');
-    await page.fill('#password', 'it23343184');
+    await page.fill('#email', process.env.VITE_STUDENT_EMAIL);
+    await page.fill('#password', process.env.VITE_STUDENT_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard/student');
 
@@ -31,8 +39,8 @@ test.describe('Extended Component & Page Coverage', () => {
 
   test('Chat Page - Direct Navigation', async ({ page }) => {
     await page.goto('http://localhost:5173/login');
-    await page.fill('#email', 'it23343184@my.sliit.lk');
-    await page.fill('#password', 'it23343184');
+    await page.fill('#email', process.env.VITE_STUDENT_EMAIL);
+    await page.fill('#password', process.env.VITE_STUDENT_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard/student');
 
@@ -45,8 +53,8 @@ test.describe('Extended Component & Page Coverage', () => {
 
   test('Resource Preview Page - Direct Navigation', async ({ page }) => {
     await page.goto('http://localhost:5173/login');
-    await page.fill('#email', 'it23343184@my.sliit.lk');
-    await page.fill('#password', 'it23343184');
+    await page.fill('#email', process.env.VITE_STUDENT_EMAIL);
+    await page.fill('#password', process.env.VITE_STUDENT_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard/student');
 

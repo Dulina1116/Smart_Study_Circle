@@ -1,12 +1,20 @@
 import { test, expect } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Load environment variables from .env file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 test.describe('Full Site Journey & Component Interconnectivity', () => {
 
   test('Student Journey: Dashboard to Chat & Resources', async ({ page }) => {
     // 1. Authentication
     await page.goto('http://localhost:5173/login');
-    await page.fill('#email', 'it23343184@my.sliit.lk');
-    await page.fill('#password', 'it23343184');
+    await page.fill('#email', process.env.VITE_STUDENT_EMAIL);
+    await page.fill('#password', process.env.VITE_STUDENT_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard/student');
 
@@ -29,8 +37,8 @@ test.describe('Full Site Journey & Component Interconnectivity', () => {
 
   test('Lecturer Journey: Analytics & Management', async ({ page }) => {
     await page.goto('http://localhost:5173/login');
-    await page.fill('#email', 'meknowshe13@gmail.com');
-    await page.fill('#password', 'Mino1234');
+    await page.fill('#email', process.env.VITE_LECTURER_EMAIL);
+    await page.fill('#password', process.env.VITE_LECTURER_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard/lecturer');
 
@@ -49,8 +57,8 @@ test.describe('Full Site Journey & Component Interconnectivity', () => {
 
   test('Admin Journey: System Moderation', async ({ page }) => {
     await page.goto('http://localhost:5173/admin');
-    await page.fill('#admin-email', 'smartstudyad123@gmail.com');
-    await page.fill('#admin-password', 'Smart@ad1234');
+    await page.fill('#admin-email', process.env.VITE_ADMIN_EMAIL);
+    await page.fill('#admin-password', process.env.VITE_ADMIN_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/admin/dashboard');
 
@@ -70,8 +78,8 @@ test.describe('Full Site Journey & Component Interconnectivity', () => {
   test('Responsive Navigation: Mobile Experience', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('http://localhost:5173/login');
-    await page.fill('#email', 'it23343184@my.sliit.lk');
-    await page.fill('#password', 'it23343184');
+    await page.fill('#email', process.env.VITE_STUDENT_EMAIL);
+    await page.fill('#password', process.env.VITE_STUDENT_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard/student');
     
