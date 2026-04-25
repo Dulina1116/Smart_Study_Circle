@@ -1,9 +1,6 @@
-<div align="center">
-  <h1 align="center">Smart Study Circle</h1>
-  <p align="center">
-    A collaborative platform for students to form study circles, share resources, and learn together.
-  </p>
-</div>
+# Smart Study Circle
+
+A collaborative platform for students to form study circles, share resources, and learn together.
 
 ---
 
@@ -35,50 +32,50 @@
 
 ### Installation & Setup
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/smart-study-circle.git
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/smart-study-circle.git
+    ```
 
-2. **Navigate to the project directory:**
-   ```bash
-   cd smart-study-circle
-   ```
+2.  **Navigate to the project directory:**
+    ```bash
+    cd smart-study-circle
+    ```
 
-3. **Install server dependencies:**
-   ```bash
-   cd Server
-   npm install
-   ```
+3.  **Install server dependencies:**
+    ```bash
+    cd Server
+    npm install
+    ```
 
-4. **Install client dependencies:**
-   ```bash
-   cd ../Client
-   npm install
-   ```
+4.  **Install client dependencies:**
+    ```bash
+    cd ../Client
+    npm install
+    ```
 
-5. **Set up environment variables:**
-   - Create a `.env` file in the `Server` directory.
-   - Add the following variables:
-     ```
-     PORT=5000
-     MONGO_URI=your_mongodb_connection_string
-     JWT_SECRET=your_jwt_secret
-     ```
+5.  **Set up environment variables:**
+    - Create a `.env` file in the `Server` directory.
+    - Add the following variables:
+      ```
+      PORT=5000
+      MONGO_URI=your_mongodb_connection_string
+      JWT_SECRET=your_jwt_secret
+      ```
 
 ### Running the Application
 
-1. **Start the server:**
-   ```bash
-   cd Server
-   npm run dev
-   ```
+1.  **Start the server:**
+    ```bash
+    cd Server
+    npm run dev
+    ```
 
-2. **Start the client:**
-   ```bash
-   cd Client
-   npm run dev
-   ```
+2.  **Start the client:**
+    ```bash
+    cd Client
+    npm run dev
+    ```
 
 ---
 
@@ -98,6 +95,4 @@
 
 ---
 
-<div align="center">
-  <p>Made with ❤️ by the Smart Study Circle Team</p>
-</div>
+Made with by the ITPM Team
